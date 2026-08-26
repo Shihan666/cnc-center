@@ -1,0 +1,326 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import { siteConfig } from "../../config/site";
+import {
+  shopCategories,
+  type ShopCategory,
+} from "../../data/shopCategories";
+
+export function getStaticPaths() {
+  return shopCategories.map((category) => ({
+    params: {
+      slug: category.slug,
+    },
+    props: {
+      category,
+    },
+  }));
+}
+
+interface Props {
+  category: ShopCategory;
+}
+
+const { category } = Astro.props;
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}/shop/${category.slug}/`;
+
+const pageTitle = `${category.title} | فروشگاه قطعات CNC`;
+
+const pageDescription =
+  `${category.description} بررسی مشخصات فنی، موارد مورد نیاز برای تطبیق و ثبت درخواست تأمین ${category.title}.`;
+
+const relatedCategories = shopCategories
+  .filter((item) => item.slug !== category.slug)
+  .slice(0, 3);
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "CollectionPage",
+      name: category.title,
+      description: category.description,
+      url: canonical,
+      inLanguage: "fa",
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "صفحه اصلی",
+          item: `${siteUrl}/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "فروشگاه قطعات",
+          item: `${siteUrl}/shop/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: category.title,
+          item: canonical,
+        },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-12 md:py-18">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-6 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a href="/" class="transition hover:text-brand-700">
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a href="/shop/" class="transition hover:text-brand-700">
+            فروشگاه قطعات
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            {category.title}
+          </span>
+        </nav>
+
+        <div class="max-w-4xl">
+          <div class="flex flex-wrap items-center gap-3">
+            <Badge variant="brand">
+              دسته {category.code}
+            </Badge>
+
+            <span
+              dir="ltr"
+              class="inline-flex min-h-7 items-center rounded-control border border-line bg-surface px-3 text-xs font-black uppercase tracking-wide text-brand-700"
+            >
+              {category.englishTitle}
+            </span>
+          </div>
+
+          <h1 class="mt-5 text-3xl font-black leading-[1.45] tracking-tight text-ink md:text-5xl">
+            {category.title}
+          </h1>
+
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+            {category.intro}
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button href="/request/part/" size="lg">
+              درخواست تأمین {category.title}
+            </Button>
+
+            <Button
+              href="/shop/"
+              variant="secondary"
+              size="lg"
+            >
+              همه دسته‌بندی‌ها
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-6 lg:grid-cols-2">
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              اقلام این دسته
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink">
+              نمونه قطعات و تجهیزات مرتبط
+            </h2>
+
+            <div class="mt-6 grid gap-3 sm:grid-cols-2">
+              {
+                category.typicalItems.map((item) => (
+                  <div class="rounded-control border border-line bg-surface-soft px-4 py-3">
+                    <span
+                      dir="ltr"
+                      class="text-sm font-black text-ink"
+                    >
+                      {item}
+                    </span>
+                  </div>
+                ))
+              }
+            </div>
+          </Card>
+
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              اطلاعات لازم برای تطبیق
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink">
+              قبل از درخواست چه مشخصاتی آماده باشد؟
+            </h2>
+
+            <ul class="mt-6 space-y-3">
+              {
+                category.buyingNotes.map((note) => (
+                  <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                    <span
+                      aria-hidden="true"
+                      class="grid size-6 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-black text-brand-800"
+                    >
+                      ✓
+                    </span>
+
+                    <span>{note}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </Card>
+        </div>
+
+        <div class="mt-8 grid gap-4 md:grid-cols-3">
+          <Card>
+            <p class="text-sm font-bold text-brand-700">
+              خرید آنلاین
+            </p>
+
+            <h2 class="mt-2 text-lg font-black text-ink">
+              محصولات آماده فروش
+            </h2>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              در فاز محصول، اقلام دارای قیمت و موجودی مستقیم در همین دسته نمایش داده می‌شوند.
+            </p>
+          </Card>
+
+          <Card>
+            <p class="text-sm font-bold text-brand-700">
+              استعلام قیمت
+            </p>
+
+            <h2 class="mt-2 text-lg font-black text-ink">
+              اقلام نیازمند بررسی قیمت
+            </h2>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              برای قطعاتی که قیمت وابسته به وضعیت بازار یا مشخصات دقیق است، مسیر استعلام فعال خواهد بود.
+            </p>
+          </Card>
+
+          <Card>
+            <p class="text-sm font-bold text-brand-700">
+              تأمین سفارشی
+            </p>
+
+            <h2 class="mt-2 text-lg font-black text-ink">
+              قطعات خاص و کمیاب
+            </h2>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              در صورت نبود محصول در کاتالوگ، درخواست تأمین با Part Number یا مشخصات فنی ثبت می‌شود.
+            </p>
+          </Card>
+        </div>
+
+        <div class="mt-10 rounded-panel border border-brand-200 bg-brand-50 p-6 md:p-8">
+          <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p class="text-sm font-bold text-brand-800">
+                تطبیق قطعه قبل از سفارش
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black leading-9 text-brand-950">
+                Part Number و مشخصات تجهیز را ارسال کنید
+              </h2>
+
+              <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-900">
+                برای کاهش خطای انتخاب، تصویر پلاک، مدل دستگاه و مشخصات قطعه فعلی را همراه درخواست ثبت کنید.
+              </p>
+            </div>
+
+            <Button href="/request/part/" size="lg">
+              ثبت درخواست قطعه
+            </Button>
+          </div>
+        </div>
+
+        <section class="mt-12 border-t border-line pt-10">
+          <p class="text-sm font-bold text-brand-700">
+            دسته‌بندی‌های مرتبط
+          </p>
+
+          <h2 class="mt-2 text-2xl font-black text-ink">
+            سایر تجهیزات CNC
+          </h2>
+
+          <div class="mt-6 grid gap-4 md:grid-cols-3">
+            {
+              relatedCategories.map((related) => (
+                <a
+                  href={`/shop/${related.slug}/`}
+                  class="group rounded-card border border-line bg-surface-raised p-5 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <Badge variant="brand" size="sm">
+                      {related.code}
+                    </Badge>
+
+                    <span
+                      aria-hidden="true"
+                      class="text-line-strong transition group-hover:text-brand-700"
+                    >
+                      ←
+                    </span>
+                  </div>
+
+                  <p
+                    dir="ltr"
+                    class="mt-4 text-xs font-black text-brand-700"
+                  >
+                    {related.englishTitle}
+                  </p>
+
+                  <h3 class="mt-1 font-black leading-7 text-ink">
+                    {related.title}
+                  </h3>
+
+                  <p class="mt-2 text-sm leading-7 text-muted">
+                    {related.description}
+                  </p>
+                </a>
+              ))
+            }
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

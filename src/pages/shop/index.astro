@@ -1,0 +1,155 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import SectionHeading from "../../components/common/SectionHeading.astro";
+import { siteConfig } from "../../config/site";
+import { shopCategories } from "../../data/shopCategories";
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}/shop/`;
+
+const pageTitle = "فروشگاه قطعات CNC و تجهیزات صنعتی";
+
+const pageDescription =
+  "دسته‌بندی قطعات CNC شامل سروو موتور، درایو، اینورتر، کنترلر CNC، PLC و HMI، انکودر، برد، قطعات مکانیکی، سنسور و تجهیزات برق صنعتی.";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "دسته‌بندی قطعات CNC",
+  url: canonical,
+  itemListElement: shopCategories.map((category, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: category.title,
+    url: `${siteUrl}/shop/${category.slug}/`,
+  })),
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-14 md:py-20">
+      <div class="site-container">
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            فروشگاه قطعات CNC
+          </Badge>
+
+          <h1 class="mt-5 text-4xl font-black leading-[1.4] tracking-tight text-ink md:text-5xl">
+            قطعات و تجهیزات CNC را بر اساس نوع تجهیز پیدا کنید
+          </h1>
+
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+            برای انتخاب دقیق قطعه، مدل دستگاه، برند، Part Number و مشخصات فنی تجهیز اهمیت دارد. از دسته‌بندی‌های زیر مسیر مناسب را انتخاب کنید.
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button href="/request/part/" size="lg">
+              درخواست تأمین قطعه
+            </Button>
+
+            <Button
+              href="/brands/"
+              variant="secondary"
+              size="lg"
+            >
+              مشاهده برندها
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <SectionHeading
+          eyebrow="دسته‌بندی فروشگاه"
+          title="نوع قطعه یا تجهیز را انتخاب کنید"
+          description="اگر دسته دقیق را نمی‌دانید، با ارسال Part Number یا تصویر پلاک می‌توان مسیر بررسی را مشخص کرد."
+        />
+
+        <div class="mt-9 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {
+            shopCategories.map((category) => (
+              <Card
+                interactive={true}
+                class="group flex h-full flex-col"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <Badge variant="brand" size="sm">
+                    {category.code}
+                  </Badge>
+
+                  <span
+                    aria-hidden="true"
+                    class="text-line-strong transition group-hover:text-brand-700"
+                  >
+                    ←
+                  </span>
+                </div>
+
+                <p
+                  dir="ltr"
+                  class="mt-5 text-xs font-black uppercase tracking-wide text-brand-700"
+                >
+                  {category.englishTitle}
+                </p>
+
+                <h2 class="mt-2 text-xl font-black leading-8 text-ink">
+                  {category.title}
+                </h2>
+
+                <p class="mt-3 flex-1 text-sm leading-7 text-muted">
+                  {category.description}
+                </p>
+
+                <a
+                  href={`/shop/${category.slug}/`}
+                  class="mt-6 inline-flex min-h-10 items-center text-sm font-black text-brand-700 transition hover:text-brand-900"
+                >
+                  مشاهده دسته‌بندی
+                </a>
+              </Card>
+            ))
+          }
+        </div>
+
+        <div class="mt-10 rounded-panel border border-brand-200 bg-brand-50 p-6 md:p-8">
+          <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p class="text-sm font-bold text-brand-800">
+                قطعه در فهرست نیست؟
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black text-brand-950">
+                Part Number یا تصویر پلاک را ارسال کنید
+              </h2>
+
+              <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-900">
+                برای قطعات خاص، قدیمی یا کمیاب می‌توانید درخواست تأمین ثبت کنید تا مشخصات فنی بررسی شود.
+              </p>
+            </div>
+
+            <Button href="/request/part/">
+              ثبت درخواست قطعه
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
