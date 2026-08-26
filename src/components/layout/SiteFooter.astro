@@ -1,0 +1,255 @@
+---
+import { siteConfig } from "../../config/site";
+import {
+  primaryNavigation,
+  requestNavigation,
+} from "../../config/navigation";
+
+const primaryPhone = siteConfig.contact.primaryPhone.trim();
+const email = siteConfig.contact.email.trim();
+const telegram = siteConfig.contact.telegram.trim();
+const instagram = siteConfig.contact.instagram.trim();
+
+const phoneHref = primaryPhone
+  ? `tel:${primaryPhone.replace(/[^\d+]/g, "")}`
+  : undefined;
+
+const telegramHref = telegram
+  ? telegram.startsWith("http")
+    ? telegram
+    : `https://t.me/${telegram.replace(/^@/, "")}`
+  : undefined;
+
+const instagramHref = instagram
+  ? instagram.startsWith("http")
+    ? instagram
+    : `https://instagram.com/${instagram.replace(/^@/, "")}`
+  : undefined;
+
+const shopLinks = [
+  { label: "موتورها", href: "/shop/motors/" },
+  { label: "درایو و سروو", href: "/shop/drives/" },
+  { label: "کنترلر CNC", href: "/shop/cnc-controllers/" },
+  { label: "PLC و HMI", href: "/shop/plc-hmi/" },
+  { label: "قطعات الکترونیکی", href: "/shop/electronic-parts/" },
+];
+
+const serviceLinks = [
+  { label: "تعمیرات CNC", href: "/services/" },
+  { label: "سوابق تعمیر", href: "/repairs/" },
+  { label: "مرکز آلارم", href: "/alarms/" },
+  { label: "دانشنامه CNC", href: "/blog/" },
+];
+---
+
+<footer class="border-t border-line bg-surface-raised">
+  <div class="site-container py-12 md:py-16">
+    <div class="grid gap-10 md:grid-cols-2 xl:grid-cols-[1.25fr_0.8fr_0.8fr_0.9fr]">
+
+      <div class="max-w-md">
+        <a
+          href="/"
+          class="inline-flex items-center gap-3"
+          aria-label={`صفحه اصلی ${siteConfig.brand.name}`}
+        >
+          <span
+            dir="ltr"
+            class="grid size-11 place-items-center rounded-control bg-brand-900 text-xs font-black tracking-wide text-white"
+          >
+            CNC
+          </span>
+
+          <span>
+            <span
+              dir="ltr"
+              class="block text-lg font-black text-ink"
+            >
+              {siteConfig.brand.name}
+            </span>
+
+            <span class="mt-0.5 block text-xs text-muted">
+              {siteConfig.brand.tagline}
+            </span>
+          </span>
+        </a>
+
+        <p class="mt-5 text-sm leading-7 text-muted">
+          مرکز تخصصی بررسی، تعمیر تجهیزات CNC و تأمین قطعات صنعتی با تمرکز بر اطلاعات فنی دستگاه، کد آلارم و Part Number.
+        </p>
+
+        <div class="mt-5 flex flex-wrap gap-2 text-xs font-bold">
+          <span class="rounded-control border border-line bg-surface px-3 py-2 text-ink-soft">
+            {siteConfig.location.city}
+          </span>
+
+          <span class="rounded-control border border-line bg-surface px-3 py-2 text-ink-soft">
+            {siteConfig.location.serviceArea}
+          </span>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-black text-ink">
+          خدمات
+        </h2>
+
+        <nav
+          aria-label="لینک‌های خدمات"
+          class="mt-4"
+        >
+          <ul class="space-y-3">
+            {
+              serviceLinks.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    class="text-sm text-muted transition hover:text-brand-700"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-black text-ink">
+          فروشگاه
+        </h2>
+
+        <nav
+          aria-label="لینک‌های فروشگاه"
+          class="mt-4"
+        >
+          <ul class="space-y-3">
+            {
+              shopLinks.map((item) => (
+                <li>
+                  <a
+                    href={item.href}
+                    class="text-sm text-muted transition hover:text-brand-700"
+                  >
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+
+      <div>
+        <h2 class="text-sm font-black text-ink">
+          ارتباط و درخواست
+        </h2>
+
+        <ul class="mt-4 space-y-3">
+          {
+            requestNavigation.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class="text-sm font-bold text-brand-700 transition hover:text-brand-900"
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+
+          {
+            phoneHref ? (
+              <li>
+                <a
+                  dir="ltr"
+                  href={phoneHref}
+                  class="inline-block text-sm text-muted transition hover:text-brand-700"
+                >
+                  {primaryPhone}
+                </a>
+              </li>
+            ) : (
+              <li class="text-xs text-muted">
+                شماره تماس در تنظیمات سایت ثبت خواهد شد.
+              </li>
+            )
+          }
+
+          {
+            email && (
+              <li>
+                <a
+                  dir="ltr"
+                  href={`mailto:${email}`}
+                  class="inline-block text-sm text-muted transition hover:text-brand-700"
+                >
+                  {email}
+                </a>
+              </li>
+            )
+          }
+        </ul>
+
+        {
+          (telegramHref || instagramHref) && (
+            <div class="mt-5 flex flex-wrap gap-3">
+              {
+                telegramHref && (
+                  <a
+                    href={telegramHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-sm font-bold text-brand-700 hover:text-brand-900"
+                  >
+                    تلگرام
+                  </a>
+                )
+              }
+
+              {
+                instagramHref && (
+                  <a
+                    href={instagramHref}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-sm font-bold text-brand-700 hover:text-brand-900"
+                  >
+                    اینستاگرام
+                  </a>
+                )
+              }
+            </div>
+          )
+        }
+      </div>
+
+    </div>
+  </div>
+
+  <div class="border-t border-line">
+    <div class="site-container flex flex-col gap-3 py-5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        © {new Date().getFullYear()} {siteConfig.brand.name}
+      </p>
+
+      <nav aria-label="ناوبری تکمیلی">
+        <ul class="flex flex-wrap gap-x-4 gap-y-2">
+          {
+            primaryNavigation.slice(0, 4).map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class="transition hover:text-brand-700"
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+    </div>
+  </div>
+</footer>

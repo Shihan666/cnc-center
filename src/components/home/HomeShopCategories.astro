@@ -1,0 +1,100 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import Card from "../common/Card.astro";
+import SectionHeading from "../common/SectionHeading.astro";
+import { shopCategories } from "../../data/shopCategories";
+---
+
+<section
+  id="shop-categories"
+  class="section-space border-t border-line bg-surface-raised"
+>
+  <div class="site-container">
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <SectionHeading
+        eyebrow="فروشگاه قطعات CNC"
+        title="قطعه را بر اساس نوع تجهیز پیدا کنید"
+        description="دسته‌بندی فروشگاه برای جستجوی سریع‌تر سروو، درایو، کنترلر، انکودر و سایر قطعات CNC طراحی شده است."
+      />
+
+      <div class="shrink-0">
+        <Button
+          href="/shop/"
+          variant="secondary"
+        >
+          ورود به فروشگاه
+        </Button>
+      </div>
+    </div>
+
+    <div class="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {
+        shopCategories.map((category) => (
+          <Card
+            interactive={true}
+            class="group flex h-full flex-col"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <Badge
+                variant="neutral"
+                size="sm"
+                dir="ltr"
+              >
+                {category.code}
+              </Badge>
+
+              <span
+                dir="ltr"
+                class="text-xs font-bold uppercase tracking-wide text-muted"
+              >
+                {category.englishTitle}
+              </span>
+            </div>
+
+            <h3 class="mt-5 text-lg font-black leading-8 text-ink">
+              {category.title}
+            </h3>
+
+            <p class="mt-2 flex-1 text-sm leading-7 text-muted">
+              {category.description}
+            </p>
+
+            <a
+              href={`/shop/${category.slug}/`}
+              class="mt-5 inline-flex min-h-10 items-center font-bold text-brand-700 transition group-hover:text-brand-900"
+              aria-label={`مشاهده ${category.title}`}
+            >
+              مشاهده قطعات
+              <span
+                aria-hidden="true"
+                class="mr-2 transition-transform group-hover:-translate-x-1"
+              >
+                ←
+              </span>
+            </a>
+          </Card>
+        ))
+      }
+    </div>
+
+    <div class="mt-6 grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div class="rounded-card border border-line bg-surface-soft p-5">
+        <p class="font-black text-ink">
+          قطعه موردنظر در دسته‌ها نیست؟
+        </p>
+
+        <p class="mt-1 text-sm leading-7 text-muted">
+          Part Number، برند، تصویر پلاک یا مشخصات قطعه را ارسال کنید تا امکان تأمین بررسی شود.
+        </p>
+      </div>
+
+      <Button
+        href="/request/part/"
+        size="lg"
+      >
+        درخواست تأمین قطعه
+      </Button>
+    </div>
+  </div>
+</section>

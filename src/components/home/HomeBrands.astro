@@ -1,0 +1,121 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import Card from "../common/Card.astro";
+import SectionHeading from "../common/SectionHeading.astro";
+import { featuredBrands } from "../../data/featuredBrands";
+---
+
+<section
+  id="brands"
+  class="section-space border-t border-line bg-surface"
+>
+  <div class="site-container">
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <SectionHeading
+        eyebrow="برندهای صنعتی"
+        title="تعمیر و تأمین قطعات برندهای پرکاربرد CNC"
+        description="برندهای زیر بخشی از حوزه کاری CNC Center هستند و فهرست کامل برندها در بخش اختصاصی برندها توسعه پیدا می‌کند."
+      />
+
+      <div class="shrink-0">
+        <Button
+          href="/brands/"
+          variant="secondary"
+        >
+          مشاهده همه برندها
+        </Button>
+      </div>
+    </div>
+
+    <div class="mt-9 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      {
+        featuredBrands.map((brand) => (
+          <Card
+            interactive={true}
+            class="group flex h-full flex-col"
+          >
+            <div class="flex items-start justify-between gap-4">
+              <Badge
+                variant="brand"
+                size="sm"
+              >
+                برند
+              </Badge>
+
+              <span
+                aria-hidden="true"
+                class="text-line-strong transition group-hover:text-brand-600"
+              >
+                ←
+              </span>
+            </div>
+
+            <p
+              dir="ltr"
+              class="mt-6 text-2xl font-black tracking-tight text-ink"
+            >
+              {brand.name}
+            </p>
+
+            <p class="mt-3 flex-1 text-sm leading-7 text-muted">
+              {brand.focus}
+            </p>
+
+            <a
+              href={`/brands/${brand.slug}/`}
+              class="mt-5 inline-flex min-h-10 items-center text-sm font-bold text-brand-700 transition hover:text-brand-900"
+              aria-label={`مشاهده محصولات و خدمات برند ${brand.name}`}
+            >
+              مشاهده برند
+            </a>
+          </Card>
+        ))
+      }
+    </div>
+
+    <div class="mt-8 grid gap-4 lg:grid-cols-3">
+      <div class="rounded-card border border-line bg-surface-raised p-5">
+        <p class="text-sm font-bold text-brand-700">
+          تطبیق قطعه
+        </p>
+
+        <p class="mt-2 font-black text-ink">
+          بررسی برند و Part Number
+        </p>
+
+        <p class="mt-2 text-sm leading-7 text-muted">
+          قبل از سفارش، شماره فنی و سازگاری قطعه با دستگاه بررسی می‌شود.
+        </p>
+      </div>
+
+      <div class="rounded-card border border-line bg-surface-raised p-5">
+        <p class="text-sm font-bold text-brand-700">
+          بررسی فنی
+        </p>
+
+        <p class="mt-2 font-black text-ink">
+          تعمیر و تست تجهیزات
+        </p>
+
+        <p class="mt-2 text-sm leading-7 text-muted">
+          تجهیزات تعمیرشده پیش از تحویل از نظر عملکرد اولیه بررسی می‌شوند.
+        </p>
+      </div>
+
+      <div class="rounded-card border border-line bg-surface-raised p-5">
+        <p class="text-sm font-bold text-brand-700">
+          خدمات سراسری
+        </p>
+
+        <p class="mt-2 font-black text-ink">
+          پشتیبانی از تهران برای سراسر ایران
+        </p>
+
+        <p class="mt-2 text-sm leading-7 text-muted">
+          دریافت تجهیزات و تأمین قطعات برای مشتریان صنعتی در شهرهای مختلف.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>

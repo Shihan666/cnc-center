@@ -1,0 +1,113 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import Card from "../common/Card.astro";
+import SectionHeading from "../common/SectionHeading.astro";
+import {
+  repairProcessSteps,
+  trustItems,
+} from "../../data/homeTrust";
+---
+
+<section
+  id="why-cnc-center"
+  class="section-space border-t border-line bg-surface-raised"
+>
+  <div class="site-container">
+    <div class="grid gap-12 xl:grid-cols-[0.9fr_1.1fr] xl:gap-16">
+
+      <div>
+        <SectionHeading
+          eyebrow="چرا CNC Center"
+          title="یک مسیر مشخص برای تعمیر، عیب‌یابی و تأمین قطعه"
+          description="هدف این ساختار، کم‌کردن رفت‌وبرگشت‌های غیرضروری و رساندن سریع‌تر اطلاعات فنی به مسیر درست است."
+        />
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+          {
+            trustItems.map((item) => (
+              <Card class="flex gap-4">
+                <Badge
+                  variant="brand"
+                  size="sm"
+                  dir="ltr"
+                  class="shrink-0 self-start"
+                >
+                  {item.number}
+                </Badge>
+
+                <div>
+                  <h3 class="font-black text-ink">
+                    {item.title}
+                  </h3>
+
+                  <p class="mt-2 text-sm leading-7 text-muted">
+                    {item.description}
+                  </p>
+                </div>
+              </Card>
+            ))
+          }
+        </div>
+      </div>
+
+      <div>
+        <SectionHeading
+          eyebrow="فرایند تعمیر"
+          title="از ثبت خرابی تا تحویل تجهیز"
+          description="هر درخواست بسته به نوع دستگاه و خرابی می‌تواند متفاوت باشد، اما مسیر کلی بررسی به شکل زیر انجام می‌شود."
+        />
+
+        <ol class="mt-8 space-y-4">
+          {
+            repairProcessSteps.map((step, index) => (
+              <li class="relative">
+                {
+                  index < repairProcessSteps.length - 1 && (
+                    <span
+                      aria-hidden="true"
+                      class="absolute right-[1.35rem] top-12 h-[calc(100%+0.25rem)] w-px bg-line"
+                    ></span>
+                  )
+                }
+
+                <div class="relative flex gap-4">
+                  <span
+                    dir="ltr"
+                    class="grid size-11 shrink-0 place-items-center rounded-full border border-brand-200 bg-brand-50 text-sm font-black text-brand-800"
+                  >
+                    {step.number}
+                  </span>
+
+                  <div class="min-w-0 flex-1 rounded-card border border-line bg-surface p-5">
+                    <h3 class="font-black text-ink">
+                      {step.title}
+                    </h3>
+
+                    <p class="mt-2 text-sm leading-7 text-muted">
+                      {step.description}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))
+          }
+        </ol>
+
+        <div class="mt-7 flex flex-wrap gap-3">
+          <Button href="/request/repair/">
+            ثبت درخواست تعمیر
+          </Button>
+
+          <Button
+            href="/repairs/"
+            variant="secondary"
+          >
+            مشاهده سوابق تعمیر
+          </Button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

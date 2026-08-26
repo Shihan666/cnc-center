@@ -1,0 +1,62 @@
+---
+import Button from "../common/Button.astro";
+import { siteConfig } from "../../config/site";
+
+const primaryPhone = siteConfig.contact.primaryPhone.trim();
+
+const phoneHref = primaryPhone
+  ? `tel:${primaryPhone.replace(/[^\d+]/g, "")}`
+  : undefined;
+---
+
+<section class="border-t border-brand-800 bg-brand-950 py-14 md:py-18">
+  <div class="site-container">
+    <div class="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+      <div class="max-w-3xl">
+        <p class="text-sm font-bold text-brand-200">
+          شروع بررسی فنی
+        </p>
+
+        <h2 class="mt-3 text-3xl font-black leading-[1.45] tracking-tight text-white md:text-4xl">
+          دستگاه متوقف شده یا قطعه‌ای پیدا نمی‌کنید؟
+        </h2>
+
+        <p class="mt-4 text-base leading-8 text-brand-100">
+          اطلاعات دستگاه، کد آلارم یا Part Number را ارسال کنید تا مسیر مناسب برای بررسی مشخص شود.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3 lg:justify-end">
+        <Button
+          href={phoneHref}
+          size="lg"
+          disabled={!phoneHref}
+          class="bg-white text-brand-950 hover:bg-brand-50 active:bg-brand-100"
+          ariaLabel={
+            phoneHref
+              ? "تماس فوری با CNC Center"
+              : "شماره تماس هنوز ثبت نشده است"
+          }
+        >
+          تماس فوری
+        </Button>
+
+        <Button
+          href="/request/repair/"
+          size="lg"
+          class="border border-brand-700 bg-brand-800 hover:bg-brand-700"
+        >
+          ثبت درخواست تعمیر
+        </Button>
+
+        <Button
+          href="/request/part/"
+          size="lg"
+          class="border border-brand-700 bg-transparent text-white hover:bg-brand-900"
+        >
+          درخواست قطعه
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>

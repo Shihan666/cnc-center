@@ -1,0 +1,133 @@
+---
+import { siteConfig } from "../../config/site";
+
+const primaryPhone = siteConfig.contact.primaryPhone.trim();
+const whatsapp = siteConfig.contact.whatsapp.trim();
+
+const phoneHref = primaryPhone
+  ? `tel:${primaryPhone.replace(/[^\d+]/g, "")}`
+  : undefined;
+
+const whatsappDigits = whatsapp.replace(/\D/g, "");
+
+const whatsappHref = whatsappDigits
+  ? `https://wa.me/${whatsappDigits}`
+  : undefined;
+---
+
+<nav
+  aria-label="دسترسی سریع موبایل"
+  class="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-surface/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-panel backdrop-blur lg:hidden"
+>
+  <div class="mx-auto grid max-w-xl grid-cols-4 gap-1">
+
+    {
+      phoneHref ? (
+        <a
+          href={phoneHref}
+          class="flex min-h-14 flex-col items-center justify-center rounded-control px-1 text-center text-[11px] font-bold leading-4 text-brand-800 transition hover:bg-brand-50"
+          aria-label="تماس فوری"
+        >
+          <span
+            aria-hidden="true"
+            class="text-base leading-none"
+          >
+            ☎
+          </span>
+
+          <span class="mt-1">
+            تماس فوری
+          </span>
+        </a>
+      ) : (
+        <span
+          aria-disabled="true"
+          class="flex min-h-14 cursor-not-allowed flex-col items-center justify-center rounded-control px-1 text-center text-[11px] font-bold leading-4 text-muted opacity-60"
+        >
+          <span
+            aria-hidden="true"
+            class="text-base leading-none"
+          >
+            ☎
+          </span>
+
+          <span class="mt-1">
+            تماس فوری
+          </span>
+        </span>
+      )
+    }
+
+    {
+      whatsappHref ? (
+        <a
+          href={whatsappHref}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex min-h-14 flex-col items-center justify-center rounded-control px-1 text-center text-[11px] font-bold leading-4 text-signal-green transition hover:bg-green-50"
+          aria-label="ارتباط در واتساپ"
+        >
+          <span
+            aria-hidden="true"
+            class="text-base leading-none"
+          >
+            W
+          </span>
+
+          <span class="mt-1">
+            واتساپ
+          </span>
+        </a>
+      ) : (
+        <span
+          aria-disabled="true"
+          class="flex min-h-14 cursor-not-allowed flex-col items-center justify-center rounded-control px-1 text-center text-[11px] font-bold leading-4 text-muted opacity-60"
+        >
+          <span
+            aria-hidden="true"
+            class="text-base font-black leading-none"
+          >
+            W
+          </span>
+
+          <span class="mt-1">
+            واتساپ
+          </span>
+        </span>
+      )
+    }
+
+    <a
+      href="/request/repair/"
+      class="flex min-h-14 flex-col items-center justify-center rounded-control bg-brand-50 px-1 text-center text-[11px] font-bold leading-4 text-brand-900 transition hover:bg-brand-100"
+    >
+      <span
+        aria-hidden="true"
+        class="text-base leading-none"
+      >
+        ⚙
+      </span>
+
+      <span class="mt-1">
+        درخواست تعمیر
+      </span>
+    </a>
+
+    <a
+      href="/request/part/"
+      class="flex min-h-14 flex-col items-center justify-center rounded-control px-1 text-center text-[11px] font-bold leading-4 text-brand-800 transition hover:bg-brand-50"
+    >
+      <span
+        aria-hidden="true"
+        class="text-base leading-none"
+      >
+        #
+      </span>
+
+      <span class="mt-1">
+        درخواست قطعه
+      </span>
+    </a>
+
+  </div>
+</nav>

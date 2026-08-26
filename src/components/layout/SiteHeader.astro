@@ -1,0 +1,170 @@
+---
+import { siteConfig } from "../../config/site";
+import {
+  primaryNavigation,
+  requestNavigation,
+} from "../../config/navigation";
+
+const pathname = Astro.url.pathname;
+
+function isActive(href: string) {
+  if (href === "/") {
+    return pathname === "/";
+  }
+
+  return pathname.startsWith(href);
+}
+---
+
+<header class="relative z-50 border-b border-line bg-surface-raised">
+  <div class="border-b border-line bg-surface-soft">
+    <div
+      class="site-container flex min-h-9 items-center justify-between gap-4 py-1 text-xs text-muted"
+    >
+      <p>
+        مرکز تخصصی تعمیر و تأمین قطعات CNC
+      </p>
+
+      <p class="hidden sm:block">
+        ارائه خدمات در
+        <strong class="font-semibold text-ink-soft">
+          {siteConfig.location.serviceArea}
+        </strong>
+      </p>
+    </div>
+  </div>
+
+  <div class="site-container">
+    <div class="flex min-h-18 items-center justify-between gap-5">
+      <a
+        href="/"
+        class="order-last flex shrink-0 items-center gap-3 rounded-control lg:order-none"
+        aria-label="CNC Center — صفحه اصلی"
+      >
+        <span
+          aria-hidden="true"
+          class="grid size-10 place-items-center rounded-control bg-brand-600 text-sm font-black tracking-tight text-white shadow-sm"
+        >
+          CNC
+        </span>
+
+        <span class="hidden sm:block">
+          <span
+            dir="ltr"
+            class="block text-base font-black leading-none tracking-tight text-ink"
+          >
+            {siteConfig.brand.name}
+          </span>
+
+          <span class="mt-1 block text-xs text-muted">
+            تعمیر و تأمین قطعات CNC
+          </span>
+        </span>
+      </a>
+
+      <nav
+        class="hidden min-w-0 flex-1 items-center justify-center lg:flex"
+        aria-label="منوی اصلی"
+      >
+        <ul class="flex items-center gap-1">
+          {
+            primaryNavigation.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  aria-current={isActive(item.href) ? "page" : undefined}
+                  class:list={[
+                    "inline-flex min-h-10 items-center rounded-control px-3 text-sm font-semibold transition duration-200 ease-standard",
+                    isActive(item.href)
+                      ? "bg-brand-50 text-brand-800"
+                      : "text-ink-soft hover:bg-surface-soft hover:text-ink",
+                  ]}
+                >
+                  {item.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="hidden shrink-0 items-center gap-2 lg:flex">
+        <a
+          href={requestNavigation[1].href}
+          class="inline-flex min-h-10 items-center justify-center rounded-control border border-line-strong bg-white px-4 text-sm font-semibold text-ink transition duration-200 ease-standard hover:bg-surface-soft"
+        >
+          {requestNavigation[1].label}
+        </a>
+
+        <a
+          href={requestNavigation[0].href}
+          class="inline-flex min-h-10 items-center justify-center rounded-control bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition duration-200 ease-standard hover:bg-brand-700"
+        >
+          {requestNavigation[0].label}
+        </a>
+      </div>
+
+      <details class="group relative order-first lg:hidden">
+        <summary
+          class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-control border border-line-strong bg-white px-3 text-sm font-semibold text-ink transition hover:bg-surface-soft [&::-webkit-details-marker]:hidden"
+        >
+          <span
+            aria-hidden="true"
+            class="flex w-5 flex-col gap-1"
+          >
+            <span class="h-0.5 w-5 rounded-full bg-current"></span>
+            <span class="h-0.5 w-5 rounded-full bg-current"></span>
+            <span class="h-0.5 w-5 rounded-full bg-current"></span>
+          </span>
+
+          منو
+        </summary>
+
+        <div
+          class="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-card border border-line bg-white p-2 shadow-panel"
+        >
+          <nav aria-label="منوی موبایل">
+            <ul class="space-y-1">
+              {
+                primaryNavigation.map((item) => (
+                  <li>
+                    <a
+                      href={item.href}
+                      aria-current={isActive(item.href) ? "page" : undefined}
+                      class:list={[
+                        "flex min-h-11 items-center rounded-control px-3 text-sm font-semibold transition",
+                        isActive(item.href)
+                          ? "bg-brand-50 text-brand-800"
+                          : "text-ink-soft hover:bg-surface-soft hover:text-ink",
+                      ]}
+                    >
+                      {item.label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+
+            <div class="my-2 border-t border-line"></div>
+
+            <div class="grid gap-2">
+              <a
+                href={requestNavigation[0].href}
+                class="flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-4 text-sm font-semibold text-white"
+              >
+                {requestNavigation[0].label}
+              </a>
+
+              <a
+                href={requestNavigation[1].href}
+                class="flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-white px-4 text-sm font-semibold text-ink"
+              >
+                {requestNavigation[1].label}
+              </a>
+            </div>
+          </nav>
+        </div>
+      </details>
+    </div>
+  </div>
+</header>

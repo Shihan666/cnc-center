@@ -1,0 +1,107 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import Card from "../common/Card.astro";
+import SectionHeading from "../common/SectionHeading.astro";
+import { serviceCategories } from "../../data/serviceCategories";
+---
+
+<section
+  id="services"
+  class="section-space border-t border-line bg-surface"
+>
+  <div class="site-container">
+    <div class="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+      <SectionHeading
+        eyebrow="خدمات تخصصی CNC"
+        title="عیب‌یابی و تعمیر از کنترل تا مکانیک دستگاه"
+        description="خدمات CNC Center بر اساس بخش معیوب دستگاه دسته‌بندی شده تا مسیر بررسی فنی و ثبت درخواست سریع‌تر باشد."
+      />
+
+      <div class="shrink-0">
+        <Button
+          href="/services/"
+          variant="secondary"
+        >
+          مشاهده همه خدمات
+        </Button>
+      </div>
+    </div>
+
+    <div class="mt-9 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {
+        serviceCategories.map((service) => (
+          <Card
+            interactive={true}
+            class="group flex h-full flex-col"
+          >
+            <div class="flex items-start justify-between gap-5">
+              <Badge
+                variant="brand"
+                size="sm"
+                dir="ltr"
+              >
+                {service.number}
+              </Badge>
+
+              <span
+                aria-hidden="true"
+                class="text-xl font-black text-line-strong transition group-hover:text-brand-600"
+              >
+                ←
+              </span>
+            </div>
+
+            <h3 class="mt-5 text-xl font-black leading-8 text-ink">
+              {service.title}
+            </h3>
+
+            <p class="mt-3 flex-1 text-sm leading-7 text-muted">
+              {service.description}
+            </p>
+
+            <div class="mt-5 flex flex-wrap gap-2">
+              {
+                service.examples.map((example) => (
+                  <Badge
+                    variant="neutral"
+                    size="sm"
+                    dir="auto"
+                  >
+                    {example}
+                  </Badge>
+                ))
+              }
+            </div>
+
+            <a
+              href={`/services/#${service.id}`}
+              class="mt-6 inline-flex min-h-10 items-center text-sm font-bold text-brand-700 transition hover:text-brand-900"
+              aria-label={`مشاهده جزئیات ${service.title}`}
+            >
+              مشاهده جزئیات خدمت
+            </a>
+          </Card>
+        ))
+      }
+    </div>
+
+    <div class="mt-6 rounded-card border border-brand-200 bg-brand-50 p-5 md:flex md:items-center md:justify-between md:gap-6">
+      <div>
+        <p class="font-black text-brand-900">
+          نوع خرابی را دقیق نمی‌دانید؟
+        </p>
+
+        <p class="mt-1 text-sm leading-7 text-brand-800">
+          مدل دستگاه، برند کنترل و کد آلارم را ارسال کنید تا مسیر اولیه بررسی مشخص شود.
+        </p>
+      </div>
+
+      <div class="mt-4 shrink-0 md:mt-0">
+        <Button href="/request/repair/">
+          ثبت درخواست بررسی
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>

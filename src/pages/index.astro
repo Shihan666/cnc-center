@@ -1,46 +1,24 @@
-﻿---
+---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import HeroSection from "../components/home/HeroSection.astro";
+import QuickActions from "../components/home/QuickActions.astro";
+import HomeServices from "../components/home/HomeServices.astro";
+import HomeShopCategories from "../components/home/HomeShopCategories.astro";
+import HomeBrands from "../components/home/HomeBrands.astro";
+import HomeWhyProcess from "../components/home/HomeWhyProcess.astro";
+import HomeNationwide from "../components/home/HomeNationwide.astro";
+import HomeFinalCta from "../components/home/HomeFinalCta.astro";
 ---
 
 <BaseLayout>
-  <main class="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
-    <section class="w-full rounded-3xl border border-slate-200 bg-white p-8 shadow-sm md:p-12">
-      <p class="mb-3 text-sm font-semibold text-blue-600">
-        CNC CENTER
-      </p>
-
-      <h1 class="text-3xl font-bold tracking-tight md:text-5xl">
-        مرکز تخصصی تعمیر و تأمین قطعات CNC
-      </h1>
-
-      <p class="mt-5 max-w-2xl text-base leading-8 text-slate-600 md:text-lg">
-        تعمیر تخصصی دستگاه‌های CNC، تأمین قطعات صنعتی و پشتیبانی فنی در سراسر ایران.
-      </p>
-
-      <div class="mt-8 flex flex-wrap gap-3">
-        <a
-          href="#"
-          class="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
-        >
-          تماس فوری
-        </a>
-
-        <a
-          href="#"
-          class="rounded-xl border border-slate-300 px-5 py-3 font-semibold transition hover:bg-slate-100"
-        >
-          درخواست قطعه
-        </a>
-      </div>
-
-      <div class="mt-10 border-t border-slate-200 pt-6">
-        <p class="text-sm text-slate-500">
-          تست Part Number:
-          <span dir="ltr" class="font-mono font-semibold text-slate-800">
-            A06B-6114-H105
-          </span>
-        </p>
-      </div>
-    </section>
+  <main>
+    <HeroSection />
+    <QuickActions />
+    <HomeServices />
+    <HomeShopCategories />
+    <HomeBrands />
+    <HomeWhyProcess />
+    <HomeNationwide />
+    <HomeFinalCta />
   </main>
 </BaseLayout>

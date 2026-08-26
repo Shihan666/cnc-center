@@ -1,0 +1,136 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import Card from "../common/Card.astro";
+import SectionHeading from "../common/SectionHeading.astro";
+import { siteConfig } from "../../config/site";
+---
+
+<section
+  id="nationwide-service"
+  class="section-space border-t border-line bg-surface"
+>
+  <div class="site-container">
+    <div class="grid gap-8 xl:grid-cols-[1fr_0.9fr] xl:items-center">
+
+      <div>
+        <SectionHeading
+          eyebrow="خدمات سراسری"
+          title={`پشتیبانی CNC از ${siteConfig.location.city} برای ${siteConfig.location.serviceArea}`}
+          description="برای بسیاری از درخواست‌ها می‌توان بررسی اولیه را با اطلاعات دستگاه، تصویر پلاک، کد آلارم یا Part Number آغاز کرد و سپس درباره نحوه ارسال تجهیز یا قطعه هماهنگ شد."
+        />
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-2">
+          <Card>
+            <Badge variant="brand" size="sm">
+              مرحله 01
+            </Badge>
+
+            <h3 class="mt-4 font-black text-ink">
+              ارسال اطلاعات فنی
+            </h3>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              مدل دستگاه، برند کنترل، شرح خرابی، آلارم یا مشخصات قطعه ارسال می‌شود.
+            </p>
+          </Card>
+
+          <Card>
+            <Badge variant="info" size="sm">
+              مرحله 02
+            </Badge>
+
+            <h3 class="mt-4 font-black text-ink">
+              بررسی مسیر مناسب
+            </h3>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              مشخص می‌شود درخواست نیاز به تعمیر، ارسال تجهیز، تأمین قطعه یا بررسی بیشتر دارد.
+            </p>
+          </Card>
+
+          <Card>
+            <Badge variant="success" size="sm">
+              مرحله 03
+            </Badge>
+
+            <h3 class="mt-4 font-black text-ink">
+              هماهنگی ارسال
+            </h3>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              در صورت نیاز، روش ارسال تجهیز یا قطعه متناسب با شهر و شرایط سفارش هماهنگ می‌شود.
+            </p>
+          </Card>
+
+          <Card>
+            <Badge variant="neutral" size="sm">
+              مرحله 04
+            </Badge>
+
+            <h3 class="mt-4 font-black text-ink">
+              پیگیری نتیجه
+            </h3>
+
+            <p class="mt-2 text-sm leading-7 text-muted">
+              نتیجه بررسی، وضعیت تعمیر یا امکان تأمین برای ادامه فرایند اعلام می‌شود.
+            </p>
+          </Card>
+        </div>
+      </div>
+
+      <Card
+        as="section"
+        padding="lg"
+        class="relative overflow-hidden border-brand-200 bg-brand-50"
+      >
+        <div
+          aria-hidden="true"
+          class="absolute -left-16 -top-16 size-44 rounded-full border-[28px] border-brand-100"
+        ></div>
+
+        <div class="relative">
+          <Badge variant="brand">
+            محدوده خدمات
+          </Badge>
+
+          <p class="mt-6 text-sm font-bold text-brand-800">
+            پایگاه اصلی
+          </p>
+
+          <p class="mt-1 text-3xl font-black tracking-tight text-brand-950">
+            {siteConfig.location.city}
+          </p>
+
+          <div class="my-6 border-t border-brand-200"></div>
+
+          <p class="text-sm font-bold text-brand-800">
+            محدوده پاسخ‌گویی
+          </p>
+
+          <p class="mt-1 text-3xl font-black tracking-tight text-brand-950">
+            {siteConfig.location.serviceArea}
+          </p>
+
+          <p class="mt-5 max-w-xl text-sm leading-7 text-brand-900">
+            جزئیات دریافت و ارسال بسته به نوع تجهیز، وزن، شهر مقصد و شرایط فنی در زمان درخواست مشخص می‌شود.
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button href="/request/repair/">
+              درخواست تعمیر
+            </Button>
+
+            <Button
+              href="/request/part/"
+              variant="secondary"
+            >
+              درخواست قطعه
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+    </div>
+  </div>
+</section>

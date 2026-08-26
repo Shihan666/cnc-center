@@ -1,0 +1,142 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import Card from "../common/Card.astro";
+import SectionHeading from "../common/SectionHeading.astro";
+import { siteConfig } from "../../config/site";
+
+const primaryPhone = siteConfig.contact.primaryPhone.trim();
+const whatsapp = siteConfig.contact.whatsapp.trim();
+
+const phoneHref = primaryPhone
+  ? `tel:${primaryPhone.replace(/[^\d+]/g, "")}`
+  : undefined;
+
+const whatsappNumber = whatsapp.replace(/\D/g, "");
+
+const whatsappHref = whatsappNumber
+  ? `https://wa.me/${whatsappNumber}`
+  : undefined;
+---
+
+<section class="section-space bg-surface-raised">
+  <div class="site-container">
+    <SectionHeading
+      eyebrow="دسترسی سریع"
+      title="برای چه کاری به CNC Center مراجعه کرده‌اید؟"
+      description="مسیر مناسب را انتخاب کنید تا درخواست شما سریع‌تر به بخش مربوط برسد."
+    />
+
+    <div class="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
+      <Card interactive={true} class="flex h-full flex-col">
+        <Badge variant="brand" size="sm">
+          اولویت اول
+        </Badge>
+
+        <h3 class="mt-4 text-xl font-black text-ink">
+          تماس فوری
+        </h3>
+
+        <p class="mt-2 flex-1 text-sm leading-7 text-muted">
+          برای توقف دستگاه، خرابی فوری یا هماهنگی مستقیم با بخش فنی.
+        </p>
+
+        <div class="mt-5">
+          <Button
+            href={phoneHref}
+            disabled={!phoneHref}
+            class="w-full"
+            ariaLabel={
+              phoneHref
+                ? "تماس فوری با CNC Center"
+                : "شماره تماس هنوز ثبت نشده است"
+            }
+          >
+            تماس با کارشناس
+          </Button>
+        </div>
+      </Card>
+
+      <Card interactive={true} class="flex h-full flex-col">
+        <Badge variant="danger" size="sm">
+          تعمیرات
+        </Badge>
+
+        <h3 class="mt-4 text-xl font-black text-ink">
+          درخواست تعمیر
+        </h3>
+
+        <p class="mt-2 flex-1 text-sm leading-7 text-muted">
+          ثبت مشخصات دستگاه، نوع خرابی، آلارم و وضعیت فعلی ماشین.
+        </p>
+
+        <div class="mt-5">
+          <Button
+            href="/request/repair/"
+            variant="secondary"
+            class="w-full"
+          >
+            ثبت درخواست تعمیر
+          </Button>
+        </div>
+      </Card>
+
+      <Card interactive={true} class="flex h-full flex-col">
+        <Badge variant="info" size="sm">
+          قطعات
+        </Badge>
+
+        <h3 class="mt-4 text-xl font-black text-ink">
+          درخواست قطعه
+        </h3>
+
+        <p class="mt-2 flex-1 text-sm leading-7 text-muted">
+          Part Number، برند و تصویر پلاک قطعه را ارسال کنید تا بررسی شود.
+        </p>
+
+        <div class="mt-5">
+          <Button
+            href="/request/part/"
+            variant="secondary"
+            class="w-full"
+          >
+            جستجوی قطعه
+          </Button>
+        </div>
+      </Card>
+
+      <Card interactive={true} class="flex h-full flex-col">
+        <Badge variant="success" size="sm">
+          پیام سریع
+        </Badge>
+
+        <h3 class="mt-4 text-xl font-black text-ink">
+          واتساپ
+        </h3>
+
+        <p class="mt-2 flex-1 text-sm leading-7 text-muted">
+          ارسال عکس قطعه، پلاک دستگاه، ویدئو خرابی یا کد آلارم.
+        </p>
+
+        <div class="mt-5">
+          <Button
+            href={whatsappHref}
+            target="_blank"
+            variant="success"
+            disabled={!whatsappHref}
+            class="w-full"
+            ariaLabel={
+              whatsappHref
+                ? "ارسال پیام واتساپ به CNC Center"
+                : "شماره واتساپ هنوز ثبت نشده است"
+            }
+          >
+            ارسال در واتساپ
+          </Button>
+        </div>
+      </Card>
+
+    </div>
+  </div>
+</section>

@@ -1,6 +1,9 @@
 ---
 import "@fontsource-variable/vazirmatn/wght.css";
 import "../styles/global.css";
+import SiteHeader from "../components/layout/SiteHeader.astro";
+import SiteFooter from "../components/layout/SiteFooter.astro";
+import MobileContactBar from "../components/layout/MobileContactBar.astro";
 import { siteConfig } from "../config/site";
 
 interface Props {
@@ -95,7 +98,11 @@ const pageTitle =
     />
   </head>
 
-  <body class="min-h-screen bg-surface text-ink antialiased">
+  <body class="min-h-screen bg-surface pb-20 text-ink antialiased lg:pb-0">
+    <SiteHeader />
+
     <slot />
+    <SiteFooter />
+    <MobileContactBar />
   </body>
 </html>
