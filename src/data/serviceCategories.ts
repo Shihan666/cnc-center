@@ -4,6 +4,9 @@ export interface ServiceCategory {
   title: string;
   description: string;
   examples: string[];
+  intro: string;
+  commonIssues: string[];
+  inspectionPoints: string[];
 }
 
 export const serviceCategories: ServiceCategory[] = [
@@ -13,10 +16,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "تعمیر و عیب‌یابی دستگاه CNC",
     description:
       "بررسی توقف دستگاه، خطاهای عملکردی، مشکلات راه‌اندازی و عیب‌یابی اولیه ماشین.",
-    examples: [
-      "توقف ماشین",
-      "خطای راه‌اندازی",
-      "عیب‌یابی عمومی",
+    examples: ["توقف ماشین", "خطای راه‌اندازی", "عیب‌یابی عمومی"],
+    intro:
+      "وقتی محل دقیق خرابی مشخص نیست، بررسی از وضعیت کلی دستگاه، کنترل، محورها، ورودی و خروجی‌ها و علائم ثبت‌شده آغاز می‌شود.",
+    commonIssues: [
+      "روشن نشدن یا توقف ناگهانی دستگاه",
+      "آماده نشدن ماشین برای Cycle",
+      "عملکرد غیرعادی یکی از بخش‌های دستگاه",
+      "خطاهای متناوب و نامشخص",
+    ],
+    inspectionPoints: [
+      "مدل دستگاه و کنترلر CNC",
+      "وضعیت پاور و تجهیزات اصلی",
+      "کدهای آلارم و پیام‌های کنترل",
+      "شرح اتفاق قبل از ایجاد خرابی",
     ],
   },
   {
@@ -25,10 +38,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "سروو، درایو و سیستم حرکت",
     description:
       "بررسی سروو موتور، سروو درایو، محورهای حرکتی و مشکلات Position یا حرکت نامنظم.",
-    examples: [
-      "Servo Drive",
-      "Servo Motor",
-      "Axis Fault",
+    examples: ["Servo Drive", "Servo Motor", "Axis Fault"],
+    intro:
+      "خطاهای محور می‌توانند از سروو موتور، سروو درایو، انکودر، کابل، تنظیمات یا بخش مکانیکی محور ایجاد شوند.",
+    commonIssues: [
+      "Servo Alarm یا Axis Alarm",
+      "حرکت نامنظم یا لرزش محور",
+      "خطای Position و Following Error",
+      "عدم حرکت یا Trip شدن محور",
+    ],
+    inspectionPoints: [
+      "مدل Servo Drive و Servo Motor",
+      "کد دقیق آلارم",
+      "وضعیت کابل موتور و فیدبک",
+      "شرایط مکانیکی محور",
     ],
   },
   {
@@ -37,10 +60,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "اسپیندل و Spindle Drive",
     description:
       "عیب‌یابی اسپیندل موتور، درایو اسپیندل، دور نامناسب، توقف و خطاهای مرتبط.",
-    examples: [
-      "Spindle Motor",
-      "Spindle Drive",
-      "Speed Fault",
+    examples: ["Spindle Motor", "Spindle Drive", "Speed Fault"],
+    intro:
+      "مشکلات اسپیندل معمولاً با خطای درایو، کاهش یا نوسان دور، توقف زیر بار، صدا یا افزایش دما ظاهر می‌شوند.",
+    commonIssues: [
+      "Spindle Alarm",
+      "نرسیدن اسپیندل به دور فرمان",
+      "توقف اسپیندل زیر بار",
+      "صدای غیرعادی یا افزایش دما",
+    ],
+    inspectionPoints: [
+      "مدل Spindle Drive و Motor",
+      "کد آلارم و وضعیت نمایشگر درایو",
+      "رفتار اسپیندل بدون بار و زیر بار",
+      "وضعیت فن، کابل و اتصالات",
     ],
   },
   {
@@ -49,10 +82,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "کنترلر CNC، PLC و HMI",
     description:
       "بررسی سیستم کنترل، پنل اپراتوری، PLC، ارتباطات و مشکلات مرتبط با کنترل ماشین.",
-    examples: [
-      "CNC Control",
-      "PLC",
-      "HMI",
+    examples: ["CNC Control", "PLC", "HMI"],
+    intro:
+      "کنترلر CNC، PLC و پنل اپراتوری بخش مرکزی فرمان دستگاه هستند و خرابی آن‌ها می‌تواند باعث توقف کامل یا عملکرد ناقص ماشین شود.",
+    commonIssues: [
+      "بوت نشدن کنترلر",
+      "خطای PLC یا I/O",
+      "قطع ارتباط HMI یا پنل",
+      "خطاهای ارتباطی بین ماژول‌ها",
+    ],
+    inspectionPoints: [
+      "برند و مدل کنترلر",
+      "پیغام یا Alarm نمایش‌داده‌شده",
+      "وضعیت LED ماژول‌ها",
+      "تغییرات اخیر در پارامتر یا سخت‌افزار",
     ],
   },
   {
@@ -61,10 +104,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "برد و تجهیزات الکترونیکی",
     description:
       "تعمیر و بررسی بردهای الکترونیکی، پاور، ماژول‌ها و تجهیزات کنترلی دستگاه.",
-    examples: [
-      "Power Supply",
-      "PCB",
-      "Control Module",
+    examples: ["Power Supply", "PCB", "Control Module"],
+    intro:
+      "بردها و ماژول‌های الکترونیکی CNC ممکن است بر اثر فرسودگی، حرارت، آلودگی، مشکل تغذیه یا خرابی قطعات داخلی دچار اختلال شوند.",
+    commonIssues: [
+      "روشن نشدن ماژول",
+      "سوختن فیوز یا بخش پاور",
+      "قطع و وصل شدن عملکرد",
+      "آسیب ظاهری قطعات روی برد",
+    ],
+    inspectionPoints: [
+      "Part Number و مدل برد",
+      "ولتاژ ورودی و خروجی",
+      "نشانه‌های حرارت یا سوختگی",
+      "شرایطی که خرابی در آن رخ داده است",
     ],
   },
   {
@@ -73,10 +126,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "بخش‌های مکانیکی CNC",
     description:
       "بررسی مشکلات مکانیکی مؤثر بر دقت، حرکت و عملکرد دستگاه و اجزای انتقال نیرو.",
-    examples: [
-      "Ball Screw",
-      "Coupling",
-      "Linear Motion",
+    examples: ["Ball Screw", "Coupling", "Linear Motion"],
+    intro:
+      "بخشی از خطاهای حرکت و دقت دستگاه منشأ مکانیکی دارند و باید همراه با وضعیت سروو و کنترل بررسی شوند.",
+    commonIssues: [
+      "Backlash یا لقی محور",
+      "صدای غیرعادی هنگام حرکت",
+      "گیرکردن یا سنگینی محور",
+      "کاهش دقت تکرارپذیری",
+    ],
+    inspectionPoints: [
+      "Ball Screw و اتصالات محور",
+      "کوپلینگ و یاتاقان‌ها",
+      "روانکاری و مسیر حرکت",
+      "مقایسه رفتار مکانیکی با Servo Load",
     ],
   },
   {
@@ -85,10 +148,20 @@ export const serviceCategories: ServiceCategory[] = [
     title: "تشخیص آلارم و خطای CNC",
     description:
       "بررسی کد آلارم، علت‌های محتمل و مسیر اولیه تست برای کنترلر، درایو و تجهیزات.",
-    examples: [
-      "Alarm Code",
-      "Drive Alarm",
-      "Controller Fault",
+    examples: ["Alarm Code", "Drive Alarm", "Controller Fault"],
+    intro:
+      "کد آلارم نقطه شروع مهمی برای عیب‌یابی است، اما برای تشخیص صحیح باید همراه با مدل تجهیز و شرایط ایجاد خطا بررسی شود.",
+    commonIssues: [
+      "Alarm کنترلر CNC",
+      "Alarm سروو یا اسپیندل",
+      "خطای ارتباط یا Feedback",
+      "آلارم‌های تکرارشونده بدون علت مشخص",
+    ],
+    inspectionPoints: [
+      "کد دقیق و متن کامل Alarm",
+      "برند و مدل کنترل یا درایو",
+      "زمان و شرایط ایجاد خطا",
+      "تغییرات انجام‌شده قبل از Alarm",
     ],
   },
 ];

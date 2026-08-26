@@ -1,0 +1,169 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import SectionHeading from "../../components/common/SectionHeading.astro";
+import { siteConfig } from "../../config/site";
+import { serviceCategories } from "../../data/serviceCategories";
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}/services/`;
+
+const pageTitle = "تعمیرات CNC و عیب‌یابی تخصصی";
+
+const pageDescription =
+  "خدمات تخصصی تعمیر و عیب‌یابی دستگاه CNC، سروو و درایو، اسپیندل، کنترلر، PLC، HMI، بردهای الکترونیکی و تشخیص آلارم CNC.";
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  name: "خدمات تعمیر و عیب‌یابی CNC",
+  url: canonical,
+  itemListElement: serviceCategories.map((service, index) => ({
+    "@type": "ListItem",
+    position: index + 1,
+    name: service.title,
+    url: `${siteUrl}/services/${service.id}/`,
+  })),
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-14 md:py-20">
+      <div class="site-container">
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            خدمات تعمیر و عیب‌یابی CNC
+          </Badge>
+
+          <h1 class="mt-5 text-4xl font-black leading-[1.4] tracking-tight text-ink md:text-5xl">
+            تعمیر تخصصی تجهیزات و دستگاه‌های CNC
+          </h1>
+
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+            مسیر بررسی خرابی بر اساس نوع دستگاه، برند کنترل، کد آلارم و تجهیز درگیر مشخص می‌شود. برای شروع، نزدیک‌ترین حوزه به مشکل دستگاه را انتخاب کنید.
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button href="/request/repair/" size="lg">
+              ثبت درخواست تعمیر
+            </Button>
+
+            <Button
+              href="/alarms/"
+              variant="secondary"
+              size="lg"
+            >
+              بررسی آلارم CNC
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <SectionHeading
+          eyebrow="حوزه‌های تخصصی"
+          title="نوع خرابی یا تجهیز را انتخاب کنید"
+          description="اگر محل دقیق خرابی را نمی‌دانید، گزینه عیب‌یابی دستگاه CNC نقطه شروع مناسبی است."
+        />
+
+        <div class="mt-9 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+          {
+            serviceCategories.map((service, index) => (
+              <div
+                id={service.id}
+                class:list={[
+                  "scroll-mt-32",
+                  index === serviceCategories.length - 1 && "xl:col-start-2",
+                ]}
+              >
+                <Card
+                  interactive={true}
+                  class="group flex h-full flex-col"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <Badge variant="brand" size="sm">
+                      {service.number}
+                    </Badge>
+
+                    <span
+                      aria-hidden="true"
+                      class="text-line-strong transition group-hover:text-brand-700"
+                    >
+                      ←
+                    </span>
+                  </div>
+
+                  <h2 class="mt-5 text-xl font-black leading-8 text-ink">
+                    {service.title}
+                  </h2>
+
+                  <p class="mt-3 flex-1 text-sm leading-7 text-muted">
+                    {service.description}
+                  </p>
+
+                  <div class="mt-5 flex flex-wrap gap-2">
+                    {
+                      service.examples.map((example) => (
+                        <span
+                          dir="ltr"
+                          class="rounded-control border border-line bg-surface-soft px-2.5 py-1.5 text-xs font-bold text-ink-soft"
+                        >
+                          {example}
+                        </span>
+                      ))
+                    }
+                  </div>
+
+                  <a
+                    href={`/services/${service.id}/`}
+                    class="mt-6 inline-flex min-h-10 items-center text-sm font-black text-brand-700 transition hover:text-brand-900"
+                  >
+                    مشاهده جزئیات سرویس
+                  </a>
+                </Card>
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="mt-10 rounded-panel border border-brand-200 bg-brand-50 p-6 md:p-8">
+          <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p class="text-sm font-bold text-brand-800">
+                نوع خرابی مشخص نیست؟
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black text-brand-950">
+                اطلاعات دستگاه و علائم خرابی را ارسال کنید
+              </h2>
+
+              <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-900">
+                مدل دستگاه، برند کنترل، کد آلارم یا تصویر پلاک می‌تواند برای تعیین مسیر اولیه عیب‌یابی کمک‌کننده باشد.
+              </p>
+            </div>
+
+            <Button href="/request/repair/">
+              شروع درخواست تعمیر
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

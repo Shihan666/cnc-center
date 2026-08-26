@@ -1,0 +1,302 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import { siteConfig } from "../../config/site";
+import {
+  serviceCategories,
+  type ServiceCategory,
+} from "../../data/serviceCategories";
+
+export function getStaticPaths() {
+  return serviceCategories.map((service) => ({
+    params: {
+      slug: service.id,
+    },
+    props: {
+      service,
+    },
+  }));
+}
+
+interface Props {
+  service: ServiceCategory;
+}
+
+const { service } = Astro.props;
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}/services/${service.id}/`;
+
+const pageTitle = `${service.title} | تعمیر و عیب‌یابی CNC`;
+
+const pageDescription =
+  `${service.description} بررسی تخصصی ${service.title}، علائم خرابی، اطلاعات مورد نیاز و مسیر ثبت درخواست تعمیر CNC.`;
+
+const relatedServices = serviceCategories
+  .filter((item) => item.id !== service.id)
+  .slice(0, 3);
+
+const structuredData = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Service",
+      name: service.title,
+      description: service.description,
+      serviceType: service.title,
+      url: canonical,
+      provider: {
+        "@type": "Organization",
+        name: siteConfig.brand.name,
+        url: siteUrl,
+      },
+      areaServed: {
+        "@type": "Country",
+        name: siteConfig.location.country,
+      },
+    },
+    {
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        {
+          "@type": "ListItem",
+          position: 1,
+          name: "صفحه اصلی",
+          item: `${siteUrl}/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: "تعمیرات CNC",
+          item: `${siteUrl}/services/`,
+        },
+        {
+          "@type": "ListItem",
+          position: 3,
+          name: service.title,
+          item: canonical,
+        },
+      ],
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-12 md:py-18">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-6 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a
+            href="/services/"
+            class="transition hover:text-brand-700"
+          >
+            تعمیرات CNC
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            {service.title}
+          </span>
+        </nav>
+
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            سرویس {service.number}
+          </Badge>
+
+          <h1 class="mt-5 text-3xl font-black leading-[1.45] tracking-tight text-ink md:text-5xl">
+            {service.title}
+          </h1>
+
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+            {service.intro}
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button href="/request/repair/" size="lg">
+              درخواست بررسی {service.title}
+            </Button>
+
+            <Button
+              href="/services/"
+              variant="secondary"
+              size="lg"
+            >
+              مشاهده همه خدمات
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-6 lg:grid-cols-2">
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              علائم و مشکلات رایج
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink">
+              چه مواردی در این حوزه بررسی می‌شوند؟
+            </h2>
+
+            <ul class="mt-6 space-y-3">
+              {
+                service.commonIssues.map((issue) => (
+                  <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                    <span
+                      aria-hidden="true"
+                      class="mt-2 size-2 shrink-0 rounded-full bg-brand-500"
+                    ></span>
+
+                    <span>{issue}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </Card>
+
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              اطلاعات مورد نیاز
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink">
+              برای بررسی اولیه چه چیزی ارسال شود؟
+            </h2>
+
+            <ul class="mt-6 space-y-3">
+              {
+                service.inspectionPoints.map((point) => (
+                  <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                    <span
+                      aria-hidden="true"
+                      class="grid size-6 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-black text-brand-800"
+                    >
+                      ✓
+                    </span>
+
+                    <span>{point}</span>
+                  </li>
+                ))
+              }
+            </ul>
+          </Card>
+        </div>
+
+        <div class="mt-8 grid gap-4 sm:grid-cols-3">
+          {
+            service.examples.map((example) => (
+              <div class="rounded-card border border-line bg-surface-raised p-5">
+                <p class="text-xs font-bold text-muted">
+                  نمونه حوزه مرتبط
+                </p>
+
+                <p
+                  dir="ltr"
+                  class="mt-2 text-lg font-black text-ink"
+                >
+                  {example}
+                </p>
+              </div>
+            ))
+          }
+        </div>
+
+        <div class="mt-10 rounded-panel border border-brand-200 bg-brand-50 p-6 md:p-8">
+          <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p class="text-sm font-bold text-brand-800">
+                بررسی تخصصی {service.title}
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black leading-9 text-brand-950">
+                اطلاعات فنی دستگاه و علائم خرابی را ارسال کنید
+              </h2>
+
+              <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-900">
+                برای شروع، مدل دستگاه، برند کنترل، کد آلارم و در صورت امکان تصویر پلاک تجهیز را ثبت کنید تا مسیر اولیه بررسی مشخص شود.
+              </p>
+            </div>
+
+            <Button href="/request/repair/" size="lg">
+              ثبت درخواست تعمیر
+            </Button>
+          </div>
+        </div>
+
+        <section class="mt-12 border-t border-line pt-10">
+          <div class="flex flex-col gap-2">
+            <p class="text-sm font-bold text-brand-700">
+              سرویس‌های مرتبط
+            </p>
+
+            <h2 class="text-2xl font-black text-ink">
+              بررسی سایر بخش‌های CNC
+            </h2>
+          </div>
+
+          <div class="mt-6 grid gap-4 md:grid-cols-3">
+            {
+              relatedServices.map((related) => (
+                <a
+                  href={`/services/${related.id}/`}
+                  class="group rounded-card border border-line bg-surface-raised p-5 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <Badge variant="brand" size="sm">
+                      {related.number}
+                    </Badge>
+
+                    <span
+                      aria-hidden="true"
+                      class="text-line-strong transition group-hover:text-brand-700"
+                    >
+                      ←
+                    </span>
+                  </div>
+
+                  <h3 class="mt-4 font-black leading-7 text-ink">
+                    {related.title}
+                  </h3>
+
+                  <p class="mt-2 text-sm leading-7 text-muted">
+                    {related.description}
+                  </p>
+                </a>
+              ))
+            }
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
