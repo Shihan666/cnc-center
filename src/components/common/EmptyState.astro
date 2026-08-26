@@ -1,0 +1,67 @@
+---
+interface Props {
+  title: string;
+  description?: string;
+  tone?: "default" | "info" | "warning";
+  compact?: boolean;
+  class?: string;
+}
+
+const {
+  title,
+  description,
+  tone = "default",
+  compact = false,
+  class: className = "",
+} = Astro.props as Props;
+
+const toneClasses: Record<
+  NonNullable<Props["tone"]>,
+  string
+> = {
+  default:
+    "border-line bg-surface-raised",
+  info:
+    "border-accent-200 bg-accent-50/60",
+  warning:
+    "border-amber-200 bg-amber-50/70",
+};
+
+const classes = [
+  "rounded-card border text-center",
+  toneClasses[tone],
+  compact ? "p-5" : "p-8 md:p-10",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class={classes}>
+  <div
+    aria-hidden="true"
+    class="mx-auto flex size-11 items-center justify-center rounded-full border border-line bg-white"
+  >
+    <span class="block size-2.5 rounded-full bg-brand-600"></span>
+  </div>
+
+  <h3 class="mt-4 text-lg font-bold text-ink">
+    {title}
+  </h3>
+
+  {
+    description && (
+      <p class="mx-auto mt-2 max-w-xl text-sm leading-7 text-muted">
+        {description}
+      </p>
+    )
+  }
+
+  {
+    Astro.slots.has("actions") && (
+      <div class="mt-5 flex flex-wrap justify-center gap-3">
+        <slot name="actions" />
+      </div>
+    )
+  }
+</div>

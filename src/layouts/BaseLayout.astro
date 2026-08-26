@@ -1,4 +1,5 @@
-﻿---
+---
+import "@fontsource-variable/vazirmatn/wght.css";
 import "../styles/global.css";
 import { siteConfig } from "../config/site";
 
@@ -32,7 +33,10 @@ const pageTitle =
       content="width=device-width, initial-scale=1"
     />
 
-    <meta name="generator" content={Astro.generator} />
+    <meta
+      name="generator"
+      content={Astro.generator}
+    />
 
     <title>{pageTitle}</title>
 
@@ -41,19 +45,23 @@ const pageTitle =
       content={description}
     />
 
-    {canonical && (
-      <link
-        rel="canonical"
-        href={canonical}
-      />
-    )}
+    {
+      canonical && (
+        <link
+          rel="canonical"
+          href={canonical}
+        />
+      )
+    }
 
-    {noindex && (
-      <meta
-        name="robots"
-        content="noindex,nofollow"
-      />
-    )}
+    {
+      noindex && (
+        <meta
+          name="robots"
+          content="noindex,nofollow"
+        />
+      )
+    }
 
     <meta
       property="og:locale"
@@ -77,7 +85,7 @@ const pageTitle =
 
     <meta
       name="theme-color"
-      content="#ffffff"
+      content="#f6f8fb"
     />
 
     <link
@@ -87,7 +95,7 @@ const pageTitle =
     />
   </head>
 
-  <body class="min-h-screen bg-white text-slate-900 antialiased">
+  <body class="min-h-screen bg-surface text-ink antialiased">
     <slot />
   </body>
 </html>

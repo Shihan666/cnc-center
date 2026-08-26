@@ -1,0 +1,117 @@
+---
+interface Props {
+  id: string;
+  name?: string;
+  label: string;
+  type?: "text" | "email" | "tel" | "search" | "url" | "number";
+  value?: string | number;
+  placeholder?: string;
+  autocomplete?: string;
+  required?: boolean;
+  disabled?: boolean;
+  readonly?: boolean;
+  dir?: "rtl" | "ltr" | "auto";
+  inputmode?:
+    | "text"
+    | "decimal"
+    | "numeric"
+    | "tel"
+    | "search"
+    | "email"
+    | "url";
+  hint?: string;
+  error?: string;
+  class?: string;
+}
+
+const {
+  id,
+  name = id,
+  label,
+  type = "text",
+  value,
+  placeholder,
+  autocomplete,
+  required = false,
+  disabled = false,
+  readonly = false,
+  dir,
+  inputmode,
+  hint,
+  error,
+  class: className = "",
+} = Astro.props;
+
+const descriptionId = error
+  ? `${id}-error`
+  : hint
+    ? `${id}-hint`
+    : undefined;
+
+const inputClasses = [
+  "min-h-11 w-full rounded-control border bg-surface-raised px-3.5 py-2.5 text-ink outline-none transition duration-200 ease-standard",
+  "placeholder:text-slate-400",
+  "disabled:cursor-not-allowed disabled:bg-surface-soft disabled:text-muted disabled:opacity-70",
+  error
+    ? "border-danger focus:border-danger focus:ring-4 focus:ring-red-100"
+    : "border-line-strong focus:border-brand-600 focus:ring-4 focus:ring-brand-100",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class="space-y-2">
+  <label
+    for={id}
+    class="block text-sm font-semibold text-ink"
+  >
+    {label}
+
+    {
+      required && (
+        <span
+          class="mr-1 text-danger"
+          aria-hidden="true"
+        >
+          *
+        </span>
+      )
+    }
+  </label>
+
+  <input
+    id={id}
+    name={name}
+    type={type}
+    value={value}
+    placeholder={placeholder}
+    autocomplete={autocomplete}
+    required={required}
+    disabled={disabled}
+    readonly={readonly}
+    dir={dir}
+    inputmode={inputmode}
+    class={inputClasses}
+    aria-invalid={error ? "true" : undefined}
+    aria-describedby={descriptionId}
+  />
+
+  {
+    error ? (
+      <p
+        id={`${id}-error`}
+        class="text-sm font-medium text-danger"
+      >
+        {error}
+      </p>
+    ) : hint ? (
+      <p
+        id={`${id}-hint`}
+        class="text-sm text-muted"
+      >
+        {hint}
+      </p>
+    ) : null
+  }
+</div>

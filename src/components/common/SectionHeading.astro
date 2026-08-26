@@ -1,0 +1,58 @@
+---
+interface Props {
+  eyebrow?: string;
+  title: string;
+  description?: string;
+  align?: "start" | "center";
+  level?: 1 | 2 | 3;
+  class?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  description,
+  align = "start",
+  level = 2,
+  class: className = "",
+} = Astro.props as Props;
+
+const HeadingTag =
+  level === 1
+    ? "h1"
+    : level === 3
+      ? "h3"
+      : "h2";
+
+const wrapperClasses = [
+  "space-y-3",
+  align === "center"
+    ? "mx-auto max-w-3xl text-center"
+    : "max-w-3xl",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<header class={wrapperClasses}>
+  {
+    eyebrow && (
+      <p class="text-sm font-bold text-brand-600">
+        {eyebrow}
+      </p>
+    )
+  }
+
+  <HeadingTag class="text-3xl font-bold tracking-tight text-ink md:text-4xl">
+    {title}
+  </HeadingTag>
+
+  {
+    description && (
+      <p class="text-base leading-8 text-muted md:text-lg">
+        {description}
+      </p>
+    )
+  }
+</header>

@@ -1,0 +1,47 @@
+---
+interface Props {
+  as?: "article" | "section" | "div";
+  tone?: "default" | "soft";
+  padding?: "none" | "sm" | "md" | "lg";
+  interactive?: boolean;
+  class?: string;
+}
+
+const {
+  as: element = "article",
+  tone = "default",
+  padding = "md",
+  interactive = false,
+  class: className = "",
+} = Astro.props as Props;
+
+const Element = element;
+
+const toneClasses: Record<NonNullable<Props["tone"]>, string> = {
+  default: "border-line bg-surface-raised",
+  soft: "border-line bg-surface-soft",
+};
+
+const paddingClasses: Record<NonNullable<Props["padding"]>, string> = {
+  none: "",
+  sm: "p-4",
+  md: "p-5 md:p-6",
+  lg: "p-6 md:p-8",
+};
+
+const classes = [
+  "rounded-card border shadow-card",
+  toneClasses[tone],
+  paddingClasses[padding],
+  interactive
+    ? "transition duration-200 ease-standard hover:-translate-y-0.5 hover:border-line-strong hover:shadow-panel motion-reduce:transform-none"
+    : "",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<Element class={classes}>
+  <slot />
+</Element>

@@ -1,0 +1,87 @@
+---
+interface Props {
+  href?: string;
+  type?: "button" | "submit" | "reset";
+  variant?: "primary" | "secondary" | "success" | "danger" | "ghost";
+  size?: "sm" | "md" | "lg";
+  disabled?: boolean;
+  ariaLabel?: string;
+  target?: "_blank" | "_self" | "_parent" | "_top";
+  rel?: string;
+  class?: string;
+}
+
+const {
+  href,
+  type = "button",
+  variant = "primary",
+  size = "md",
+  disabled = false,
+  ariaLabel,
+  target,
+  rel,
+  class: className = "",
+} = Astro.props;
+
+const baseClasses =
+  "inline-flex items-center justify-center gap-2 rounded-control font-semibold leading-none transition duration-200 ease-standard focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50";
+
+const variantClasses = {
+  primary:
+    "bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800",
+  secondary:
+    "border border-line-strong bg-surface-raised text-ink hover:bg-surface-soft active:bg-slate-200",
+  success:
+    "bg-signal text-white shadow-sm hover:brightness-95 active:brightness-90",
+  danger:
+    "bg-danger text-white shadow-sm hover:brightness-95 active:brightness-90",
+  ghost:
+    "bg-transparent text-brand-700 hover:bg-brand-50 active:bg-brand-100",
+} as const;
+
+const sizeClasses = {
+  sm: "min-h-9 px-3.5 py-2 text-sm",
+  md: "min-h-11 px-5 py-3 text-sm",
+  lg: "min-h-12 px-6 py-3.5 text-base",
+} as const;
+
+const classes = [
+  baseClasses,
+  variantClasses[variant],
+  sizeClasses[size],
+  disabled && href ? "pointer-events-none opacity-50" : "",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+
+const safeRel =
+  target === "_blank"
+    ? rel ?? "noopener noreferrer"
+    : rel;
+---
+
+{
+  href ? (
+    <a
+      href={href}
+      class={classes}
+      target={target}
+      rel={safeRel}
+      aria-label={ariaLabel}
+      aria-disabled={disabled ? "true" : undefined}
+      tabindex={disabled ? -1 : undefined}
+    >
+      <slot />
+    </a>
+  ) : (
+    <button
+      type={type}
+      class={classes}
+      disabled={disabled}
+      aria-label={ariaLabel}
+    >
+      <slot />
+    </button>
+  )
+}

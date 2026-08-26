@@ -1,0 +1,63 @@
+---
+interface Props {
+  variant?:
+    | "neutral"
+    | "brand"
+    | "info"
+    | "success"
+    | "warning"
+    | "danger";
+  size?: "sm" | "md";
+  dir?: "rtl" | "ltr" | "auto";
+  class?: string;
+}
+
+const {
+  variant = "neutral",
+  size = "md",
+  dir,
+  class: className = "",
+} = Astro.props as Props;
+
+const variantClasses: Record<
+  NonNullable<Props["variant"]>,
+  string
+> = {
+  neutral:
+    "border-line bg-surface-soft text-ink-soft",
+  brand:
+    "border-brand-200 bg-brand-50 text-brand-800",
+  info:
+    "border-accent-200 bg-accent-50 text-accent-700",
+  success:
+    "border-green-200 bg-green-50 text-green-800",
+  warning:
+    "border-amber-200 bg-amber-50 text-amber-800",
+  danger:
+    "border-red-200 bg-red-50 text-red-800",
+};
+
+const sizeClasses: Record<
+  NonNullable<Props["size"]>,
+  string
+> = {
+  sm: "min-h-6 px-2 py-0.5 text-xs",
+  md: "min-h-7 px-2.5 py-1 text-sm",
+};
+
+const classes = [
+  "inline-flex items-center justify-center rounded-full border font-semibold leading-none",
+  variantClasses[variant],
+  sizeClasses[size],
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<span
+  class={classes}
+  dir={dir}
+>
+  <slot />
+</span>
