@@ -1,0 +1,44 @@
+﻿---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+
+<BaseLayout
+  title="صفحه پیدا نشد"
+  description="صفحه موردنظر در CNC Center پیدا نشد."
+  noindex={true}
+>
+  <main class="mx-auto flex min-h-screen max-w-6xl items-center justify-center px-6 py-16">
+    <section class="w-full max-w-2xl text-center">
+      <p
+        dir="ltr"
+        class="text-sm font-bold tracking-[0.25em] text-blue-600"
+      >
+        ERROR 404
+      </p>
+
+      <h1 class="mt-4 text-4xl font-bold tracking-tight text-slate-950 md:text-5xl">
+        صفحه موردنظر پیدا نشد
+      </h1>
+
+      <p class="mx-auto mt-5 max-w-xl leading-8 text-slate-600">
+        ممکن است آدرس صفحه تغییر کرده باشد یا صفحه موردنظر دیگر در دسترس نباشد.
+      </p>
+
+      <div class="mt-8 flex flex-wrap justify-center gap-3">
+        <a
+          href="/"
+          class="rounded-xl bg-blue-600 px-5 py-3 font-semibold text-white transition hover:bg-blue-700"
+        >
+          بازگشت به صفحه اصلی
+        </a>
+
+        <a
+          href="/shop/"
+          class="rounded-xl border border-slate-300 px-5 py-3 font-semibold text-slate-800 transition hover:bg-slate-100"
+        >
+          مشاهده قطعات
+        </a>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

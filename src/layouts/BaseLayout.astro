@@ -1,0 +1,93 @@
+﻿---
+import "../styles/global.css";
+import { siteConfig } from "../config/site";
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  noindex?: boolean;
+}
+
+const {
+  title = siteConfig.seo.defaultTitle,
+  description = siteConfig.seo.defaultDescription,
+  canonical,
+  noindex = false,
+} = Astro.props;
+
+const pageTitle =
+  title === siteConfig.seo.defaultTitle
+    ? title
+    : `${title} | ${siteConfig.brand.name}`;
+---
+
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1"
+    />
+
+    <meta name="generator" content={Astro.generator} />
+
+    <title>{pageTitle}</title>
+
+    <meta
+      name="description"
+      content={description}
+    />
+
+    {canonical && (
+      <link
+        rel="canonical"
+        href={canonical}
+      />
+    )}
+
+    {noindex && (
+      <meta
+        name="robots"
+        content="noindex,nofollow"
+      />
+    )}
+
+    <meta
+      property="og:locale"
+      content={siteConfig.seo.locale}
+    />
+
+    <meta
+      property="og:type"
+      content="website"
+    />
+
+    <meta
+      property="og:title"
+      content={pageTitle}
+    />
+
+    <meta
+      property="og:description"
+      content={description}
+    />
+
+    <meta
+      name="theme-color"
+      content="#ffffff"
+    />
+
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="/favicon.svg"
+    />
+  </head>
+
+  <body class="min-h-screen bg-white text-slate-900 antialiased">
+    <slot />
+  </body>
+</html>
