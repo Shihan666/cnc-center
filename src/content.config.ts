@@ -364,50 +364,98 @@ const articles = defineCollection({
 |--------------------------------------------------------------------------
 */
 
+const repairStatusSchema = z.enum([
+  "draft",
+  "active",
+  "archived",
+]);
+
+const repairServiceSchema = z.enum([
+  "machine",
+  "motion",
+  "spindle",
+  "control",
+  "electronics",
+  "mechanical",
+  "alarm-diagnosis",
+]);
+
 const repairs = defineCollection({
   loader: glob({
     base: "./src/content/repairs",
     pattern: "**/*.{md,mdx}",
   }),
 
-  schema: z.object({
-    title: z.string(),
-    excerpt: z.string(),
+  schema: z
+    .object({
+      title: z.string(),
+      excerpt: z.string(),
 
-    machine: z.string(),
-    manufacturer: z.string().optional(),
-    controller: z.string().optional(),
+      status: repairStatusSchema.default("draft"),
 
-    component: z.string(),
+      machine: z.string(),
+      manufacturer: z.string().optional(),
+      machineModel: z.string().optional(),
 
-    alarmCode: z.string().optional(),
+      controller: z.string().optional(),
 
-    diagnosis: z.string(),
-    repairOperation: z.string(),
-    result: z.string(),
+      brand: z.string().optional(),
+      component: z.string(),
+      partNumber: z.string().optional(),
 
-    beforeImages: z
-      .array(z.string())
-      .default([]),
+      alarmCode: z.string().optional(),
 
-    afterImages: z
-      .array(z.string())
-      .default([]),
+      problemSymptoms: z
+        .array(z.string())
+        .default([]),
 
-    relatedProducts: z
-      .array(z.string())
-      .default([]),
+      diagnosis: z.string(),
+      repairOperation: z.string(),
+      result: z.string(),
 
-    relatedServices: z
-      .array(z.string())
-      .default([]),
+      beforeImages: z
+        .array(z.string())
+        .default([]),
 
-    publishedAt: z.coerce.date(),
+      afterImages: z
+        .array(z.string())
+        .default([]),
 
-    featured: z.boolean().default(false),
+      relatedBrands: z
+        .array(z.string())
+        .default([]),
 
-    seo: seoSchema.optional(),
-  }),
+      relatedProducts: z
+        .array(z.string())
+        .default([]),
+
+      relatedServices: z
+        .array(repairServiceSchema)
+        .default([]),
+
+      completedAt: z.coerce.date().optional(),
+      publishedAt: z.coerce.date().optional(),
+
+      featured: z.boolean().default(false),
+
+      order: z
+        .number()
+        .int()
+        .nonnegative()
+        .default(0),
+
+      seo: seoSchema.optional(),
+    })
+    .superRefine((repair, ctx) => {
+      if (repair.status === "active" && !repair.publishedAt) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["publishedAt"],
+          message:
+            "Active repair records require a publishedAt date.",
+        });
+      }
+    }),
 });
 
 /*
