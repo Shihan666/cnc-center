@@ -1,5 +1,8 @@
 ---
+import { getCollection } from "astro:content";
+
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import KnowledgeBacklinks from "../../components/knowledge/KnowledgeBacklinks.astro";
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
 import Card from "../../components/common/Card.astro";
@@ -8,6 +11,11 @@ import {
   serviceCategories,
   type ServiceCategory,
 } from "../../data/serviceCategories";
+
+import {
+  getRelatedActiveArticlesForEntity,
+  getRelatedActiveFaqsForEntity,
+} from "../../lib/knowledgeGraph";
 
 export function getStaticPaths() {
   return serviceCategories.map((service) => ({
@@ -25,6 +33,28 @@ interface Props {
 }
 
 const { service } = Astro.props;
+
+const [
+  allKnowledgeArticles,
+  allKnowledgeFaqs,
+] = await Promise.all([
+  getCollection("articles"),
+  getCollection("faqs"),
+]);
+
+const relatedKnowledgeArticles =
+  getRelatedActiveArticlesForEntity(
+    allKnowledgeArticles,
+    "service",
+    service.id,
+  );
+
+const relatedKnowledgeFaqs =
+  getRelatedActiveFaqsForEntity(
+    allKnowledgeFaqs,
+    "service",
+    service.id,
+  );
 
 const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
 const canonical = `${siteUrl}/services/${service.id}/`;
@@ -298,5 +328,10 @@ const structuredData = {
         </section>
       </div>
     </section>
+    <KnowledgeBacklinks
+      articles={relatedKnowledgeArticles}
+      faqs={relatedKnowledgeFaqs}
+    />
+
   </main>
 </BaseLayout>

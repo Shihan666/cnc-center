@@ -1,0 +1,137 @@
+---
+import {
+  getArticleHref,
+  type ArticleEntry,
+} from "../../lib/articles";
+
+import {
+  getFaqHref,
+  type FaqEntry,
+} from "../../lib/faqs";
+
+interface Props {
+  articles: ArticleEntry[];
+  faqs: FaqEntry[];
+  heading?: string;
+}
+
+const {
+  articles,
+  faqs,
+  heading = "دانش فنی مرتبط",
+} = Astro.props;
+
+const hasArticles =
+  articles.length > 0;
+
+const hasFaqs =
+  faqs.length > 0;
+
+const hasContent =
+  hasArticles || hasFaqs;
+---
+
+{
+  hasContent && (
+    <section
+      class="border-t border-line bg-surface-raised py-10 md:py-14"
+      data-knowledge-backlinks
+    >
+      <div class="site-container">
+        <div class="max-w-3xl">
+          <p
+            class="text-sm font-bold text-brand-700"
+          >
+            دانشنامه مرتبط
+          </p>
+
+          <h2
+            class="mt-2 text-2xl font-black text-ink md:text-3xl"
+          >
+            {heading}
+          </h2>
+
+          <p
+            class="mt-3 text-sm leading-8 text-muted"
+          >
+            راهنماهای فنی و پاسخ‌های مرتبط با همین موضوع
+            برای ادامه بررسی در دسترس هستند.
+          </p>
+        </div>
+
+        <div
+          class:list={[
+            "mt-7 grid gap-6",
+            hasArticles && hasFaqs
+              ? "lg:grid-cols-2"
+              : "grid-cols-1",
+          ]}
+        >
+          {
+            hasArticles && (
+              <div
+                class="rounded-panel border border-line bg-surface p-5 md:p-6"
+                data-knowledge-backlink-group="articles"
+              >
+                <p
+                  class="text-sm font-black text-brand-700"
+                >
+                  مقاله‌های مرتبط
+                </p>
+
+                <ul class="mt-4 space-y-3">
+                  {
+                    articles.map(
+                      (article) => (
+                        <li>
+                          <a
+                            href={getArticleHref(article)}
+                            class="block rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm font-black leading-7 text-ink transition hover:border-brand-300 hover:text-brand-700"
+                          >
+                            {article.data.title}
+                          </a>
+                        </li>
+                      ),
+                    )
+                  }
+                </ul>
+              </div>
+            )
+          }
+
+          {
+            hasFaqs && (
+              <div
+                class="rounded-panel border border-line bg-surface p-5 md:p-6"
+                data-knowledge-backlink-group="faqs"
+              >
+                <p
+                  class="text-sm font-black text-brand-700"
+                >
+                  سوالات متداول مرتبط
+                </p>
+
+                <ul class="mt-4 space-y-3">
+                  {
+                    faqs.map(
+                      (faq) => (
+                        <li>
+                          <a
+                            href={getFaqHref(faq)}
+                            class="block rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm font-black leading-7 text-ink transition hover:border-brand-300 hover:text-brand-700"
+                          >
+                            {faq.data.question}
+                          </a>
+                        </li>
+                      ),
+                    )
+                  }
+                </ul>
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+  )
+}

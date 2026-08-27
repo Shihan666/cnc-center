@@ -5,6 +5,7 @@ import {
 } from "astro:content";
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import KnowledgeBacklinks from "../../components/knowledge/KnowledgeBacklinks.astro";
 
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
@@ -29,6 +30,11 @@ import {
   type RepairEntry,
 } from "../../lib/repairs";
 
+import {
+  getRelatedActiveArticlesForEntity,
+  getRelatedActiveFaqsForEntity,
+} from "../../lib/knowledgeGraph";
+
 export async function getStaticPaths() {
   const allRepairs = await getCollection("repairs");
   const repairs = getActiveRepairs(allRepairs);
@@ -51,6 +57,28 @@ interface Props {
 const { repair } = Astro.props;
 
 const { Content } = await render(repair);
+
+const [
+  allKnowledgeArticles,
+  allKnowledgeFaqs,
+] = await Promise.all([
+  getCollection("articles"),
+  getCollection("faqs"),
+]);
+
+const relatedKnowledgeArticles =
+  getRelatedActiveArticlesForEntity(
+    allKnowledgeArticles,
+    "repair",
+    repair.id,
+  );
+
+const relatedKnowledgeFaqs =
+  getRelatedActiveFaqsForEntity(
+    allKnowledgeFaqs,
+    "repair",
+    repair.id,
+  );
 
 const allBrands = await getCollection("brands");
 const activeBrands = getActiveBrands(allBrands);
@@ -738,6 +766,11 @@ const breadcrumbStructuredData = {
         </section>
       )
     }
+
+    <KnowledgeBacklinks
+      articles={relatedKnowledgeArticles}
+      faqs={relatedKnowledgeFaqs}
+    />
 
     <section class="border-t border-line bg-brand-950 py-10 text-white md:py-12">
       <div class="site-container">

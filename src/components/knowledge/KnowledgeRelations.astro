@@ -1,0 +1,146 @@
+---
+import {
+  getAlarmHref,
+} from "../../lib/alarms";
+
+import {
+  getBrandHref,
+} from "../../lib/brands";
+
+import {
+  getProductHref,
+} from "../../lib/products";
+
+import {
+  getRepairHref,
+} from "../../lib/repairs";
+
+import type {
+  ResolvedKnowledgeRelations,
+} from "../../lib/knowledgeGraph";
+
+interface Props {
+  relations: ResolvedKnowledgeRelations;
+  heading?: string;
+  compact?: boolean;
+}
+
+const {
+  relations,
+  heading = "ارتباط‌های مرتبط",
+  compact = false,
+} = Astro.props;
+
+const groups = [
+  {
+    key: "services",
+    label: "خدمات مرتبط",
+    items: relations.services.map(
+      (service) => ({
+        href: `/services/${service.id}/`,
+        label: service.title,
+      }),
+    ),
+  },
+  {
+    key: "brands",
+    label: "برندهای مرتبط",
+    items: relations.brands.map(
+      (brand) => ({
+        href: getBrandHref(brand),
+        label: brand.data.name,
+      }),
+    ),
+  },
+  {
+    key: "products",
+    label: "قطعات و محصولات مرتبط",
+    items: relations.products.map(
+      (product) => ({
+        href: getProductHref(product),
+        label: product.data.name,
+      }),
+    ),
+  },
+  {
+    key: "alarms",
+    label: "آلارم‌های مرتبط",
+    items: relations.alarms.map(
+      (alarm) => ({
+        href: getAlarmHref(alarm),
+        label: alarm.data.title,
+      }),
+    ),
+  },
+  {
+    key: "repairs",
+    label: "سوابق تعمیر مرتبط",
+    items: relations.repairs.map(
+      (repair) => ({
+        href: getRepairHref(repair),
+        label: repair.data.title,
+      }),
+    ),
+  },
+].filter(
+  (group) => group.items.length > 0,
+);
+---
+
+{
+  groups.length > 0 && (
+    <section
+      class:list={[
+        "rounded-2xl border border-line bg-surface-raised",
+        compact ? "mt-5 p-4" : "p-5",
+      ]}
+      data-knowledge-relations
+    >
+      <p
+        class="text-sm font-black text-brand-700"
+      >
+        {heading}
+      </p>
+
+      <div
+        class:list={[
+          "mt-4 grid gap-4",
+          compact
+            ? "sm:grid-cols-2"
+            : "grid-cols-1",
+        ]}
+      >
+        {
+          groups.map((group) => (
+            <div
+              data-knowledge-group={group.key}
+            >
+              <p
+                class="text-xs font-bold text-muted"
+              >
+                {group.label}
+              </p>
+
+              <ul class="mt-2 space-y-2">
+                {
+                  group.items.map(
+                    (item) => (
+                      <li>
+                        <a
+                          href={item.href}
+                          class="block rounded-xl border border-line bg-surface px-4 py-3 text-sm font-black leading-6 text-ink transition hover:border-brand-300 hover:text-brand-700"
+                        >
+                          {item.label}
+                        </a>
+                      </li>
+                    ),
+                  )
+                }
+              </ul>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+  )
+}

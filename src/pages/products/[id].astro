@@ -5,6 +5,7 @@ import {
 } from "astro:content";
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import KnowledgeBacklinks from "../../components/knowledge/KnowledgeBacklinks.astro";
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
 import Card from "../../components/common/Card.astro";
@@ -22,6 +23,11 @@ import {
   getRelatedServiceTitle,
   type ProductEntry,
 } from "../../lib/products";
+
+import {
+  getRelatedActiveArticlesForEntity,
+  getRelatedActiveFaqsForEntity,
+} from "../../lib/knowledgeGraph";
 
 export async function getStaticPaths() {
   const allProducts = await getCollection("products");
@@ -45,6 +51,28 @@ interface Props {
 const { product } = Astro.props;
 
 const { Content } = await render(product);
+
+const [
+  allKnowledgeArticles,
+  allKnowledgeFaqs,
+] = await Promise.all([
+  getCollection("articles"),
+  getCollection("faqs"),
+]);
+
+const relatedKnowledgeArticles =
+  getRelatedActiveArticlesForEntity(
+    allKnowledgeArticles,
+    "product",
+    product.id,
+  );
+
+const relatedKnowledgeFaqs =
+  getRelatedActiveFaqsForEntity(
+    allKnowledgeFaqs,
+    "product",
+    product.id,
+  );
 
 const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
 const canonical =
@@ -576,5 +604,10 @@ const breadcrumbStructuredData = {
         </div>
       </div>
     </section>
+    <KnowledgeBacklinks
+      articles={relatedKnowledgeArticles}
+      faqs={relatedKnowledgeFaqs}
+    />
+
   </main>
 </BaseLayout>

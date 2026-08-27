@@ -5,6 +5,7 @@ import {
 } from "astro:content";
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import KnowledgeBacklinks from "../../components/knowledge/KnowledgeBacklinks.astro";
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
 import ProductCard from "../../components/product/ProductCard.astro";
@@ -21,6 +22,11 @@ import {
 import {
   getActiveProducts,
 } from "../../lib/products";
+
+import {
+  getRelatedActiveArticlesForEntity,
+  getRelatedActiveFaqsForEntity,
+} from "../../lib/knowledgeGraph";
 
 export async function getStaticPaths() {
   const allBrands = await getCollection("brands");
@@ -43,6 +49,28 @@ interface Props {
 const { brand } = Astro.props;
 
 const { Content } = await render(brand);
+
+const [
+  allKnowledgeArticles,
+  allKnowledgeFaqs,
+] = await Promise.all([
+  getCollection("articles"),
+  getCollection("faqs"),
+]);
+
+const relatedKnowledgeArticles =
+  getRelatedActiveArticlesForEntity(
+    allKnowledgeArticles,
+    "brand",
+    brand.id,
+  );
+
+const relatedKnowledgeFaqs =
+  getRelatedActiveFaqsForEntity(
+    allKnowledgeFaqs,
+    "brand",
+    brand.id,
+  );
 
 const allProducts = await getCollection("products");
 const activeProducts = getActiveProducts(allProducts);
@@ -512,6 +540,11 @@ const productListStructuredData =
         </section>
       )
     }
+
+    <KnowledgeBacklinks
+      articles={relatedKnowledgeArticles}
+      faqs={relatedKnowledgeFaqs}
+    />
 
     <section class="border-t border-line bg-brand-950 py-10 text-white md:py-12">
       <div class="site-container">

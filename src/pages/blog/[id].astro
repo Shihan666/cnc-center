@@ -5,10 +5,9 @@ import {
 } from "astro:content";
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import KnowledgeRelations from "../../components/knowledge/KnowledgeRelations.astro";
 
 import { siteConfig } from "../../config/site";
-
-import { serviceCategories } from "../../data/serviceCategories";
 
 import {
   formatArticleDate,
@@ -16,6 +15,10 @@ import {
   getArticleCategoryLabel,
   type ArticleEntry,
 } from "../../lib/articles";
+
+import {
+  resolveArticleRelations,
+} from "../../lib/knowledgeGraph";
 
 export async function getStaticPaths() {
   const allArticles =
@@ -78,20 +81,28 @@ const updatedAt =
     article.data.updatedAt,
   );
 
-const relatedServices =
-  article.data.relatedServices
-    .map((serviceId) =>
-      serviceCategories.find(
-        (service) =>
-          service.id === serviceId,
-      ),
-    )
-    .filter(
-      (
-        service,
-      ): service is (typeof serviceCategories)[number] =>
-        Boolean(service),
-    );
+const [
+  allProducts,
+  allBrands,
+  allAlarms,
+  allRepairs,
+] = await Promise.all([
+  getCollection("products"),
+  getCollection("brands"),
+  getCollection("alarms"),
+  getCollection("repairs"),
+]);
+
+const articleRelations =
+  resolveArticleRelations(
+    article,
+    {
+      products: allProducts,
+      brands: allBrands,
+      alarms: allAlarms,
+      repairs: allRepairs,
+    },
+  );
 
 const structuredImage =
   article.data.image
@@ -357,38 +368,10 @@ const breadcrumbStructuredData = {
         </article>
 
         <aside class="space-y-5">
-          {
-            relatedServices.length > 0 && (
-              <section
-                class="rounded-2xl border border-line bg-surface-raised p-5"
-              >
-                <p
-                  class="text-sm font-black text-brand-700"
-                >
-                  خدمات مرتبط
-                </p>
-
-                <ul
-                  class="mt-4 space-y-2"
-                >
-                  {
-                    relatedServices.map(
-                      (service) => (
-                        <li>
-                          <a
-                            href={`/services/${service.id}/`}
-                            class="block rounded-xl border border-line bg-surface px-4 py-3 text-sm font-black text-ink transition hover:border-brand-300 hover:text-brand-700"
-                          >
-                            {service.title}
-                          </a>
-                        </li>
-                      ),
-                    )
-                  }
-                </ul>
-              </section>
-            )
-          }
+          <KnowledgeRelations
+            relations={articleRelations}
+            heading="منابع و مسیرهای مرتبط"
+          />
 
           <section
             class="rounded-2xl border border-line bg-surface-raised p-5"

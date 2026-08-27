@@ -106,6 +106,12 @@ export function getFaqsByCategory(
   );
 }
 
+export function getFaqHref(
+  faq: FaqEntry,
+): string {
+  return `/faq/#faq-${faq.id}`;
+}
+
 export function getFaqCategoryLabel(
   faq: FaqEntry,
 ): string {

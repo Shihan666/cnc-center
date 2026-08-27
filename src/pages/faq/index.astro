@@ -4,6 +4,7 @@ import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
+import KnowledgeRelations from "../../components/knowledge/KnowledgeRelations.astro";
 
 import { siteConfig } from "../../config/site";
 
@@ -13,11 +14,33 @@ import {
   type FaqCategory,
 } from "../../lib/faqs";
 
-const allFaqs =
-  await getCollection("faqs");
+import {
+  resolveFaqRelations,
+} from "../../lib/knowledgeGraph";
+
+const [
+  allFaqs,
+  allProducts,
+  allBrands,
+  allAlarms,
+  allRepairs,
+] = await Promise.all([
+  getCollection("faqs"),
+  getCollection("products"),
+  getCollection("brands"),
+  getCollection("alarms"),
+  getCollection("repairs"),
+]);
 
 const faqs =
   getActiveFaqs(allFaqs);
+
+const graphSources = {
+  products: allProducts,
+  brands: allBrands,
+  alarms: allAlarms,
+  repairs: allRepairs,
+};
 
 const faqGroups =
   Object.entries(faqCategoryLabels)
@@ -308,27 +331,42 @@ const categoryOverview =
                       >
                         {
                           group.faqs.map(
-                            (faq) => (
-                              <details
-                                class="rounded-card border border-line bg-surface-raised shadow-card"
-                              >
-                                <summary
-                                  class="cursor-pointer px-5 py-5 font-bold leading-8 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 md:px-6"
-                                >
-                                  {faq.data.question}
-                                </summary>
+                            (faq) => {
+                              const relations =
+                                resolveFaqRelations(
+                                  faq,
+                                  graphSources,
+                                );
 
-                                <div
-                                  class="border-t border-line px-5 py-5 md:px-6"
+                              return (
+                                <details
+                                  id={`faq-${faq.id}`}
+                                  class="rounded-card border border-line bg-surface-raised shadow-card"
                                 >
-                                  <p
-                                    class="text-sm leading-8 text-muted md:text-base"
+                                  <summary
+                                    class="cursor-pointer px-5 py-5 font-bold leading-8 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 md:px-6"
                                   >
-                                    {faq.data.answer}
-                                  </p>
-                                </div>
-                              </details>
-                            ),
+                                    {faq.data.question}
+                                  </summary>
+
+                                  <div
+                                    class="border-t border-line px-5 py-5 md:px-6"
+                                  >
+                                    <p
+                                      class="text-sm leading-8 text-muted md:text-base"
+                                    >
+                                      {faq.data.answer}
+                                    </p>
+
+                                    <KnowledgeRelations
+                                      relations={relations}
+                                      heading="مسیرهای مرتبط با این پاسخ"
+                                      compact
+                                    />
+                                  </div>
+                                </details>
+                              );
+                            },
                           )
                         }
                       </div>
