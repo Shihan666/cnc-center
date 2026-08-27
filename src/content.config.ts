@@ -661,24 +661,104 @@ const alarms = defineCollection({
 |--------------------------------------------------------------------------
 */
 
+const faqStatusSchema = z.enum([
+  "draft",
+  "active",
+  "archived",
+]);
+
+const faqCategorySchema = z.enum([
+  "general",
+  "repair",
+  "parts",
+  "alarms",
+  "maintenance",
+  "buying",
+  "shipping",
+  "payment",
+]);
+
 const faqs = defineCollection({
   loader: glob({
     base: "./src/content/faqs",
     pattern: "**/*.{md,mdx}",
   }),
 
-  schema: z.object({
-    question: z.string(),
-    answer: z.string(),
+  schema: z
+    .object({
+      question: z.string(),
+      answer: z.string(),
 
-    category: z.string().default("general"),
+      status:
+        faqStatusSchema.default("draft"),
 
-    order: z
-      .number()
-      .int()
-      .nonnegative()
-      .default(0),
-  }),
+      category:
+        faqCategorySchema.default("general"),
+
+      featured:
+        z.boolean().default(false),
+
+      order: z
+        .number()
+        .int()
+        .nonnegative()
+        .default(0),
+
+      publishedAt:
+        z.coerce.date().optional(),
+
+      updatedAt:
+        z.coerce.date().optional(),
+
+      relatedProducts: z
+        .array(z.string())
+        .default([]),
+
+      relatedServices: z
+        .array(z.string())
+        .default([]),
+
+      relatedBrands: z
+        .array(z.string())
+        .default([]),
+
+      relatedAlarms: z
+        .array(z.string())
+        .default([]),
+
+      relatedRepairs: z
+        .array(z.string())
+        .default([]),
+
+      seo: seoSchema.optional(),
+    })
+    .superRefine((faq, ctx) => {
+      if (
+        faq.status === "active" &&
+        !faq.publishedAt
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["publishedAt"],
+          message:
+            "Active FAQs require a publishedAt date.",
+        });
+      }
+
+      if (
+        faq.publishedAt &&
+        faq.updatedAt &&
+        faq.updatedAt.getTime() <
+          faq.publishedAt.getTime()
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["updatedAt"],
+          message:
+            "FAQ updatedAt cannot be earlier than publishedAt.",
+        });
+      }
+    }),
 });
 
 /*

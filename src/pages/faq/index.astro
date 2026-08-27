@@ -1,0 +1,468 @@
+---
+import { getCollection } from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+
+import { siteConfig } from "../../config/site";
+
+import {
+  faqCategoryLabels,
+  getActiveFaqs,
+  type FaqCategory,
+} from "../../lib/faqs";
+
+const allFaqs =
+  await getCollection("faqs");
+
+const faqs =
+  getActiveFaqs(allFaqs);
+
+const faqGroups =
+  Object.entries(faqCategoryLabels)
+    .map(([category, label]) => ({
+      category:
+        category as FaqCategory,
+      label,
+      faqs: faqs.filter(
+        (faq) =>
+          faq.data.category ===
+          category,
+      ),
+    }))
+    .filter(
+      (group) =>
+        group.faqs.length > 0,
+    );
+
+const siteUrl =
+  siteConfig.seo.siteUrl.replace(
+    /\/$/,
+    "",
+  );
+
+const canonical =
+  `${siteUrl}/faq/`;
+
+const pageTitle =
+  "سوالات متداول CNC | تعمیرات، قطعات، آلارم و سفارش";
+
+const pageDescription =
+  "پاسخ به سوالات متداول درباره تعمیرات CNC، قطعات و تجهیزات، آلارم و عیب‌یابی، نگهداری، خرید، استعلام قیمت، ارسال و پرداخت.";
+
+const faqStructuredData =
+  faqs.length > 0
+    ? {
+        "@context":
+          "https://schema.org",
+        "@type":
+          "FAQPage",
+        url: canonical,
+        inLanguage: "fa-IR",
+        mainEntity: faqs.map(
+          (faq) => ({
+            "@type":
+              "Question",
+            name:
+              faq.data.question,
+            acceptedAnswer: {
+              "@type":
+                "Answer",
+              text:
+                faq.data.answer,
+            },
+          }),
+        ),
+      }
+    : null;
+
+const breadcrumbStructuredData = {
+  "@context":
+    "https://schema.org",
+  "@type":
+    "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type":
+        "ListItem",
+      position: 1,
+      name:
+        "صفحه اصلی",
+      item:
+        `${siteUrl}/`,
+    },
+    {
+      "@type":
+        "ListItem",
+      position: 2,
+      name:
+        "سوالات متداول",
+      item:
+        canonical,
+    },
+  ],
+};
+
+const categoryOverview =
+  Object.entries(
+    faqCategoryLabels,
+  );
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+>
+  {
+    faqStructuredData && (
+      <script
+        slot="head"
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify(
+          faqStructuredData,
+        )}
+      ></script>
+    )
+  }
+
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(
+      breadcrumbStructuredData,
+    )}
+  ></script>
+
+  <main>
+    <section
+      class="border-b border-line bg-surface-raised py-12 md:py-18"
+    >
+      <div class="site-container">
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            مرکز پاسخ‌های CNC
+          </Badge>
+
+          <h1
+            class="mt-5 text-3xl font-black leading-[1.45] tracking-tight text-ink md:text-5xl"
+          >
+            سوالات متداول CNC
+          </h1>
+
+          <p
+            class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg"
+          >
+            پاسخ‌های کوتاه و کاربردی درباره
+            تعمیرات CNC، شناسایی و تأمین قطعه،
+            آلارم‌ها، نگهداری، سفارش و ارسال
+            تجهیزات صنعتی.
+          </p>
+
+          <div
+            class="mt-7 flex flex-wrap gap-3"
+          >
+            <Button
+              href="/blog/"
+              size="lg"
+            >
+              مشاهده دانشنامه
+            </Button>
+
+            <Button
+              href="/alarms/"
+              variant="secondary"
+              size="lg"
+            >
+              مرکز آلارم
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="border-b border-line bg-surface py-10 md:py-12"
+      aria-labelledby="faq-topics-heading"
+    >
+      <div class="site-container">
+        <div
+          class="max-w-3xl"
+        >
+          <p
+            class="text-sm font-bold text-brand-700"
+          >
+            موضوعات اصلی
+          </p>
+
+          <h2
+            id="faq-topics-heading"
+            class="mt-2 text-2xl font-black text-ink md:text-3xl"
+          >
+            FAQ بر اساس نیاز کاربران CNC
+          </h2>
+
+          <p
+            class="mt-3 text-sm leading-7 text-muted md:text-base"
+          >
+            ساختار این بخش برای پاسخ‌های عمومی،
+            تعمیرات، قطعات، آلارم، نگهداری،
+            خرید، ارسال و پرداخت آماده شده است.
+          </p>
+        </div>
+
+        <div
+          class="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {
+            categoryOverview.map(
+              ([category, label]) => (
+                <div
+                  class="rounded-card border border-line bg-surface-raised px-4 py-4 shadow-card"
+                  data-faq-category={category}
+                >
+                  <p
+                    class="font-bold text-ink"
+                  >
+                    {label}
+                  </p>
+                </div>
+              ),
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="bg-surface py-12 md:py-16"
+      aria-labelledby="faq-list-heading"
+    >
+      <div class="site-container">
+        <div
+          class="flex flex-col gap-4 md:flex-row md:items-end md:justify-between"
+        >
+          <div>
+            <p
+              class="text-sm font-bold text-brand-700"
+            >
+              پاسخ‌های فنی و اجرایی
+            </p>
+
+            <h2
+              id="faq-list-heading"
+              class="mt-2 text-2xl font-black text-ink md:text-3xl"
+            >
+              پرسش‌های متداول
+            </h2>
+          </div>
+
+          {
+            faqs.length > 0 && (
+              <p
+                class="text-sm leading-7 text-muted"
+              >
+                {faqs.length.toLocaleString(
+                  "fa-IR",
+                )} پاسخ فعال
+              </p>
+            )
+          }
+        </div>
+
+        {
+          faqGroups.length > 0 ? (
+            <div
+              class="mt-8 space-y-10"
+            >
+              {
+                faqGroups.map(
+                  (group) => (
+                    <section
+                      aria-labelledby={`faq-category-${group.category}`}
+                    >
+                      <div
+                        class="flex items-center gap-3"
+                      >
+                        <h3
+                          id={`faq-category-${group.category}`}
+                          class="text-xl font-black text-ink md:text-2xl"
+                        >
+                          {group.label}
+                        </h3>
+
+                        <span
+                          class="inline-flex min-h-7 items-center rounded-control border border-line bg-surface-raised px-3 text-xs font-bold text-muted"
+                        >
+                          {group.faqs.length.toLocaleString(
+                            "fa-IR",
+                          )}
+                        </span>
+                      </div>
+
+                      <div
+                        class="mt-4 space-y-3"
+                      >
+                        {
+                          group.faqs.map(
+                            (faq) => (
+                              <details
+                                class="rounded-card border border-line bg-surface-raised shadow-card"
+                              >
+                                <summary
+                                  class="cursor-pointer px-5 py-5 font-bold leading-8 text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2 md:px-6"
+                                >
+                                  {faq.data.question}
+                                </summary>
+
+                                <div
+                                  class="border-t border-line px-5 py-5 md:px-6"
+                                >
+                                  <p
+                                    class="text-sm leading-8 text-muted md:text-base"
+                                  >
+                                    {faq.data.answer}
+                                  </p>
+                                </div>
+                              </details>
+                            ),
+                          )
+                        }
+                      </div>
+                    </section>
+                  ),
+                )
+              }
+            </div>
+          ) : (
+            <div
+              class="mt-8 rounded-panel border border-line bg-surface-raised p-6 shadow-card md:p-8"
+            >
+              <Badge variant="neutral">
+                در حال تکمیل
+              </Badge>
+
+              <h3
+                class="mt-4 text-xl font-black text-ink md:text-2xl"
+              >
+                پرسش‌های متداول در حال تکمیل است
+              </h3>
+
+              <p
+                class="mt-3 max-w-2xl text-sm leading-8 text-muted md:text-base"
+              >
+                پاسخ‌ها پس از بررسی فنی و
+                تأیید محتوا در این بخش منتشر
+                می‌شوند. برای موضوعات فوری
+                می‌توانید مستقیماً درخواست
+                تعمیر یا قطعه ثبت کنید.
+              </p>
+
+              <div
+                class="mt-6 flex flex-wrap gap-3"
+              >
+                <Button
+                  href="/request/repair/"
+                >
+                  ثبت درخواست تعمیر
+                </Button>
+
+                <Button
+                  href="/request/part/"
+                  variant="secondary"
+                >
+                  ثبت درخواست قطعه
+                </Button>
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </section>
+
+    <section
+      class="border-t border-line bg-surface-raised py-10 md:py-12"
+    >
+      <div class="site-container">
+        <div
+          class="grid gap-4 md:grid-cols-3"
+        >
+          <a
+            href="/services/"
+            class="rounded-card border border-line bg-surface p-5 transition hover:border-line-strong hover:shadow-card"
+          >
+            <p
+              class="text-sm font-bold text-brand-700"
+            >
+              تعمیرات CNC
+            </p>
+
+            <p
+              class="mt-2 font-black text-ink"
+            >
+              مشاهده خدمات تعمیر
+            </p>
+
+            <p
+              class="mt-2 text-sm leading-7 text-muted"
+            >
+              مسیرهای عیب‌یابی و تعمیر بخش‌های
+              مختلف دستگاه CNC.
+            </p>
+          </a>
+
+          <a
+            href="/shop/"
+            class="rounded-card border border-line bg-surface p-5 transition hover:border-line-strong hover:shadow-card"
+          >
+            <p
+              class="text-sm font-bold text-brand-700"
+            >
+              قطعات CNC
+            </p>
+
+            <p
+              class="mt-2 font-black text-ink"
+            >
+              مشاهده دسته‌بندی قطعات
+            </p>
+
+            <p
+              class="mt-2 text-sm leading-7 text-muted"
+            >
+              خرید، استعلام قیمت و درخواست
+              تأمین قطعات و تجهیزات صنعتی.
+            </p>
+          </a>
+
+          <a
+            href="/repairs/"
+            class="rounded-card border border-line bg-surface p-5 transition hover:border-line-strong hover:shadow-card"
+          >
+            <p
+              class="text-sm font-bold text-brand-700"
+            >
+              سوابق تعمیر
+            </p>
+
+            <p
+              class="mt-2 font-black text-ink"
+            >
+              بررسی نمونه‌های تعمیر
+            </p>
+
+            <p
+              class="mt-2 text-sm leading-7 text-muted"
+            >
+              نمونه‌های منتشرشده از عیب‌یابی،
+              تعمیر و نتیجه بررسی تجهیزات CNC.
+            </p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
