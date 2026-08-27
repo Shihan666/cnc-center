@@ -263,6 +263,12 @@ const services = defineCollection({
 |--------------------------------------------------------------------------
 */
 
+const brandStatusSchema = z.enum([
+  "draft",
+  "active",
+  "archived",
+]);
+
 const brands = defineCollection({
   loader: glob({
     base: "./src/content/brands",
@@ -272,10 +278,20 @@ const brands = defineCollection({
   schema: z.object({
     name: z.string(),
     description: z.string(),
+    focus: z.string(),
+
+    aliases: z
+      .array(z.string())
+      .default([]),
 
     logo: z.string().optional(),
     country: z.string().optional(),
-    website: z.string().optional(),
+
+    website: z
+      .url()
+      .optional(),
+
+    status: brandStatusSchema.default("draft"),
 
     featured: z.boolean().default(false),
 
@@ -284,6 +300,14 @@ const brands = defineCollection({
       .int()
       .nonnegative()
       .default(0),
+
+    productCategories: z
+      .array(productCategorySchema)
+      .default([]),
+
+    relatedServices: z
+      .array(z.string())
+      .default([]),
 
     seo: seoSchema.optional(),
   }),

@@ -1,0 +1,553 @@
+---
+import {
+  getCollection,
+  render,
+} from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import ProductCard from "../../components/product/ProductCard.astro";
+
+import { siteConfig } from "../../config/site";
+import { serviceCategories } from "../../data/serviceCategories";
+import { shopCategories } from "../../data/shopCategories";
+
+import {
+  getActiveBrands,
+  type BrandEntry,
+} from "../../lib/brands";
+
+import {
+  getActiveProducts,
+} from "../../lib/products";
+
+export async function getStaticPaths() {
+  const allBrands = await getCollection("brands");
+  const brands = getActiveBrands(allBrands);
+
+  return brands.map((brand) => ({
+    params: {
+      id: brand.id,
+    },
+    props: {
+      brand,
+    },
+  }));
+}
+
+interface Props {
+  brand: BrandEntry;
+}
+
+const { brand } = Astro.props;
+
+const { Content } = await render(brand);
+
+const allProducts = await getCollection("products");
+const activeProducts = getActiveProducts(allProducts);
+
+const normalizedBrandNames = new Set(
+  [
+    brand.data.name,
+    ...brand.data.aliases,
+  ].map((name) => name.trim().toLocaleLowerCase("en-US")),
+);
+
+const relatedProducts = activeProducts.filter((product) =>
+  normalizedBrandNames.has(
+    product.data.brand.trim().toLocaleLowerCase("en-US"),
+  ),
+);
+
+const relatedCategories = brand.data.productCategories
+  .map((slug) =>
+    shopCategories.find((category) => category.slug === slug),
+  )
+  .filter(
+    (
+      category,
+    ): category is (typeof shopCategories)[number] =>
+      category !== undefined,
+  );
+
+const relatedServices = brand.data.relatedServices
+  .map((serviceId) =>
+    serviceCategories.find(
+      (service) => service.id === serviceId,
+    ),
+  )
+  .filter(
+    (
+      service,
+    ): service is (typeof serviceCategories)[number] =>
+      service !== undefined,
+  );
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}/brands/${brand.id}/`;
+
+const pageTitle =
+  brand.data.seo?.title ??
+  `${brand.data.name} | قطعات و خدمات CNC`;
+
+const pageDescription =
+  brand.data.seo?.description ??
+  brand.data.description;
+
+const brandStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "Brand",
+  name: brand.data.name,
+  description: brand.data.description,
+  url: canonical,
+  ...(brand.data.logo
+    ? {
+        logo: brand.data.logo.startsWith("/")
+          ? `${siteUrl}${brand.data.logo}`
+          : brand.data.logo,
+      }
+    : {}),
+  ...(brand.data.website
+    ? {
+        sameAs: [
+          brand.data.website,
+        ],
+      }
+    : {}),
+};
+
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "صفحه اصلی",
+      item: `${siteUrl}/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "برندها",
+      item: `${siteUrl}/brands/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: brand.data.name,
+      item: canonical,
+    },
+  ],
+};
+
+const productListStructuredData =
+  relatedProducts.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: `محصولات ${brand.data.name}`,
+        itemListElement: relatedProducts.map(
+          (product, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: product.data.name,
+            url: `${siteUrl}/products/${product.id}/`,
+          }),
+        ),
+      }
+    : null;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  noindex={brand.data.seo?.noindex ?? false}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(brandStructuredData)}
+  ></script>
+
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbStructuredData)}
+  ></script>
+
+  {
+    productListStructuredData && (
+      <script
+        slot="head"
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify(productListStructuredData)}
+      ></script>
+    )
+  }
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-16">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a
+            href="/brands/"
+            class="transition hover:text-brand-700"
+          >
+            برندها
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span
+            dir="ltr"
+            class="font-bold text-ink-soft"
+          >
+            {brand.data.name}
+          </span>
+        </nav>
+
+        <div class="grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-center">
+          <div>
+            <Badge variant="brand">
+              برند صنعتی
+            </Badge>
+
+            <h1
+              dir="ltr"
+              class="mt-5 text-4xl font-black tracking-tight text-ink md:text-6xl"
+            >
+              {brand.data.name}
+            </h1>
+
+            <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+              {brand.data.description}
+            </p>
+
+            <div class="mt-6 rounded-card border border-line bg-surface p-5">
+              <p class="text-xs font-bold text-brand-700">
+                حوزه کاری
+              </p>
+
+              <p class="mt-2 text-base font-black leading-8 text-ink">
+                {brand.data.focus}
+              </p>
+            </div>
+
+            <div class="mt-7 flex flex-wrap gap-3">
+              <Button
+                href="/request/part/"
+                size="lg"
+              >
+                درخواست قطعه {brand.data.name}
+              </Button>
+
+              <Button
+                href="/services/"
+                variant="secondary"
+                size="lg"
+              >
+                خدمات تعمیر CNC
+              </Button>
+            </div>
+          </div>
+
+          <div
+            class="grid min-h-56 place-items-center rounded-panel border border-line bg-surface p-8 text-center shadow-card"
+          >
+            {
+              brand.data.logo ? (
+                <img
+                  src={brand.data.logo}
+                  alt={`لوگوی ${brand.data.name}`}
+                  class="max-h-28 max-w-full object-contain"
+                  loading="eager"
+                />
+              ) : (
+                <div>
+                  <p class="text-xs font-bold text-muted">
+                    INDUSTRIAL BRAND
+                  </p>
+
+                  <p
+                    dir="ltr"
+                    class="mt-4 break-words text-3xl font-black tracking-tight text-ink"
+                  >
+                    {brand.data.name}
+                  </p>
+
+                  <p class="mt-3 text-xs leading-6 text-muted">
+                    لوگوی رسمی پس از آماده‌سازی دارایی‌های برند اضافه می‌شود.
+                  </p>
+                </div>
+              )
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
+          <div>
+            <p class="text-sm font-bold text-brand-700">
+              معرفی برند
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink md:text-3xl">
+              حوزه خدمات و قطعات {brand.data.name}
+            </h2>
+
+            <div class="prose-content mt-6">
+              <Content />
+            </div>
+          </div>
+
+          <aside class="space-y-4">
+            <div class="rounded-card border border-line bg-surface-raised p-5">
+              <p class="text-xs font-bold text-brand-700">
+                تطبیق قطعه
+              </p>
+
+              <p class="mt-2 font-black text-ink">
+                Part Number و مدل دستگاه
+              </p>
+
+              <p class="mt-2 text-sm leading-7 text-muted">
+                برای بررسی دقیق، شماره فنی قطعه و مدل دستگاه یا کنترلر را همراه درخواست ارسال کنید.
+              </p>
+            </div>
+
+            <div class="rounded-card border border-line bg-surface-raised p-5">
+              <p class="text-xs font-bold text-brand-700">
+                پوشش خدمات
+              </p>
+
+              <p class="mt-2 font-black text-ink">
+                تهران و سراسر ایران
+              </p>
+
+              <p class="mt-2 text-sm leading-7 text-muted">
+                بررسی فنی، تعمیر تجهیزات و تأمین قطعات برای مشتریان صنعتی در سراسر کشور.
+              </p>
+            </div>
+
+            {
+              brand.data.country && (
+                <div class="rounded-card border border-line bg-surface-raised p-5">
+                  <p class="text-xs font-bold text-brand-700">
+                    کشور برند
+                  </p>
+
+                  <p class="mt-2 font-black text-ink">
+                    {brand.data.country}
+                  </p>
+                </div>
+              )
+            }
+
+            {
+              brand.data.website && (
+                <a
+                  href={brand.data.website}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="block rounded-card border border-line bg-surface-raised p-5 transition hover:border-brand-300"
+                >
+                  <p class="text-xs font-bold text-brand-700">
+                    وب‌سایت رسمی
+                  </p>
+
+                  <p class="mt-2 font-black text-ink">
+                    مشاهده وب‌سایت برند
+                  </p>
+                </a>
+              )
+            }
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    {
+      relatedProducts.length > 0 ? (
+        <section class="border-t border-line bg-surface-raised py-10 md:py-14">
+          <div class="site-container">
+            <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p class="text-sm font-bold text-brand-700">
+                  کاتالوگ فعال
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  محصولات {brand.data.name}
+                </h2>
+              </div>
+
+              <p class="text-sm font-bold text-muted">
+                {new Intl.NumberFormat("fa-IR").format(
+                  relatedProducts.length,
+                )}
+                {" "}
+                محصول
+              </p>
+            </div>
+
+            <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {
+                relatedProducts.map((product) => (
+                  <ProductCard product={product} />
+                ))
+              }
+            </div>
+          </div>
+        </section>
+      ) : (
+        <section class="border-t border-line bg-surface-raised py-10 md:py-14">
+          <div class="site-container">
+            <div class="rounded-panel border border-line bg-surface p-7 md:p-9">
+              <p class="text-sm font-bold text-brand-700">
+                محصولات این برند
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black text-ink">
+                هنوز محصول فعال عمومی برای {brand.data.name} ثبت نشده است
+              </h2>
+
+              <p class="mt-3 max-w-3xl text-sm leading-8 text-muted">
+                برای بررسی موجودی، قیمت یا امکان تأمین یک قطعه، Part Number
+                و مشخصات دستگاه را در فرم درخواست قطعه ارسال کنید.
+              </p>
+
+              <div class="mt-5">
+                <Button href="/request/part/">
+                  ثبت درخواست قطعه
+                </Button>
+              </div>
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      (relatedCategories.length > 0 ||
+        relatedServices.length > 0) && (
+        <section class="border-t border-line bg-surface py-10 md:py-14">
+          <div class="site-container">
+            <div class="grid gap-8 lg:grid-cols-2">
+              {
+                relatedCategories.length > 0 && (
+                  <div>
+                    <p class="text-sm font-bold text-brand-700">
+                      دسته‌های مرتبط
+                    </p>
+
+                    <h2 class="mt-2 text-xl font-black text-ink">
+                      قطعات مرتبط با این برند
+                    </h2>
+
+                    <div class="mt-5 flex flex-wrap gap-2">
+                      {
+                        relatedCategories.map((category) => (
+                          <a
+                            href={`/shop/${category.slug}/`}
+                            class="rounded-full border border-line bg-surface-raised px-4 py-2 text-sm font-bold text-ink transition hover:border-brand-300 hover:text-brand-700"
+                          >
+                            {category.title}
+                          </a>
+                        ))
+                      }
+                    </div>
+                  </div>
+                )
+              }
+
+              {
+                relatedServices.length > 0 && (
+                  <div>
+                    <p class="text-sm font-bold text-brand-700">
+                      خدمات مرتبط
+                    </p>
+
+                    <h2 class="mt-2 text-xl font-black text-ink">
+                      مسیرهای بررسی و تعمیر
+                    </h2>
+
+                    <div class="mt-5 flex flex-wrap gap-2">
+                      {
+                        relatedServices.map((service) => (
+                          <a
+                            href={`/services/${service.id}/`}
+                            class="rounded-full border border-line bg-surface-raised px-4 py-2 text-sm font-bold text-ink transition hover:border-brand-300 hover:text-brand-700"
+                          >
+                            {service.title}
+                          </a>
+                        ))
+                      }
+                    </div>
+                  </div>
+                )
+              }
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <section class="border-t border-line bg-brand-950 py-10 text-white md:py-12">
+      <div class="site-container">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div class="max-w-3xl">
+            <p class="text-sm font-bold text-brand-200">
+              قطعه یا تجهیز {brand.data.name} دارید؟
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black md:text-3xl">
+              Part Number و مشخصات فنی را برای بررسی ارسال کنید
+            </h2>
+
+            <p class="mt-3 text-sm leading-7 text-brand-100">
+              مسیر مناسب بر اساس نوع تجهیز، امکان تعمیر، موجودی و شرایط تأمین مشخص می‌شود.
+            </p>
+          </div>
+
+          <div class="flex shrink-0 flex-wrap gap-3">
+            <Button
+              href="/request/part/"
+              size="lg"
+            >
+              درخواست قطعه
+            </Button>
+
+            <Button
+              href="/services/"
+              variant="secondary"
+              size="lg"
+            >
+              خدمات تعمیر
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

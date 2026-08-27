@@ -1,9 +1,18 @@
 ---
+import { getCollection } from "astro:content";
+
 import Badge from "../common/Badge.astro";
 import Button from "../common/Button.astro";
 import Card from "../common/Card.astro";
 import SectionHeading from "../common/SectionHeading.astro";
-import { featuredBrands } from "../../data/featuredBrands";
+
+import {
+  getBrandHref,
+  getFeaturedBrands,
+} from "../../lib/brands";
+
+const allBrands = await getCollection("brands");
+const featuredBrands = getFeaturedBrands(allBrands);
 ---
 
 <section
@@ -55,17 +64,17 @@ import { featuredBrands } from "../../data/featuredBrands";
               dir="ltr"
               class="mt-6 text-2xl font-black tracking-tight text-ink"
             >
-              {brand.name}
+              {brand.data.name}
             </p>
 
             <p class="mt-3 flex-1 text-sm leading-7 text-muted">
-              {brand.focus}
+              {brand.data.focus}
             </p>
 
             <a
-              href={`/brands/${brand.slug}/`}
+              href={getBrandHref(brand)}
               class="mt-5 inline-flex min-h-10 items-center text-sm font-bold text-brand-700 transition hover:text-brand-900"
-              aria-label={`مشاهده محصولات و خدمات برند ${brand.name}`}
+              aria-label={`مشاهده محصولات و خدمات برند ${brand.data.name}`}
             >
               مشاهده برند
             </a>
