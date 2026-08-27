@@ -1,0 +1,139 @@
+---
+interface SelectOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+}
+
+interface Props {
+  id: string;
+  name?: string;
+  label: string;
+
+  options: SelectOption[];
+
+  value?: string;
+  placeholder?: string;
+
+  required?: boolean;
+  disabled?: boolean;
+
+  dir?: "rtl" | "ltr" | "auto";
+
+  hint?: string;
+  error?: string;
+
+  class?: string;
+}
+
+const {
+  id,
+  name = id,
+  label,
+
+  options,
+
+  value = "",
+  placeholder,
+
+  required = false,
+  disabled = false,
+
+  dir,
+
+  hint,
+  error,
+
+  class: className = "",
+} = Astro.props;
+
+const descriptionId = error
+  ? `${id}-error`
+  : hint
+    ? `${id}-hint`
+    : undefined;
+
+const selectClasses = [
+  "min-h-11 w-full rounded-control border bg-surface-raised px-3.5 py-2.5 text-ink outline-none transition duration-200 ease-standard",
+  "disabled:cursor-not-allowed disabled:bg-surface-soft disabled:text-muted disabled:opacity-70",
+  error
+    ? "border-danger focus:border-danger focus:ring-4 focus:ring-red-100"
+    : "border-line-strong focus:border-brand-600 focus:ring-4 focus:ring-brand-100",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div class="space-y-2">
+  <label
+    for={id}
+    class="block text-sm font-semibold text-ink"
+  >
+    {label}
+
+    {
+      required && (
+        <span
+          class="mr-1 text-danger"
+          aria-hidden="true"
+        >
+          *
+        </span>
+      )
+    }
+  </label>
+
+  <select
+    id={id}
+    name={name}
+    required={required}
+    disabled={disabled}
+    dir={dir}
+    class={selectClasses}
+    aria-invalid={error ? "true" : undefined}
+    aria-describedby={descriptionId}
+  >
+    {
+      placeholder && (
+        <option
+          value=""
+          disabled
+          selected={value === ""}
+        >
+          {placeholder}
+        </option>
+      )
+    }
+
+    {
+      options.map((option) => (
+        <option
+          value={option.value}
+          disabled={option.disabled}
+          selected={option.value === value}
+        >
+          {option.label}
+        </option>
+      ))
+    }
+  </select>
+
+  {
+    error ? (
+      <p
+        id={`${id}-error`}
+        class="text-sm font-medium text-danger"
+      >
+        {error}
+      </p>
+    ) : hint ? (
+      <p
+        id={`${id}-hint`}
+        class="text-sm text-muted"
+      >
+        {hint}
+      </p>
+    ) : null
+  }
+</div>

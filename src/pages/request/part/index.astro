@@ -1,0 +1,719 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+
+import SelectInput from "../../../components/forms/SelectInput.astro";
+import TextareaInput from "../../../components/forms/TextareaInput.astro";
+import TextInput from "../../../components/forms/TextInput.astro";
+
+import { siteConfig } from "../../../config/site";
+
+const siteUrl =
+  siteConfig.seo.siteUrl.replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/request/part/`;
+
+const preferredContactOptions = [
+  {
+    value: "phone",
+    label: "تماس تلفنی",
+  },
+  {
+    value: "whatsapp",
+    label: "واتساپ",
+  },
+  {
+    value: "telegram",
+    label: "تلگرام",
+  },
+  {
+    value: "email",
+    label: "ایمیل",
+  },
+  {
+    value: "any",
+    label: "هر روش در دسترس",
+  },
+];
+
+const conditionOptions = [
+  {
+    value: "new",
+    label: "نو",
+  },
+  {
+    value: "used",
+    label: "کارکرده",
+  },
+  {
+    value: "refurbished",
+    label: "بازسازی‌شده",
+  },
+  {
+    value: "tested",
+    label: "تست‌شده",
+  },
+  {
+    value: "any",
+    label: "هر وضعیت قابل بررسی",
+  },
+];
+
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "صفحه اصلی",
+      item: `${siteUrl}/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "درخواست قطعه",
+      item: canonical,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="درخواست قطعه CNC"
+  description="فرم آماده‌سازی درخواست قطعه CNC بر اساس نام قطعه، برند، Part Number، دستگاه، تعداد و وضعیت موردنظر."
+  canonical={canonical}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbStructuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-14">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            درخواست قطعه
+          </span>
+        </nav>
+
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+          <div>
+            <div class="flex flex-wrap gap-2">
+              <Badge
+                variant="brand"
+                size="sm"
+              >
+                درخواست قطعه
+              </Badge>
+
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                تأمین در سراسر ایران
+              </Badge>
+            </div>
+
+            <h1 class="mt-5 max-w-4xl text-3xl font-black leading-[1.55] tracking-tight text-ink md:text-5xl">
+              ثبت اطلاعات اولیه برای تأمین قطعه CNC
+            </h1>
+
+            <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+              نام قطعه، برند، Part Number و مشخصات دستگاه را وارد کنید
+              تا یک متن ساختاریافته برای بررسی موجودی، قیمت یا تأمین
+              سفارشی آماده شود.
+            </p>
+          </div>
+
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              قبل از شروع
+            </p>
+
+            <ul class="mt-4 space-y-3 text-sm leading-7 text-ink-soft">
+              <li>
+                • اگر Part Number دارید، دقیقاً مطابق پلاک یا لیبل وارد کنید.
+              </li>
+
+              <li>
+                • برند و مدل دستگاه به تطبیق دقیق‌تر قطعه کمک می‌کند.
+              </li>
+
+              <li>
+                • وضعیت نو، کارکرده، بازسازی‌شده یا تست‌شده را می‌توانید مشخص کنید.
+              </li>
+
+              <li>
+                • در این نسخه، فرم به سرور ارسال نمی‌شود و فقط متن درخواست آماده می‌شود.
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <Card
+            as="section"
+            padding="lg"
+          >
+            <form
+              id="part-request-form"
+              novalidate
+              class="space-y-8"
+            >
+              <div>
+                <p class="text-sm font-bold text-brand-700">
+                  اطلاعات تماس
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  مشخصات درخواست‌دهنده
+                </h2>
+
+                <div class="mt-6 grid gap-5 md:grid-cols-2">
+                  <TextInput
+                    id="name"
+                    label="نام و نام خانوادگی"
+                    autocomplete="name"
+                    required
+                    placeholder="مثلاً علی رضایی"
+                  />
+
+                  <TextInput
+                    id="phone"
+                    label="شماره تماس"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    dir="ltr"
+                    required
+                    placeholder="09121234567"
+                    hint="موبایل یا شماره ثابت با پیش‌شماره"
+                  />
+
+                  <TextInput
+                    id="city"
+                    label="شهر"
+                    autocomplete="address-level2"
+                    required
+                    placeholder="مثلاً تهران"
+                  />
+
+                  <SelectInput
+                    id="preferredContact"
+                    label="روش تماس ترجیحی"
+                    options={preferredContactOptions}
+                    value="any"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="border-t border-line pt-8">
+                <p class="text-sm font-bold text-brand-700">
+                  مشخصات قطعه
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  اطلاعات فنی قطعه
+                </h2>
+
+                <div class="mt-6 grid gap-5 md:grid-cols-2">
+                  <TextInput
+                    id="partName"
+                    label="نام یا نوع قطعه"
+                    required
+                    placeholder="مثلاً Servo Drive"
+                  />
+
+                  <TextInput
+                    id="brand"
+                    label="برند"
+                    dir="auto"
+                    placeholder="مثلاً FANUC"
+                  />
+
+                  <TextInput
+                    id="partNumber"
+                    label="Part Number"
+                    dir="ltr"
+                    placeholder="مثلاً A06B-6114-H105"
+                    hint="در صورت وجود، دقیقاً مطابق پلاک یا لیبل"
+                  />
+
+                  <TextInput
+                    id="quantity"
+                    label="تعداد"
+                    type="number"
+                    inputmode="numeric"
+                    value={1}
+                    required
+                  />
+
+                  <SelectInput
+                    id="conditionPreference"
+                    label="وضعیت ترجیحی قطعه"
+                    options={conditionOptions}
+                    value="any"
+                  />
+                </div>
+              </div>
+
+              <div class="border-t border-line pt-8">
+                <p class="text-sm font-bold text-brand-700">
+                  دستگاه مرتبط
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  اطلاعات دستگاه
+                </h2>
+
+                <div class="mt-6 grid gap-5 md:grid-cols-2">
+                  <TextInput
+                    id="machine"
+                    label="نوع یا سازنده دستگاه CNC"
+                    placeholder="مثلاً تراش CNC / MORI SEIKI"
+                  />
+
+                  <TextInput
+                    id="machineModel"
+                    label="مدل دستگاه"
+                    dir="auto"
+                    placeholder="مثلاً SL-25"
+                  />
+                </div>
+              </div>
+
+              <div class="border-t border-line pt-8">
+                <TextareaInput
+                  id="description"
+                  label="توضیحات تکمیلی"
+                  rows={7}
+                  minlength={10}
+                  maxlength={2000}
+                  required
+                  placeholder="اطلاعات پلاک، مشخصات فنی، کاربرد قطعه، فوریت تأمین یا هر نکته‌ای که برای تطبیق دقیق قطعه لازم است را بنویسید."
+                  hint="حداقل ۱۰ کاراکتر؛ اطلاعات دقیق‌تر باعث بررسی بهتر درخواست می‌شود."
+                />
+              </div>
+
+              <div
+                id="part-error-summary"
+                class="hidden rounded-control border border-red-200 bg-red-50 p-4"
+                role="alert"
+                aria-live="polite"
+              >
+                <p class="font-black text-danger">
+                  اطلاعات فرم نیاز به اصلاح دارد
+                </p>
+
+                <ul
+                  id="part-error-list"
+                  class="mt-3 space-y-2 text-sm leading-7 text-red-800"
+                ></ul>
+              </div>
+
+              <div class="border-t border-line pt-6">
+                <Button
+                  type="submit"
+                  size="lg"
+                  class="w-full sm:w-auto"
+                >
+                  آماده‌سازی متن درخواست قطعه
+                </Button>
+
+                <p class="mt-3 text-xs leading-6 text-muted">
+                  این دکمه اطلاعات را به سرور ارسال نمی‌کند.
+                </p>
+              </div>
+            </form>
+          </Card>
+
+          <aside class="space-y-6">
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                اطلاعات مفید برای تطبیق قطعه
+              </p>
+
+              <ul class="mt-4 space-y-3 text-sm leading-7 text-ink-soft">
+                <li>• عکس واضح پلاک یا لیبل قطعه</li>
+                <li>• Part Number کامل</li>
+                <li>• برند و مدل تجهیز</li>
+                <li>• مدل دستگاه CNC</li>
+                <li>• تعداد موردنیاز</li>
+                <li>• وضعیت موردنظر: نو، کارکرده یا بازسازی‌شده</li>
+              </ul>
+            </Card>
+
+            <Card tone="soft">
+              <p class="text-sm font-bold text-brand-700">
+                دسته قطعه را می‌دانید؟
+              </p>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                برای مشاهده دسته‌های موتور، درایو، کنترلر، PLC/HMI،
+                Encoder و سایر قطعات می‌توانید وارد فروشگاه شوید.
+              </p>
+
+              <a
+                href="/shop/"
+                class="mt-4 inline-flex text-sm font-black text-brand-700 transition hover:text-brand-800"
+              >
+                مشاهده دسته‌های فروشگاه ←
+              </a>
+            </Card>
+
+            <Card tone="soft">
+              <p class="text-sm font-bold text-brand-700">
+                برند قطعه مشخص است؟
+              </p>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                فهرست برندهای فعال می‌تواند برای تطبیق تجهیزات و
+                Part Numberها مفید باشد.
+              </p>
+
+              <a
+                href="/brands/"
+                class="mt-4 inline-flex text-sm font-black text-brand-700 transition hover:text-brand-800"
+              >
+                مشاهده برندها ←
+              </a>
+            </Card>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="part-request-result"
+      class="hidden border-t border-line bg-surface-raised py-10 md:py-14"
+      aria-live="polite"
+    >
+      <div class="site-container">
+        <div class="mx-auto max-w-4xl">
+          <div class="rounded-panel border border-line bg-surface p-6 shadow-card md:p-8">
+            <p class="text-sm font-bold text-signal">
+              متن درخواست آماده است
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink md:text-3xl">
+              متن زیر را کپی یا اشتراک‌گذاری کنید
+            </h2>
+
+            <p class="mt-3 text-sm leading-7 text-muted">
+              تا زمان اتصال زیرساخت ارسال واقعی، این متن خروجی فرم است
+              و هیچ اطلاعاتی به CNC Center ارسال نشده است.
+            </p>
+
+            <pre
+              id="part-request-preview"
+              dir="auto"
+              tabindex="0"
+              class="mt-6 max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-control border border-line bg-surface-raised p-5 text-sm leading-8 text-ink"
+            ></pre>
+
+            <div class="mt-6 flex flex-wrap gap-3">
+              <button
+                id="copy-part-request"
+                type="button"
+                class="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-brand-700 focus-visible:outline-none"
+              >
+                کپی متن درخواست
+              </button>
+
+              <button
+                id="share-part-request"
+                type="button"
+                class="inline-flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-surface-raised px-5 py-3 text-sm font-semibold leading-none text-ink transition hover:bg-surface-soft focus-visible:outline-none"
+              >
+                اشتراک‌گذاری
+              </button>
+            </div>
+
+            <p
+              id="part-action-status"
+              class="mt-4 min-h-6 text-sm font-bold text-muted"
+              aria-live="polite"
+            ></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    import {
+      buildPartRequestText,
+      validatePartRequest,
+      type PartRequestPayload,
+      type PreferredContact,
+    } from "../../../lib/requests";
+
+    const form = document.querySelector<HTMLFormElement>(
+      "#part-request-form",
+    );
+
+    const errorSummary = document.querySelector<HTMLElement>(
+      "#part-error-summary",
+    );
+
+    const errorList = document.querySelector<HTMLUListElement>(
+      "#part-error-list",
+    );
+
+    const result = document.querySelector<HTMLElement>(
+      "#part-request-result",
+    );
+
+    const preview = document.querySelector<HTMLElement>(
+      "#part-request-preview",
+    );
+
+    const copyButton = document.querySelector<HTMLButtonElement>(
+      "#copy-part-request",
+    );
+
+    const shareButton = document.querySelector<HTMLButtonElement>(
+      "#share-part-request",
+    );
+
+    const actionStatus = document.querySelector<HTMLElement>(
+      "#part-action-status",
+    );
+
+    let generatedText = "";
+
+    function fieldValue(
+      data: FormData,
+      name: string,
+    ): string {
+      const value = data.get(name);
+
+      return typeof value === "string"
+        ? value
+        : "";
+    }
+
+    function buildPayload(
+      data: FormData,
+    ): PartRequestPayload {
+      const rawQuantity =
+        Number(
+          fieldValue(
+            data,
+            "quantity",
+          ),
+        );
+
+      return {
+        kind: "part",
+
+        name: fieldValue(data, "name"),
+        phone: fieldValue(data, "phone"),
+        city: fieldValue(data, "city"),
+
+        preferredContact:
+          fieldValue(
+            data,
+            "preferredContact",
+          ) as PreferredContact,
+
+        partName:
+          fieldValue(data, "partName"),
+
+        brand:
+          fieldValue(data, "brand"),
+
+        partNumber:
+          fieldValue(data, "partNumber"),
+
+        quantity:
+          rawQuantity,
+
+        machine:
+          fieldValue(data, "machine"),
+
+        machineModel:
+          fieldValue(data, "machineModel"),
+
+        conditionPreference:
+          fieldValue(
+            data,
+            "conditionPreference",
+          ),
+
+        description:
+          fieldValue(data, "description"),
+      };
+    }
+
+    function showErrors(
+      errors: string[],
+    ): void {
+      if (
+        !errorSummary ||
+        !errorList
+      ) {
+        return;
+      }
+
+      errorList.replaceChildren();
+
+      for (const error of errors) {
+        const item =
+          document.createElement("li");
+
+        item.textContent = `• ${error}`;
+
+        errorList.append(item);
+      }
+
+      errorSummary.classList.remove("hidden");
+
+      errorSummary.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+
+    function clearErrors(): void {
+      errorSummary?.classList.add("hidden");
+      errorList?.replaceChildren();
+    }
+
+    form?.addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+
+        clearErrors();
+
+        const payload =
+          buildPayload(
+            new FormData(form),
+          );
+
+        const errors =
+          validatePartRequest(payload);
+
+        if (errors.length > 0) {
+          result?.classList.add("hidden");
+          showErrors(errors);
+          return;
+        }
+
+        generatedText =
+          buildPartRequestText(payload);
+
+        if (preview) {
+          preview.textContent =
+            generatedText;
+        }
+
+        if (actionStatus) {
+          actionStatus.textContent = "";
+        }
+
+        result?.classList.remove("hidden");
+
+        result?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      },
+    );
+
+    copyButton?.addEventListener(
+      "click",
+      async () => {
+        if (!generatedText) {
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(
+            generatedText,
+          );
+
+          if (actionStatus) {
+            actionStatus.textContent =
+              "متن درخواست در حافظه موقت کپی شد.";
+          }
+        }
+        catch {
+          if (actionStatus) {
+            actionStatus.textContent =
+              "کپی خودکار ممکن نبود؛ متن را به‌صورت دستی انتخاب کنید.";
+          }
+        }
+      },
+    );
+
+    shareButton?.addEventListener(
+      "click",
+      async () => {
+        if (!generatedText) {
+          return;
+        }
+
+        if (!navigator.share) {
+          if (actionStatus) {
+            actionStatus.textContent =
+              "اشتراک‌گذاری در این مرورگر در دسترس نیست؛ از دکمه کپی استفاده کنید.";
+          }
+
+          return;
+        }
+
+        try {
+          await navigator.share({
+            title: "درخواست قطعه CNC",
+            text: generatedText,
+          });
+
+          if (actionStatus) {
+            actionStatus.textContent =
+              "پنجره اشتراک‌گذاری باز شد.";
+          }
+        }
+        catch (error) {
+          if (
+            error instanceof DOMException &&
+            error.name === "AbortError"
+          ) {
+            return;
+          }
+
+          if (actionStatus) {
+            actionStatus.textContent =
+              "اشتراک‌گذاری انجام نشد؛ از دکمه کپی استفاده کنید.";
+          }
+        }
+      },
+    );
+  </script>
+</BaseLayout>

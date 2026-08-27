@@ -1,0 +1,654 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+
+import SelectInput from "../../../components/forms/SelectInput.astro";
+import TextareaInput from "../../../components/forms/TextareaInput.astro";
+import TextInput from "../../../components/forms/TextInput.astro";
+
+import { siteConfig } from "../../../config/site";
+
+const siteUrl =
+  siteConfig.seo.siteUrl.replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/request/repair/`;
+
+const preferredContactOptions = [
+  {
+    value: "phone",
+    label: "تماس تلفنی",
+  },
+  {
+    value: "whatsapp",
+    label: "واتساپ",
+  },
+  {
+    value: "telegram",
+    label: "تلگرام",
+  },
+  {
+    value: "email",
+    label: "ایمیل",
+  },
+  {
+    value: "any",
+    label: "هر روش در دسترس",
+  },
+];
+
+const machineStatusOptions = [
+  {
+    value: "stopped",
+    label: "دستگاه متوقف است",
+  },
+  {
+    value: "intermittent",
+    label: "خرابی مقطعی / متناوب",
+  },
+  {
+    value: "degraded",
+    label: "دستگاه کار می‌کند اما عملکرد ناقص است",
+  },
+  {
+    value: "unknown",
+    label: "وضعیت دقیق مشخص نیست",
+  },
+];
+
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "صفحه اصلی",
+      item: `${siteUrl}/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "درخواست تعمیر",
+      item: canonical,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title="درخواست تعمیر CNC"
+  description="فرم آماده‌سازی درخواست تعمیر دستگاه CNC، سروو، درایو، اسپیندل، کنترلر و تجهیزات صنعتی."
+  canonical={canonical}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbStructuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-14">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            درخواست تعمیر
+          </span>
+        </nav>
+
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+          <div>
+            <div class="flex flex-wrap gap-2">
+              <Badge
+                variant="brand"
+                size="sm"
+              >
+                درخواست تعمیر
+              </Badge>
+
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                سراسر ایران
+              </Badge>
+            </div>
+
+            <h1 class="mt-5 max-w-4xl text-3xl font-black leading-[1.55] tracking-tight text-ink md:text-5xl">
+              ثبت اطلاعات اولیه برای بررسی تعمیر CNC
+            </h1>
+
+            <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+              اطلاعات دستگاه، کد آلارم و شرح خرابی را وارد کنید
+              تا یک متن ساختاریافته و آماده ارسال برای بررسی اولیه
+              ساخته شود.
+            </p>
+          </div>
+
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              قبل از شروع
+            </p>
+
+            <ul class="mt-4 space-y-3 text-sm leading-7 text-ink-soft">
+              <li>
+                • اگر Alarm Code دارید، دقیقاً همان کد نمایشگر را وارد کنید.
+              </li>
+
+              <li>
+                • مدل دستگاه، کنترلر و تجهیز درگیر تشخیص اولیه را سریع‌تر می‌کند.
+              </li>
+
+              <li>
+                • در این نسخه، فرم به سرور ارسال نمی‌شود و فقط متن درخواست آماده می‌شود.
+              </li>
+            </ul>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <Card
+            as="section"
+            padding="lg"
+          >
+            <form
+              id="repair-request-form"
+              novalidate
+              class="space-y-8"
+            >
+              <div>
+                <p class="text-sm font-bold text-brand-700">
+                  اطلاعات تماس
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  مشخصات درخواست‌دهنده
+                </h2>
+
+                <div class="mt-6 grid gap-5 md:grid-cols-2">
+                  <TextInput
+                    id="name"
+                    label="نام و نام خانوادگی"
+                    autocomplete="name"
+                    required
+                    placeholder="مثلاً علی رضایی"
+                  />
+
+                  <TextInput
+                    id="phone"
+                    label="شماره تماس"
+                    type="tel"
+                    inputmode="tel"
+                    autocomplete="tel"
+                    dir="ltr"
+                    required
+                    placeholder="09121234567"
+                    hint="موبایل یا شماره ثابت با پیش‌شماره"
+                  />
+
+                  <TextInput
+                    id="city"
+                    label="شهر"
+                    autocomplete="address-level2"
+                    required
+                    placeholder="مثلاً تهران"
+                  />
+
+                  <SelectInput
+                    id="preferredContact"
+                    label="روش تماس ترجیحی"
+                    options={preferredContactOptions}
+                    value="any"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div class="border-t border-line pt-8">
+                <p class="text-sm font-bold text-brand-700">
+                  مشخصات دستگاه
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  اطلاعات فنی اولیه
+                </h2>
+
+                <div class="mt-6 grid gap-5 md:grid-cols-2">
+                  <TextInput
+                    id="machine"
+                    label="نوع یا سازنده دستگاه CNC"
+                    required
+                    placeholder="مثلاً تراش CNC / MORI SEIKI"
+                  />
+
+                  <TextInput
+                    id="machineModel"
+                    label="مدل دستگاه"
+                    dir="auto"
+                    placeholder="مثلاً SL-25"
+                  />
+
+                  <TextInput
+                    id="controller"
+                    label="کنترلر"
+                    dir="auto"
+                    placeholder="مثلاً FANUC 0i-MF"
+                  />
+
+                  <TextInput
+                    id="alarmCode"
+                    label="Alarm Code"
+                    dir="ltr"
+                    placeholder="مثلاً SV0410"
+                    hint="در صورت وجود، دقیقاً مطابق نمایشگر وارد شود"
+                  />
+
+                  <TextInput
+                    id="component"
+                    label="تجهیز یا بخش درگیر"
+                    placeholder="مثلاً Servo Drive محور X"
+                  />
+
+                  <SelectInput
+                    id="machineStatus"
+                    label="وضعیت فعلی دستگاه"
+                    options={machineStatusOptions}
+                    placeholder="انتخاب وضعیت"
+                  />
+                </div>
+              </div>
+
+              <div class="border-t border-line pt-8">
+                <TextareaInput
+                  id="description"
+                  label="شرح خرابی"
+                  rows={7}
+                  minlength={10}
+                  maxlength={2000}
+                  required
+                  placeholder="علائم خرابی، اتفاق قبل از ایجاد خطا، زمان شروع مشکل و هر نکته‌ای که در عیب‌یابی مؤثر است را بنویسید."
+                  hint="حداقل ۱۰ کاراکتر؛ اطلاعات دقیق‌تر باعث بررسی اولیه بهتر می‌شود."
+                />
+              </div>
+
+              <div
+                id="repair-error-summary"
+                class="hidden rounded-control border border-red-200 bg-red-50 p-4"
+                role="alert"
+                aria-live="polite"
+              >
+                <p class="font-black text-danger">
+                  اطلاعات فرم نیاز به اصلاح دارد
+                </p>
+
+                <ul
+                  id="repair-error-list"
+                  class="mt-3 space-y-2 text-sm leading-7 text-red-800"
+                ></ul>
+              </div>
+
+              <div class="border-t border-line pt-6">
+                <Button
+                  type="submit"
+                  size="lg"
+                  class="w-full sm:w-auto"
+                >
+                  آماده‌سازی متن درخواست
+                </Button>
+
+                <p class="mt-3 text-xs leading-6 text-muted">
+                  این دکمه اطلاعات را به سرور ارسال نمی‌کند.
+                </p>
+              </div>
+            </form>
+          </Card>
+
+          <aside class="space-y-6">
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                اطلاعات مفید برای بررسی
+              </p>
+
+              <ul class="mt-4 space-y-3 text-sm leading-7 text-ink-soft">
+                <li>• عکس Alarm یا صفحه کنترلر</li>
+                <li>• پلاک دستگاه یا تجهیز</li>
+                <li>• مدل Drive / Motor / Controller</li>
+                <li>• اتفاقی که قبل از خرابی رخ داده</li>
+                <li>• سابقه تعمیر یا تعویض قطعه</li>
+              </ul>
+            </Card>
+
+            <Card tone="soft">
+              <p class="text-sm font-bold text-brand-700">
+                خطای مشخصی دارید؟
+              </p>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                قبل از ثبت اطلاعات می‌توانید معنی و بررسی اولیه برخی
+                Alarmها را در مرکز آلارم مشاهده کنید.
+              </p>
+
+              <a
+                href="/alarms/"
+                class="mt-4 inline-flex text-sm font-black text-brand-700 transition hover:text-brand-800"
+              >
+                ورود به مرکز آلارم ←
+              </a>
+            </Card>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section
+      id="repair-request-result"
+      class="hidden border-t border-line bg-surface-raised py-10 md:py-14"
+      aria-live="polite"
+    >
+      <div class="site-container">
+        <div class="mx-auto max-w-4xl">
+          <div class="rounded-panel border border-line bg-surface p-6 shadow-card md:p-8">
+            <p class="text-sm font-bold text-signal">
+              متن درخواست آماده است
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black text-ink md:text-3xl">
+              متن زیر را کپی یا اشتراک‌گذاری کنید
+            </h2>
+
+            <p class="mt-3 text-sm leading-7 text-muted">
+              تا زمان اتصال زیرساخت ارسال واقعی، این متن خروجی فرم است
+              و هیچ اطلاعاتی به CNC Center ارسال نشده است.
+            </p>
+
+            <pre
+              id="repair-request-preview"
+              dir="auto"
+              tabindex="0"
+              class="mt-6 max-h-[32rem] overflow-auto whitespace-pre-wrap rounded-control border border-line bg-surface-raised p-5 text-sm leading-8 text-ink"
+            ></pre>
+
+            <div class="mt-6 flex flex-wrap gap-3">
+              <button
+                id="copy-repair-request"
+                type="button"
+                class="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold leading-none text-white shadow-sm transition hover:bg-brand-700 focus-visible:outline-none"
+              >
+                کپی متن درخواست
+              </button>
+
+              <button
+                id="share-repair-request"
+                type="button"
+                class="inline-flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-surface-raised px-5 py-3 text-sm font-semibold leading-none text-ink transition hover:bg-surface-soft focus-visible:outline-none"
+              >
+                اشتراک‌گذاری
+              </button>
+            </div>
+
+            <p
+              id="repair-action-status"
+              class="mt-4 min-h-6 text-sm font-bold text-muted"
+              aria-live="polite"
+            ></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    import {
+      buildRepairRequestText,
+      validateRepairRequest,
+      type PreferredContact,
+      type RepairRequestPayload,
+    } from "../../../lib/requests";
+
+    const form = document.querySelector<HTMLFormElement>(
+      "#repair-request-form",
+    );
+
+    const errorSummary = document.querySelector<HTMLElement>(
+      "#repair-error-summary",
+    );
+
+    const errorList = document.querySelector<HTMLUListElement>(
+      "#repair-error-list",
+    );
+
+    const result = document.querySelector<HTMLElement>(
+      "#repair-request-result",
+    );
+
+    const preview = document.querySelector<HTMLElement>(
+      "#repair-request-preview",
+    );
+
+    const copyButton = document.querySelector<HTMLButtonElement>(
+      "#copy-repair-request",
+    );
+
+    const shareButton = document.querySelector<HTMLButtonElement>(
+      "#share-repair-request",
+    );
+
+    const actionStatus = document.querySelector<HTMLElement>(
+      "#repair-action-status",
+    );
+
+    let generatedText = "";
+
+    function fieldValue(
+      data: FormData,
+      name: string,
+    ): string {
+      const value = data.get(name);
+
+      return typeof value === "string"
+        ? value
+        : "";
+    }
+
+    function buildPayload(
+      data: FormData,
+    ): RepairRequestPayload {
+      return {
+        kind: "repair",
+
+        name: fieldValue(data, "name"),
+        phone: fieldValue(data, "phone"),
+        city: fieldValue(data, "city"),
+
+        preferredContact:
+          fieldValue(
+            data,
+            "preferredContact",
+          ) as PreferredContact,
+
+        machine: fieldValue(data, "machine"),
+        machineModel:
+          fieldValue(data, "machineModel"),
+
+        controller:
+          fieldValue(data, "controller"),
+
+        alarmCode:
+          fieldValue(data, "alarmCode"),
+
+        component:
+          fieldValue(data, "component"),
+
+        machineStatus:
+          fieldValue(data, "machineStatus"),
+
+        description:
+          fieldValue(data, "description"),
+      };
+    }
+
+    function showErrors(
+      errors: string[],
+    ): void {
+      if (
+        !errorSummary ||
+        !errorList
+      ) {
+        return;
+      }
+
+      errorList.replaceChildren();
+
+      for (const error of errors) {
+        const item =
+          document.createElement("li");
+
+        item.textContent = `• ${error}`;
+
+        errorList.append(item);
+      }
+
+      errorSummary.classList.remove("hidden");
+
+      errorSummary.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+
+    function clearErrors(): void {
+      errorSummary?.classList.add("hidden");
+      errorList?.replaceChildren();
+    }
+
+    form?.addEventListener(
+      "submit",
+      (event) => {
+        event.preventDefault();
+
+        clearErrors();
+
+        const payload =
+          buildPayload(
+            new FormData(form),
+          );
+
+        const errors =
+          validateRepairRequest(payload);
+
+        if (errors.length > 0) {
+          result?.classList.add("hidden");
+          showErrors(errors);
+          return;
+        }
+
+        generatedText =
+          buildRepairRequestText(payload);
+
+        if (preview) {
+          preview.textContent =
+            generatedText;
+        }
+
+        actionStatus &&
+          (actionStatus.textContent = "");
+
+        result?.classList.remove("hidden");
+
+        result?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      },
+    );
+
+    copyButton?.addEventListener(
+      "click",
+      async () => {
+        if (!generatedText) {
+          return;
+        }
+
+        try {
+          await navigator.clipboard.writeText(
+            generatedText,
+          );
+
+          if (actionStatus) {
+            actionStatus.textContent =
+              "متن درخواست در حافظه موقت کپی شد.";
+          }
+        }
+        catch {
+          if (actionStatus) {
+            actionStatus.textContent =
+              "کپی خودکار ممکن نبود؛ متن را به‌صورت دستی انتخاب کنید.";
+          }
+        }
+      },
+    );
+
+    shareButton?.addEventListener(
+      "click",
+      async () => {
+        if (!generatedText) {
+          return;
+        }
+
+        if (!navigator.share) {
+          if (actionStatus) {
+            actionStatus.textContent =
+              "اشتراک‌گذاری در این مرورگر در دسترس نیست؛ از دکمه کپی استفاده کنید.";
+          }
+
+          return;
+        }
+
+        try {
+          await navigator.share({
+            title: "درخواست تعمیر CNC",
+            text: generatedText,
+          });
+
+          if (actionStatus) {
+            actionStatus.textContent =
+              "پنجره اشتراک‌گذاری باز شد.";
+          }
+        }
+        catch (error) {
+          if (
+            error instanceof DOMException &&
+            error.name === "AbortError"
+          ) {
+            return;
+          }
+
+          if (actionStatus) {
+            actionStatus.textContent =
+              "اشتراک‌گذاری انجام نشد؛ از دکمه کپی استفاده کنید.";
+          }
+        }
+      },
+    );
+  </script>
+</BaseLayout>
