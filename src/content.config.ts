@@ -464,38 +464,130 @@ const repairs = defineCollection({
 |--------------------------------------------------------------------------
 */
 
+const alarmStatusSchema = z.enum([
+  "draft",
+  "active",
+  "archived",
+]);
+
+const alarmCategorySchema = z.enum([
+  "controller",
+  "servo",
+  "spindle",
+  "power",
+  "communication",
+  "feedback",
+  "io",
+  "safety",
+  "system",
+  "other",
+]);
+
+const alarmServiceSchema = z.enum([
+  "machine",
+  "motion",
+  "spindle",
+  "control",
+  "electronics",
+  "mechanical",
+  "alarm-diagnosis",
+]);
+
 const alarms = defineCollection({
   loader: glob({
     base: "./src/content/alarms",
     pattern: "**/*.{md,mdx}",
   }),
 
-  schema: z.object({
-    title: z.string(),
+  schema: z
+    .object({
+      title: z.string(),
+      excerpt: z.string(),
 
-    brand: z.string(),
-    code: z.string(),
+      status: alarmStatusSchema.default("draft"),
 
-    meaning: z.string(),
+      brand: z.string(),
+      code: z.string(),
 
-    commonCauses: z
-      .array(z.string())
-      .default([]),
+      aliases: z
+        .array(z.string())
+        .default([]),
 
-    initialChecks: z
-      .array(z.string())
-      .default([]),
+      category: alarmCategorySchema,
 
-    relatedComponents: z
-      .array(z.string())
-      .default([]),
+      series: z
+        .array(z.string())
+        .default([]),
 
-    relatedServices: z
-      .array(z.string())
-      .default([]),
+      applicableModels: z
+        .array(z.string())
+        .default([]),
 
-    seo: seoSchema.optional(),
-  }),
+      meaning: z.string(),
+
+      symptoms: z
+        .array(z.string())
+        .default([]),
+
+      commonCauses: z
+        .array(z.string())
+        .default([]),
+
+      initialChecks: z
+        .array(z.string())
+        .default([]),
+
+      safetyNotes: z
+        .array(z.string())
+        .default([]),
+
+      escalationNotes: z
+        .array(z.string())
+        .default([]),
+
+      relatedComponents: z
+        .array(z.string())
+        .default([]),
+
+      relatedBrands: z
+        .array(z.string())
+        .default([]),
+
+      relatedProducts: z
+        .array(z.string())
+        .default([]),
+
+      relatedRepairs: z
+        .array(z.string())
+        .default([]),
+
+      relatedServices: z
+        .array(alarmServiceSchema)
+        .default([]),
+
+      publishedAt: z.coerce.date().optional(),
+      updatedAt: z.coerce.date().optional(),
+
+      featured: z.boolean().default(false),
+
+      order: z
+        .number()
+        .int()
+        .nonnegative()
+        .default(0),
+
+      seo: seoSchema.optional(),
+    })
+    .superRefine((alarm, ctx) => {
+      if (alarm.status === "active" && !alarm.publishedAt) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["publishedAt"],
+          message:
+            "Active alarm records require a publishedAt date.",
+        });
+      }
+    }),
 });
 
 /*

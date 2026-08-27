@@ -1,0 +1,927 @@
+---
+import {
+  getCollection,
+  render,
+} from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import ProductCard from "../../components/product/ProductCard.astro";
+
+import { siteConfig } from "../../config/site";
+import { serviceCategories } from "../../data/serviceCategories";
+
+import {
+  formatAlarmDate,
+  getActiveAlarms,
+  getAlarmCategoryLabel,
+  type AlarmEntry,
+} from "../../lib/alarms";
+
+import {
+  getActiveBrands,
+  getBrandHref,
+} from "../../lib/brands";
+
+import {
+  getActiveProducts,
+} from "../../lib/products";
+
+import {
+  formatRepairDate,
+  getActiveRepairs,
+  getRepairHref,
+} from "../../lib/repairs";
+
+export async function getStaticPaths() {
+  const allAlarms = await getCollection("alarms");
+  const alarms = getActiveAlarms(allAlarms);
+
+  return alarms.map((alarm) => ({
+    params: {
+      id: alarm.id,
+    },
+
+    props: {
+      alarm,
+    },
+  }));
+}
+
+interface Props {
+  alarm: AlarmEntry;
+}
+
+const { alarm } = Astro.props;
+
+const { Content } = await render(alarm);
+
+const allBrands = await getCollection("brands");
+const activeBrands = getActiveBrands(allBrands);
+
+const allProducts = await getCollection("products");
+const activeProducts = getActiveProducts(allProducts);
+
+const allRepairs = await getCollection("repairs");
+const activeRepairs = getActiveRepairs(allRepairs);
+
+const relatedBrandIds = new Set(
+  alarm.data.relatedBrands,
+);
+
+const relatedBrands = activeBrands.filter((brand) =>
+  relatedBrandIds.has(brand.id),
+);
+
+const relatedProductIds = new Set(
+  alarm.data.relatedProducts,
+);
+
+const relatedProducts = activeProducts.filter((product) =>
+  relatedProductIds.has(product.id),
+);
+
+const relatedRepairIds = new Set(
+  alarm.data.relatedRepairs,
+);
+
+const relatedRepairs = activeRepairs.filter((repair) =>
+  relatedRepairIds.has(repair.id),
+);
+
+const relatedServices = alarm.data.relatedServices
+  .map((serviceId) =>
+    serviceCategories.find(
+      (service) => service.id === serviceId,
+    ),
+  )
+  .filter(
+    (
+      service,
+    ): service is (typeof serviceCategories)[number] =>
+      service !== undefined,
+  );
+
+const categoryLabel =
+  getAlarmCategoryLabel(alarm);
+
+const publishedAt =
+  formatAlarmDate(alarm.data.publishedAt);
+
+const updatedAt =
+  formatAlarmDate(alarm.data.updatedAt);
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+
+const canonical =
+  alarm.data.seo?.canonical ??
+  `${siteUrl}/alarms/${alarm.id}/`;
+
+const pageTitle =
+  alarm.data.seo?.title ??
+  alarm.data.title;
+
+const pageDescription =
+  alarm.data.seo?.description ??
+  alarm.data.excerpt;
+
+const noindex =
+  alarm.data.seo?.noindex ?? false;
+
+const articleStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: alarm.data.title,
+  description: alarm.data.excerpt,
+  url: canonical,
+  inLanguage: "fa-IR",
+  articleSection: categoryLabel,
+
+  ...(alarm.data.publishedAt
+    ? {
+        datePublished:
+          alarm.data.publishedAt.toISOString(),
+      }
+    : {}),
+
+  ...(alarm.data.updatedAt
+    ? {
+        dateModified:
+          alarm.data.updatedAt.toISOString(),
+      }
+    : {}),
+
+  publisher: {
+    "@type": "Organization",
+    name: siteConfig.brand.name,
+    url: siteUrl,
+  },
+
+  about: [
+    {
+      "@type": "Brand",
+      name: alarm.data.brand,
+    },
+    {
+      "@type": "Thing",
+      name: alarm.data.code,
+    },
+    {
+      "@type": "Thing",
+      name: categoryLabel,
+    },
+  ],
+};
+
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "صفحه اصلی",
+      item: `${siteUrl}/`,
+    },
+
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "مرکز آلارم",
+      item: `${siteUrl}/alarms/`,
+    },
+
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: alarm.data.title,
+      item: canonical,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  noindex={noindex}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(articleStructuredData)}
+  ></script>
+
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbStructuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-14">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a
+            href="/alarms/"
+            class="transition hover:text-brand-700"
+          >
+            مرکز آلارم
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            {alarm.data.title}
+          </span>
+        </nav>
+
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
+          <div>
+            <div class="flex flex-wrap gap-2">
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                {categoryLabel}
+              </Badge>
+
+              <Badge
+                variant="brand"
+                size="sm"
+                dir="ltr"
+              >
+                {alarm.data.brand}
+              </Badge>
+
+              <Badge
+                variant="warning"
+                size="sm"
+                dir="ltr"
+              >
+                {alarm.data.code}
+              </Badge>
+            </div>
+
+            <h1 class="mt-5 text-3xl font-black leading-[1.55] tracking-tight text-ink md:text-5xl">
+              {alarm.data.title}
+            </h1>
+
+            <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+              {alarm.data.excerpt}
+            </p>
+
+            <div class="mt-7 flex flex-wrap gap-3">
+              <Button
+                href="/request/repair/"
+                size="lg"
+              >
+                درخواست بررسی این آلارم
+              </Button>
+
+              <Button
+                href="/alarms/"
+                variant="secondary"
+                size="lg"
+              >
+                بازگشت به مرکز آلارم
+              </Button>
+            </div>
+          </div>
+
+          <Card padding="lg">
+            <p class="text-sm font-bold text-brand-700">
+              مشخصات Alarm
+            </p>
+
+            <div class="mt-5 rounded-control border border-line bg-surface-soft p-4">
+              <p class="text-xs font-bold text-muted">
+                Alarm Code
+              </p>
+
+              <p
+                dir="ltr"
+                class="mt-2 break-words text-left text-2xl font-black tracking-tight text-ink"
+              >
+                {alarm.data.code}
+              </p>
+            </div>
+
+            <dl class="mt-5 space-y-4">
+              <div>
+                <dt class="text-xs font-bold text-muted">
+                  برند
+                </dt>
+
+                <dd
+                  dir="ltr"
+                  class="mt-1 text-sm font-black text-ink"
+                >
+                  {alarm.data.brand}
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-xs font-bold text-muted">
+                  دسته خطا
+                </dt>
+
+                <dd class="mt-1 text-sm font-black text-ink">
+                  {categoryLabel}
+                </dd>
+              </div>
+
+              {
+                publishedAt && (
+                  <div>
+                    <dt class="text-xs font-bold text-muted">
+                      تاریخ انتشار
+                    </dt>
+
+                    <dd class="mt-1 text-sm font-black text-ink">
+                      {publishedAt}
+                    </dd>
+                  </div>
+                )
+              }
+
+              {
+                updatedAt && (
+                  <div>
+                    <dt class="text-xs font-bold text-muted">
+                      آخرین به‌روزرسانی
+                    </dt>
+
+                    <dd class="mt-1 text-sm font-black text-ink">
+                      {updatedAt}
+                    </dd>
+                  </div>
+                )
+              }
+            </dl>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    {
+      (alarm.data.series.length > 0 ||
+        alarm.data.applicableModels.length > 0 ||
+        alarm.data.aliases.length > 0) && (
+        <section class="border-b border-line bg-surface py-10 md:py-12">
+          <div class="site-container">
+            <div class="grid gap-4 md:grid-cols-3">
+              {
+                alarm.data.series.length > 0 && (
+                  <Card padding="sm">
+                    <p class="text-xs font-bold text-brand-700">
+                      سری / خانواده
+                    </p>
+
+                    <div class="mt-3 space-y-2">
+                      {
+                        alarm.data.series.map((series) => (
+                          <p
+                            dir="auto"
+                            class="text-sm font-black leading-7 text-ink"
+                          >
+                            {series}
+                          </p>
+                        ))
+                      }
+                    </div>
+                  </Card>
+                )
+              }
+
+              {
+                alarm.data.applicableModels.length > 0 && (
+                  <Card padding="sm">
+                    <p class="text-xs font-bold text-brand-700">
+                      مدل‌های مرتبط
+                    </p>
+
+                    <div class="mt-3 space-y-2">
+                      {
+                        alarm.data.applicableModels.map(
+                          (model) => (
+                            <p
+                              dir="auto"
+                              class="text-sm font-black leading-7 text-ink"
+                            >
+                              {model}
+                            </p>
+                          ),
+                        )
+                      }
+                    </div>
+                  </Card>
+                )
+              }
+
+              {
+                alarm.data.aliases.length > 0 && (
+                  <Card padding="sm">
+                    <p class="text-xs font-bold text-brand-700">
+                      نام‌ها / کدهای جایگزین
+                    </p>
+
+                    <div class="mt-3 space-y-2">
+                      {
+                        alarm.data.aliases.map((alias) => (
+                          <p
+                            dir="ltr"
+                            class="break-words text-left text-sm font-black leading-7 text-ink"
+                          >
+                            {alias}
+                          </p>
+                        ))
+                      }
+                    </div>
+                  </Card>
+                )
+              }
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div class="space-y-6">
+            <Card padding="lg">
+              <p class="text-sm font-bold text-brand-700">
+                معنی Alarm
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black text-ink">
+                این کد چه مفهومی دارد؟
+              </h2>
+
+              <p class="mt-5 text-sm leading-8 text-ink-soft">
+                {alarm.data.meaning}
+              </p>
+            </Card>
+
+            {
+              alarm.data.symptoms.length > 0 && (
+                <Card padding="lg">
+                  <p class="text-sm font-bold text-brand-700">
+                    علائم مشاهده‌شده
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    رفتارهای همراه با خطا
+                  </h2>
+
+                  <ul class="mt-6 space-y-3">
+                    {
+                      alarm.data.symptoms.map((symptom) => (
+                        <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                          <span
+                            aria-hidden="true"
+                            class="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-black text-brand-800"
+                          >
+                            !
+                          </span>
+
+                          <span>{symptom}</span>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                </Card>
+              )
+            }
+
+            {
+              alarm.data.commonCauses.length > 0 && (
+                <Card padding="lg">
+                  <p class="text-sm font-bold text-brand-700">
+                    علت‌های محتمل
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    چه مواردی باید بررسی شوند؟
+                  </h2>
+
+                  <ul class="mt-6 space-y-3">
+                    {
+                      alarm.data.commonCauses.map(
+                        (cause) => (
+                          <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                            <span
+                              aria-hidden="true"
+                              class="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-surface-soft text-xs font-black text-brand-800"
+                            >
+                              •
+                            </span>
+
+                            <span>{cause}</span>
+                          </li>
+                        ),
+                      )
+                    }
+                  </ul>
+                </Card>
+              )
+            }
+
+            {
+              alarm.data.initialChecks.length > 0 && (
+                <Card padding="lg">
+                  <p class="text-sm font-bold text-brand-700">
+                    بررسی اولیه
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    اطلاعات و کنترل‌های اولیه
+                  </h2>
+
+                  <ol class="mt-6 space-y-4">
+                    {
+                      alarm.data.initialChecks.map(
+                        (check, index) => (
+                          <li class="flex gap-4 text-sm leading-7 text-ink-soft">
+                            <span
+                              aria-hidden="true"
+                              class="grid size-7 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-black text-brand-800"
+                            >
+                              {new Intl.NumberFormat(
+                                "fa-IR",
+                              ).format(index + 1)}
+                            </span>
+
+                            <span>{check}</span>
+                          </li>
+                        ),
+                      )
+                    }
+                  </ol>
+                </Card>
+              )
+            }
+
+            {
+              alarm.data.safetyNotes.length > 0 && (
+                <div class="rounded-card border border-amber-200 bg-amber-50 p-6 shadow-card md:p-8">
+                  <p class="text-sm font-bold text-amber-800">
+                    نکات ایمنی
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    قبل از بررسی سخت‌افزاری
+                  </h2>
+
+                  <ul class="mt-5 space-y-3">
+                    {
+                      alarm.data.safetyNotes.map((note) => (
+                        <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                          <span
+                            aria-hidden="true"
+                            class="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-amber-100 text-xs font-black text-amber-800"
+                          >
+                            !
+                          </span>
+
+                          <span>{note}</span>
+                        </li>
+                      ))
+                    }
+                  </ul>
+                </div>
+              )
+            }
+
+            {
+              alarm.data.escalationNotes.length > 0 && (
+                <Card padding="lg">
+                  <p class="text-sm font-bold text-brand-700">
+                    زمان ارجاع تخصصی
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    چه زمانی بررسی تخصصی لازم است؟
+                  </h2>
+
+                  <ul class="mt-5 space-y-3">
+                    {
+                      alarm.data.escalationNotes.map(
+                        (note) => (
+                          <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                            <span
+                              aria-hidden="true"
+                              class="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-black text-brand-800"
+                            >
+                              →
+                            </span>
+
+                            <span>{note}</span>
+                          </li>
+                        ),
+                      )
+                    }
+                  </ul>
+                </Card>
+              )
+            }
+
+            <Card padding="lg">
+              <h2 class="text-2xl font-black text-ink">
+                توضیحات تکمیلی
+              </h2>
+
+              <div class="prose-content mt-6">
+                <Content />
+              </div>
+            </Card>
+          </div>
+
+          <aside class="space-y-6">
+            {
+              alarm.data.relatedComponents.length > 0 && (
+                <Card>
+                  <p class="text-sm font-bold text-brand-700">
+                    تجهیزات مرتبط
+                  </p>
+
+                  <div class="mt-4 flex flex-wrap gap-2">
+                    {
+                      alarm.data.relatedComponents.map(
+                        (component) => (
+                          <span
+                            dir="auto"
+                            class="rounded-full border border-line bg-surface-soft px-3 py-2 text-xs font-bold text-ink-soft"
+                          >
+                            {component}
+                          </span>
+                        ),
+                      )
+                    }
+                  </div>
+                </Card>
+              )
+            }
+
+            {
+              relatedServices.length > 0 && (
+                <Card>
+                  <p class="text-sm font-bold text-brand-700">
+                    خدمات مرتبط
+                  </p>
+
+                  <div class="mt-4 space-y-2">
+                    {
+                      relatedServices.map((service) => (
+                        <a
+                          href={`/services/${service.id}/`}
+                          class="block rounded-control border border-line px-4 py-3 text-sm font-bold text-ink transition hover:border-brand-200 hover:text-brand-700"
+                        >
+                          {service.title}
+                        </a>
+                      ))
+                    }
+                  </div>
+                </Card>
+              )
+            }
+
+            {
+              relatedBrands.length > 0 && (
+                <Card>
+                  <p class="text-sm font-bold text-brand-700">
+                    برندهای مرتبط
+                  </p>
+
+                  <div class="mt-4 space-y-2">
+                    {
+                      relatedBrands.map((brand) => (
+                        <a
+                          href={getBrandHref(brand)}
+                          class="block rounded-control border border-line px-4 py-3 text-sm font-bold text-ink transition hover:border-brand-200 hover:text-brand-700"
+                        >
+                          <span dir="ltr">
+                            {brand.data.name}
+                          </span>
+                        </a>
+                      ))
+                    }
+                  </div>
+                </Card>
+              )
+            }
+
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                این Alarm روی دستگاه شما دیده می‌شود؟
+              </p>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                کد کامل، عکس نمایشگر، برند، مدل تجهیز و
+                اتفاق قبل از ایجاد خطا را برای بررسی اولیه
+                ارسال کنید.
+              </p>
+
+              <div class="mt-5">
+                <Button
+                  href="/request/repair/"
+                  class="w-full"
+                >
+                  درخواست بررسی آلارم
+                </Button>
+              </div>
+            </Card>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    {
+      relatedProducts.length > 0 && (
+        <section class="border-t border-line bg-surface-raised py-10 md:py-14">
+          <div class="site-container">
+            <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p class="text-sm font-bold text-brand-700">
+                  قطعات مرتبط
+                </p>
+
+                <h2 class="mt-2 text-2xl font-black text-ink">
+                  محصولات مرتبط با این Alarm
+                </h2>
+              </div>
+
+              <p class="text-sm font-bold text-muted">
+                {new Intl.NumberFormat("fa-IR").format(
+                  relatedProducts.length,
+                )}
+                {" "}
+                محصول
+              </p>
+            </div>
+
+            <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {
+                relatedProducts.map((product) => (
+                  <ProductCard product={product} />
+                ))
+              }
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    {
+      relatedRepairs.length > 0 && (
+        <section class="border-t border-line bg-surface py-10 md:py-14">
+          <div class="site-container">
+            <div class="mb-8">
+              <p class="text-sm font-bold text-brand-700">
+                سوابق تعمیر مرتبط
+              </p>
+
+              <h2 class="mt-2 text-2xl font-black text-ink md:text-3xl">
+                نمونه‌های عیب‌یابی مرتبط
+              </h2>
+            </div>
+
+            <div class="grid gap-6 lg:grid-cols-2">
+              {
+                relatedRepairs.map((repair) => {
+                  const repairDate =
+                    formatRepairDate(
+                      repair.data.publishedAt,
+                    );
+
+                  return (
+                    <Card
+                      interactive
+                      padding="lg"
+                    >
+                      <div class="flex flex-wrap gap-2">
+                        {
+                          repair.data.brand && (
+                            <Badge
+                              variant="brand"
+                              size="sm"
+                              dir="ltr"
+                            >
+                              {repair.data.brand}
+                            </Badge>
+                          )
+                        }
+
+                        {
+                          repair.data.alarmCode && (
+                            <Badge
+                              variant="warning"
+                              size="sm"
+                              dir="ltr"
+                            >
+                              {repair.data.alarmCode}
+                            </Badge>
+                          )
+                        }
+                      </div>
+
+                      <h3 class="mt-5 text-xl font-black leading-8 text-ink">
+                        <a
+                          href={getRepairHref(repair)}
+                          class="transition hover:text-brand-700"
+                        >
+                          {repair.data.title}
+                        </a>
+                      </h3>
+
+                      <p class="mt-3 text-sm leading-7 text-muted">
+                        {repair.data.excerpt}
+                      </p>
+
+                      <div class="mt-5 flex flex-wrap items-center justify-between gap-3">
+                        {
+                          repairDate ? (
+                            <p class="text-xs font-bold text-muted">
+                              انتشار: {repairDate}
+                            </p>
+                          ) : (
+                            <span></span>
+                          )
+                        }
+
+                        <a
+                          href={getRepairHref(repair)}
+                          class="text-sm font-black text-brand-700 transition hover:text-brand-800"
+                        >
+                          مشاهده سابقه تعمیر ←
+                        </a>
+                      </div>
+                    </Card>
+                  );
+                })
+              }
+            </div>
+          </div>
+        </section>
+      )
+    }
+
+    <section class="border-t border-line bg-brand-950 py-10 text-white md:py-12">
+      <div class="site-container">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div class="max-w-3xl">
+            <p class="text-sm font-bold text-brand-200">
+              برای تفسیر دقیق‌تر Alarm
+            </p>
+
+            <h2 class="mt-2 text-2xl font-black md:text-3xl">
+              کد کامل، مدل تجهیز و شرایط ایجاد خطا را ارسال کنید
+            </h2>
+
+            <p class="mt-3 text-sm leading-7 text-brand-100">
+              یک کد بدون مدل، سری و شرایط وقوع ممکن است
+              برای تشخیص قطعی کافی نباشد.
+            </p>
+          </div>
+
+          <div class="flex shrink-0 flex-wrap gap-3">
+            <Button
+              href="/request/repair/"
+              size="lg"
+            >
+              درخواست بررسی
+            </Button>
+
+            <Button
+              href="/services/alarm-diagnosis/"
+              variant="secondary"
+              size="lg"
+            >
+              خدمات تشخیص آلارم
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
