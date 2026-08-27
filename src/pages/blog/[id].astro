@@ -1,0 +1,522 @@
+---
+import {
+  getCollection,
+  render,
+} from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+import { siteConfig } from "../../config/site";
+
+import { serviceCategories } from "../../data/serviceCategories";
+
+import {
+  formatArticleDate,
+  getActiveArticles,
+  getArticleCategoryLabel,
+  type ArticleEntry,
+} from "../../lib/articles";
+
+export async function getStaticPaths() {
+  const allArticles =
+    await getCollection("articles");
+
+  const articles =
+    getActiveArticles(allArticles);
+
+  return articles.map((article) => ({
+    params: {
+      id: article.id,
+    },
+
+    props: {
+      article,
+    },
+  }));
+}
+
+interface Props {
+  article: ArticleEntry;
+}
+
+const { article } = Astro.props;
+
+const { Content } =
+  await render(article);
+
+const siteUrl =
+  siteConfig.seo.siteUrl.replace(
+    /\/$/,
+    "",
+  );
+
+const canonical =
+  article.data.seo?.canonical ??
+  `${siteUrl}/blog/${article.id}/`;
+
+const pageTitle =
+  article.data.seo?.title ??
+  article.data.title;
+
+const pageDescription =
+  article.data.seo?.description ??
+  article.data.excerpt;
+
+const noindex =
+  article.data.seo?.noindex ?? false;
+
+const categoryLabel =
+  getArticleCategoryLabel(article);
+
+const publishedAt =
+  formatArticleDate(
+    article.data.publishedAt,
+  );
+
+const updatedAt =
+  formatArticleDate(
+    article.data.updatedAt,
+  );
+
+const relatedServices =
+  article.data.relatedServices
+    .map((serviceId) =>
+      serviceCategories.find(
+        (service) =>
+          service.id === serviceId,
+      ),
+    )
+    .filter(
+      (
+        service,
+      ): service is (typeof serviceCategories)[number] =>
+        Boolean(service),
+    );
+
+const structuredImage =
+  article.data.image
+    ? article.data.image.startsWith(
+        "http",
+      )
+      ? article.data.image
+      : `${siteUrl}/${article.data.image.replace(
+          /^\/+/,
+          "",
+        )}`
+    : undefined;
+
+const articleStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "TechArticle",
+  headline: article.data.title,
+  description: article.data.excerpt,
+  url: canonical,
+  inLanguage: "fa-IR",
+  articleSection: categoryLabel,
+  mainEntityOfPage: {
+    "@type": "WebPage",
+    "@id": canonical,
+  },
+
+  ...(article.data.publishedAt
+    ? {
+        datePublished:
+          article.data.publishedAt.toISOString(),
+      }
+    : {}),
+
+  ...(article.data.updatedAt
+    ? {
+        dateModified:
+          article.data.updatedAt.toISOString(),
+      }
+    : {}),
+
+  ...(article.data.tags.length > 0
+    ? {
+        keywords:
+          article.data.tags.join(", "),
+      }
+    : {}),
+
+  ...(structuredImage
+    ? {
+        image: structuredImage,
+      }
+    : {}),
+
+  publisher: {
+    "@type": "Organization",
+    name: siteConfig.brand.name,
+    url: `${siteUrl}/`,
+  },
+};
+
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "صفحه اصلی",
+      item: `${siteUrl}/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "دانشنامه CNC",
+      item: `${siteUrl}/blog/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: article.data.title,
+      item: canonical,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  noindex={noindex}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(
+      articleStructuredData,
+    )}
+  ></script>
+
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(
+      breadcrumbStructuredData,
+    )}
+  ></script>
+
+  <main>
+    <section
+      class="border-b border-line bg-surface-raised"
+    >
+      <div
+        class="site-container py-10 md:py-14 lg:py-16"
+      >
+        <nav
+          aria-label="مسیر صفحه"
+          class="text-sm font-bold text-muted"
+        >
+          <ol
+            class="flex flex-wrap items-center gap-2"
+          >
+            <li>
+              <a
+                href="/"
+                class="transition hover:text-brand-700"
+              >
+                صفحه اصلی
+              </a>
+            </li>
+
+            <li aria-hidden="true">/</li>
+
+            <li>
+              <a
+                href="/blog/"
+                class="transition hover:text-brand-700"
+              >
+                دانشنامه
+              </a>
+            </li>
+
+            <li aria-hidden="true">/</li>
+
+            <li
+              class="text-ink"
+              aria-current="page"
+            >
+              {article.data.title}
+            </li>
+          </ol>
+        </nav>
+
+        <div class="mt-8 max-w-4xl">
+          <div
+            class="flex flex-wrap items-center gap-2"
+          >
+            <span
+              class="rounded-full bg-brand-50 px-3 py-1 text-xs font-black text-brand-700"
+            >
+              {categoryLabel}
+            </span>
+
+            {
+              article.data.featured && (
+                <span
+                  class="rounded-full border border-line px-3 py-1 text-xs font-black text-muted"
+                >
+                  مطلب منتخب
+                </span>
+              )
+            }
+          </div>
+
+          <h1
+            class="mt-4 text-3xl font-black leading-tight text-ink md:text-4xl lg:text-5xl"
+          >
+            {article.data.title}
+          </h1>
+
+          <p
+            class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg"
+          >
+            {article.data.excerpt}
+          </p>
+
+          <dl
+            class="mt-6 flex flex-wrap gap-x-8 gap-y-3 text-sm"
+          >
+            {
+              publishedAt && (
+                <div>
+                  <dt
+                    class="inline font-bold text-muted"
+                  >
+                    انتشار:
+                  </dt>
+
+                  <dd
+                    class="mr-1 inline font-black text-ink"
+                  >
+                    {publishedAt}
+                  </dd>
+                </div>
+              )
+            }
+
+            {
+              updatedAt && (
+                <div>
+                  <dt
+                    class="inline font-bold text-muted"
+                  >
+                    آخرین به‌روزرسانی:
+                  </dt>
+
+                  <dd
+                    class="mr-1 inline font-black text-ink"
+                  >
+                    {updatedAt}
+                  </dd>
+                </div>
+              )
+            }
+          </dl>
+
+          {
+            article.data.tags.length > 0 && (
+              <div
+                class="mt-6 flex flex-wrap gap-2"
+                aria-label="برچسب‌های مقاله"
+              >
+                {
+                  article.data.tags.map(
+                    (tag) => (
+                      <span
+                        class="rounded-full border border-line bg-surface px-3 py-1 text-xs font-bold text-muted"
+                      >
+                        {tag}
+                      </span>
+                    ),
+                  )
+                }
+              </div>
+            )
+          }
+        </div>
+      </div>
+    </section>
+
+    <section class="site-container py-10 md:py-14">
+      <div
+        class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_320px]"
+      >
+        <article
+          class="min-w-0 rounded-2xl border border-line bg-surface-raised p-6 md:p-8"
+        >
+          <div class="article-content">
+            <Content />
+          </div>
+        </article>
+
+        <aside class="space-y-5">
+          {
+            relatedServices.length > 0 && (
+              <section
+                class="rounded-2xl border border-line bg-surface-raised p-5"
+              >
+                <p
+                  class="text-sm font-black text-brand-700"
+                >
+                  خدمات مرتبط
+                </p>
+
+                <ul
+                  class="mt-4 space-y-2"
+                >
+                  {
+                    relatedServices.map(
+                      (service) => (
+                        <li>
+                          <a
+                            href={`/services/${service.id}/`}
+                            class="block rounded-xl border border-line bg-surface px-4 py-3 text-sm font-black text-ink transition hover:border-brand-300 hover:text-brand-700"
+                          >
+                            {service.title}
+                          </a>
+                        </li>
+                      ),
+                    )
+                  }
+                </ul>
+              </section>
+            )
+          }
+
+          <section
+            class="rounded-2xl border border-line bg-surface-raised p-5"
+          >
+            <p
+              class="text-sm font-black text-brand-700"
+            >
+              نیاز به بررسی تخصصی دارید؟
+            </p>
+
+            <h2
+              class="mt-2 text-lg font-black text-ink"
+            >
+              اطلاعات خرابی دستگاه را آماده کنید
+            </h2>
+
+            <p
+              class="mt-3 text-sm leading-7 text-muted"
+            >
+              اگر موضوع مقاله با مشکل واقعی
+              دستگاه شما مرتبط است، مشخصات
+              دستگاه، کنترلر و علائم خرابی را
+              ثبت کنید.
+            </p>
+
+            <a
+              href="/request/repair/"
+              class="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand-600 px-4 text-sm font-black text-white transition hover:bg-brand-700"
+            >
+              درخواست تعمیر
+            </a>
+          </section>
+
+          <section
+            class="rounded-2xl border border-line bg-surface-raised p-5"
+          >
+            <p
+              class="text-sm font-black text-brand-700"
+            >
+              جست‌وجوی قطعه
+            </p>
+
+            <p
+              class="mt-2 text-sm leading-7 text-muted"
+            >
+              برای تطبیق قطعه می‌توانید اطلاعات
+              برند، Part Number و مدل دستگاه را
+              آماده کنید.
+            </p>
+
+            <a
+              href="/request/part/"
+              class="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-xl border border-line bg-surface px-4 text-sm font-black text-ink transition hover:border-brand-300 hover:text-brand-700"
+            >
+              درخواست قطعه
+            </a>
+          </section>
+        </aside>
+      </div>
+    </section>
+  </main>
+</BaseLayout>
+
+<style>
+  :global(.article-content) {
+    color: var(--color-ink);
+    line-height: 2;
+  }
+
+  :global(.article-content > :first-child) {
+    margin-top: 0;
+  }
+
+  :global(.article-content > :last-child) {
+    margin-bottom: 0;
+  }
+
+  :global(.article-content h2) {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.35rem;
+    font-weight: 900;
+    line-height: 1.6;
+  }
+
+  :global(.article-content h3) {
+    margin-top: 1.5rem;
+    margin-bottom: 0.65rem;
+    font-size: 1.1rem;
+    font-weight: 900;
+    line-height: 1.7;
+  }
+
+  :global(.article-content p) {
+    margin-block: 1rem;
+  }
+
+  :global(.article-content ul),
+  :global(.article-content ol) {
+    margin-block: 1rem;
+    padding-inline-start: 1.5rem;
+  }
+
+  :global(.article-content ul) {
+    list-style: disc;
+  }
+
+  :global(.article-content ol) {
+    list-style: decimal;
+  }
+
+  :global(.article-content li) {
+    margin-block: 0.4rem;
+  }
+
+  :global(.article-content a) {
+    font-weight: 800;
+    color: var(--color-brand-700);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
+
+  :global(.article-content strong) {
+    font-weight: 900;
+  }
+
+  :global(.article-content code) {
+    direction: ltr;
+    unicode-bidi: embed;
+  }
+</style>

@@ -319,43 +319,108 @@ const brands = defineCollection({
 |--------------------------------------------------------------------------
 */
 
+const articleStatusSchema = z.enum([
+  "draft",
+  "active",
+  "archived",
+]);
+
+const articleCategorySchema = z.enum([
+  "fundamentals",
+  "troubleshooting",
+  "maintenance",
+  "repair",
+  "parts",
+  "automation",
+  "buying-guide",
+]);
+
 const articles = defineCollection({
   loader: glob({
     base: "./src/content/articles",
     pattern: "**/*.{md,mdx}",
   }),
 
-  schema: z.object({
-    title: z.string(),
-    excerpt: z.string(),
+  schema: z
+    .object({
+      title: z.string(),
+      excerpt: z.string(),
 
-    category: z.string(),
+      status:
+        articleStatusSchema.default("draft"),
 
-    tags: z
-      .array(z.string())
-      .default([]),
+      category: articleCategorySchema,
 
-    publishedAt: z.coerce.date(),
+      tags: z
+        .array(z.string())
+        .default([]),
 
-    updatedAt: z
-      .coerce
-      .date()
-      .optional(),
+      publishedAt:
+        z.coerce.date().optional(),
 
-    featured: z.boolean().default(false),
+      updatedAt:
+        z.coerce.date().optional(),
 
-    image: z.string().optional(),
+      featured:
+        z.boolean().default(false),
 
-    relatedProducts: z
-      .array(z.string())
-      .default([]),
+      order: z
+        .number()
+        .int()
+        .nonnegative()
+        .default(0),
 
-    relatedServices: z
-      .array(z.string())
-      .default([]),
+      image: z.string().optional(),
 
-    seo: seoSchema.optional(),
-  }),
+      relatedProducts: z
+        .array(z.string())
+        .default([]),
+
+      relatedServices: z
+        .array(z.string())
+        .default([]),
+
+      relatedBrands: z
+        .array(z.string())
+        .default([]),
+
+      relatedAlarms: z
+        .array(z.string())
+        .default([]),
+
+      relatedRepairs: z
+        .array(z.string())
+        .default([]),
+
+      seo: seoSchema.optional(),
+    })
+    .superRefine((article, ctx) => {
+      if (
+        article.status === "active" &&
+        !article.publishedAt
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["publishedAt"],
+          message:
+            "Active articles require a publishedAt date.",
+        });
+      }
+
+      if (
+        article.publishedAt &&
+        article.updatedAt &&
+        article.updatedAt.getTime() <
+          article.publishedAt.getTime()
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["updatedAt"],
+          message:
+            "Article updatedAt cannot be earlier than publishedAt.",
+        });
+      }
+    }),
 });
 
 /*
