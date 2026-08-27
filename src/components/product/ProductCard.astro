@@ -1,0 +1,130 @@
+---
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import type { ProductEntry } from "../../lib/products";
+import {
+  formatProductPrice,
+  getProductCategoryTitle,
+  getProductCommerceModeLabel,
+  getProductConditionLabel,
+  getProductHref,
+  getProductInventoryLabel,
+} from "../../lib/products";
+
+interface Props {
+  product: ProductEntry;
+}
+
+const { product } = Astro.props;
+
+const price = formatProductPrice(product);
+const href = getProductHref(product);
+
+const commerceVariant =
+  product.data.commerceMode === "direct-purchase"
+    ? "success"
+    : product.data.commerceMode === "price-inquiry"
+      ? "brand"
+      : "warning";
+---
+
+<article
+  class="flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface-raised shadow-card"
+>
+  <div
+    class="flex aspect-[4/3] items-center justify-center border-b border-line bg-surface-soft p-6"
+  >
+    {
+      product.data.images[0] ? (
+        <img
+          src={product.data.images[0]}
+          alt={product.data.name}
+          loading="lazy"
+          class="h-full w-full object-contain"
+        />
+      ) : (
+        <div class="text-center">
+          <div
+            dir="ltr"
+            class="text-2xl font-black tracking-tight text-line-strong"
+          >
+            CNC
+          </div>
+
+          <p class="mt-2 text-xs font-bold text-muted">
+            تصویر محصول به‌زودی
+          </p>
+        </div>
+      )
+    }
+  </div>
+
+  <div class="flex flex-1 flex-col p-5">
+    <div class="flex flex-wrap gap-2">
+      <Badge variant={commerceVariant} size="sm">
+        {getProductCommerceModeLabel(product)}
+      </Badge>
+
+      <Badge variant="neutral" size="sm">
+        {getProductConditionLabel(product)}
+      </Badge>
+    </div>
+
+    <p class="mt-4 text-xs font-bold text-brand-700">
+      {getProductCategoryTitle(product)}
+    </p>
+
+    <h2 class="mt-1 text-lg font-black leading-8 text-ink">
+      <a
+        href={href}
+        class="transition hover:text-brand-700"
+      >
+        {product.data.name}
+      </a>
+    </h2>
+
+    <div class="mt-3 space-y-1">
+      <p
+        dir="ltr"
+        class="text-sm font-black text-ink-soft"
+      >
+        {product.data.brand}
+      </p>
+
+      <p
+        dir="ltr"
+        class="text-xs font-bold text-muted"
+      >
+        P/N: {product.data.partNumber}
+      </p>
+    </div>
+
+    <p class="mt-4 line-clamp-3 text-sm leading-7 text-muted">
+      {product.data.description}
+    </p>
+
+    <div class="mt-5 border-t border-line pt-4">
+      {
+        price ? (
+          <p class="text-lg font-black text-ink">
+            {price}
+          </p>
+        ) : (
+          <p class="text-sm font-black text-brand-700">
+            {getProductCommerceModeLabel(product)}
+          </p>
+        )
+      }
+
+      <p class="mt-1 text-xs font-bold text-muted">
+        {getProductInventoryLabel(product)}
+      </p>
+    </div>
+
+    <div class="mt-auto pt-5">
+      <Button href={href} variant="secondary" class="w-full">
+        مشاهده جزئیات
+      </Button>
+    </div>
+  </div>
+</article>

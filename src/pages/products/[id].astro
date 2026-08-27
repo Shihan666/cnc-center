@@ -1,0 +1,580 @@
+---
+import {
+  getCollection,
+  render,
+} from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import { siteConfig } from "../../config/site";
+
+import {
+  formatProductPrice,
+  getActiveProducts,
+  getProductCategoryHref,
+  getProductCategoryTitle,
+  getProductCommerceModeDescription,
+  getProductCommerceModeLabel,
+  getProductConditionLabel,
+  getProductInventoryLabel,
+  getRelatedServiceTitle,
+  type ProductEntry,
+} from "../../lib/products";
+
+export async function getStaticPaths() {
+  const allProducts = await getCollection("products");
+  const products = getActiveProducts(allProducts);
+
+  return products.map((product) => ({
+    params: {
+      id: product.id,
+    },
+
+    props: {
+      product,
+    },
+  }));
+}
+
+interface Props {
+  product: ProductEntry;
+}
+
+const { product } = Astro.props;
+
+const { Content } = await render(product);
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical =
+  product.data.seo?.canonical ??
+  `${siteUrl}/products/${product.id}/`;
+
+const pageTitle =
+  product.data.seo?.title ??
+  product.data.name;
+
+const pageDescription =
+  product.data.seo?.description ??
+  product.data.description;
+
+const noindex =
+  product.data.seo?.noindex ?? false;
+
+const categoryTitle =
+  getProductCategoryTitle(product);
+
+const categoryHref =
+  getProductCategoryHref(product);
+
+const conditionLabel =
+  getProductConditionLabel(product);
+
+const commerceModeLabel =
+  getProductCommerceModeLabel(product);
+
+const commerceModeDescription =
+  getProductCommerceModeDescription(product);
+
+const inventoryLabel =
+  getProductInventoryLabel(product);
+
+const formattedPrice =
+  formatProductPrice(product);
+
+/*
+ * Schema.org Offer uses ISO 4217 currency codes.
+ * IRR represents Iranian Rial, so Toman content prices
+ * must be multiplied by 10 only for structured data.
+ */
+const structuredPrice =
+  product.data.price === undefined
+    ? null
+    : product.data.priceUnit === "toman"
+      ? product.data.price * 10
+      : product.data.price;
+
+const ctaLabel =
+  product.data.commerceMode === "direct-purchase"
+    ? "درخواست خرید این محصول"
+    : product.data.commerceMode === "price-inquiry"
+      ? "استعلام قیمت این محصول"
+      : "درخواست تأمین این قطعه";
+
+const commerceVariant =
+  product.data.commerceMode === "direct-purchase"
+    ? "success"
+    : product.data.commerceMode === "price-inquiry"
+      ? "brand"
+      : "warning";
+
+const structuredProduct = {
+  "@context": "https://schema.org",
+  "@type": "Product",
+  name: product.data.name,
+  description: product.data.description,
+  sku: product.data.sku,
+  mpn: product.data.partNumber,
+  brand: {
+    "@type": "Brand",
+    name: product.data.brand,
+  },
+  category: categoryTitle,
+  url: canonical,
+
+  ...(product.data.images.length > 0
+    ? {
+        image: product.data.images.map(
+          (image) =>
+            image.startsWith("http")
+              ? image
+              : `${siteUrl}${image}`,
+        ),
+      }
+    : {}),
+
+  ...(formattedPrice &&
+  structuredPrice !== null
+    ? {
+        offers: {
+          "@type": "Offer",
+          url: canonical,
+          price: structuredPrice,
+          priceCurrency: "IRR",
+          availability:
+            product.data.stockQuantity > 0
+              ? "https://schema.org/InStock"
+              : "https://schema.org/OutOfStock",
+          itemCondition:
+            product.data.condition === "new"
+              ? "https://schema.org/NewCondition"
+              : "https://schema.org/UsedCondition",
+        },
+      }
+    : {}),
+};
+
+const breadcrumbStructuredData = {
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  itemListElement: [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: "صفحه اصلی",
+      item: `${siteUrl}/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 2,
+      name: "محصولات",
+      item: `${siteUrl}/products/`,
+    },
+    {
+      "@type": "ListItem",
+      position: 3,
+      name: categoryTitle,
+      item: `${siteUrl}${categoryHref}`,
+    },
+    {
+      "@type": "ListItem",
+      position: 4,
+      name: product.data.name,
+      item: canonical,
+    },
+  ],
+};
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  noindex={noindex}
+>
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(structuredProduct)}
+  ></script>
+
+  <script
+    slot="head"
+    is:inline
+    type="application/ld+json"
+    set:html={JSON.stringify(breadcrumbStructuredData)}
+  ></script>
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-14">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a
+            href="/products/"
+            class="transition hover:text-brand-700"
+          >
+            محصولات
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a
+            href={categoryHref}
+            class="transition hover:text-brand-700"
+          >
+            {categoryTitle}
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            {product.data.name}
+          </span>
+        </nav>
+
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,420px)] lg:items-start">
+          <div>
+            <div class="flex flex-wrap gap-2">
+              <Badge
+                variant={commerceVariant}
+                size="sm"
+              >
+                {commerceModeLabel}
+              </Badge>
+
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                {conditionLabel}
+              </Badge>
+            </div>
+
+            <p class="mt-5 text-sm font-black text-brand-700">
+              {categoryTitle}
+            </p>
+
+            <h1 class="mt-2 text-3xl font-black leading-[1.45] tracking-tight text-ink md:text-5xl">
+              {product.data.name}
+            </h1>
+
+            <p class="mt-5 max-w-3xl text-base leading-8 text-muted">
+              {product.data.description}
+            </p>
+
+            <div class="mt-6 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-control border border-line bg-surface px-4 py-3">
+                <p class="text-xs font-bold text-muted">
+                  برند
+                </p>
+
+                <p
+                  dir="ltr"
+                  class="mt-1 text-sm font-black text-ink"
+                >
+                  {product.data.brand}
+                </p>
+              </div>
+
+              <div class="rounded-control border border-line bg-surface px-4 py-3">
+                <p class="text-xs font-bold text-muted">
+                  Part Number
+                </p>
+
+                <p
+                  dir="ltr"
+                  class="mt-1 text-sm font-black text-ink"
+                >
+                  {product.data.partNumber}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <Card padding="lg">
+            <div
+              class="flex aspect-[4/3] items-center justify-center rounded-control border border-line bg-surface-soft p-6"
+            >
+              {
+                product.data.images[0] ? (
+                  <img
+                    src={product.data.images[0]}
+                    alt={product.data.name}
+                    class="h-full w-full object-contain"
+                  />
+                ) : (
+                  <div class="text-center">
+                    <div
+                      dir="ltr"
+                      class="text-3xl font-black tracking-tight text-line-strong"
+                    >
+                      CNC
+                    </div>
+
+                    <p class="mt-2 text-xs font-bold text-muted">
+                      تصویر محصول به‌زودی
+                    </p>
+                  </div>
+                )
+              }
+            </div>
+
+            <div class="mt-5">
+              {
+                formattedPrice ? (
+                  <>
+                    <p class="text-xs font-bold text-muted">
+                      قیمت
+                    </p>
+
+                    <p class="mt-1 text-2xl font-black text-ink">
+                      {formattedPrice}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p class="text-xs font-bold text-muted">
+                      روش سفارش
+                    </p>
+
+                    <p class="mt-1 text-xl font-black text-brand-700">
+                      {commerceModeLabel}
+                    </p>
+                  </>
+                )
+              }
+
+              <p class="mt-3 text-sm font-bold text-ink-soft">
+                {inventoryLabel}
+              </p>
+
+              <p class="mt-4 text-sm leading-7 text-muted">
+                {commerceModeDescription}
+              </p>
+
+              {
+                product.data.availabilityNote && (
+                  <p class="mt-3 rounded-control bg-surface-soft px-4 py-3 text-xs leading-6 text-muted">
+                    {product.data.availabilityNote}
+                  </p>
+                )
+              }
+
+              <div class="mt-6">
+                <Button
+                  href="/request/part/"
+                  size="lg"
+                  class="w-full"
+                >
+                  {ctaLabel}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <div class="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div class="space-y-8">
+            {
+              product.data.specifications.length > 0 && (
+                <Card padding="lg">
+                  <h2 class="text-2xl font-black text-ink">
+                    مشخصات فنی
+                  </h2>
+
+                  <dl class="mt-6 divide-y divide-line border-y border-line">
+                    {
+                      product.data.specifications.map(
+                        (specification) => (
+                          <div class="grid gap-1 py-4 sm:grid-cols-[180px_1fr] sm:gap-6">
+                            <dt class="text-sm font-bold text-muted">
+                              {specification.label}
+                            </dt>
+
+                            <dd
+                              dir="auto"
+                              class="text-sm font-black text-ink"
+                            >
+                              {specification.value}
+                            </dd>
+                          </div>
+                        ),
+                      )
+                    }
+                  </dl>
+                </Card>
+              )
+            }
+
+            <Card padding="lg">
+              <h2 class="text-2xl font-black text-ink">
+                توضیحات تکمیلی
+              </h2>
+
+              <div class="prose-content mt-6">
+                <Content />
+              </div>
+            </Card>
+
+            {
+              product.data.compatibility.length > 0 && (
+                <Card padding="lg">
+                  <h2 class="text-2xl font-black text-ink">
+                    سازگاری و کاربرد
+                  </h2>
+
+                  <ul class="mt-5 space-y-3">
+                    {
+                      product.data.compatibility.map(
+                        (item) => (
+                          <li class="flex gap-3 text-sm leading-7 text-ink-soft">
+                            <span
+                              aria-hidden="true"
+                              class="mt-1 grid size-5 shrink-0 place-items-center rounded-full bg-brand-50 text-xs font-black text-brand-800"
+                            >
+                              ✓
+                            </span>
+
+                            <span>{item}</span>
+                          </li>
+                        ),
+                      )
+                    }
+                  </ul>
+                </Card>
+              )
+            }
+          </div>
+
+          <aside class="space-y-6">
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                اطلاعات محصول
+              </p>
+
+              <dl class="mt-4 space-y-4">
+                <div>
+                  <dt class="text-xs font-bold text-muted">
+                    وضعیت کالا
+                  </dt>
+
+                  <dd class="mt-1 text-sm font-black text-ink">
+                    {conditionLabel}
+                  </dd>
+                </div>
+
+                <div>
+                  <dt class="text-xs font-bold text-muted">
+                    موجودی
+                  </dt>
+
+                  <dd class="mt-1 text-sm font-black text-ink">
+                    {inventoryLabel}
+                  </dd>
+                </div>
+
+                {
+                  product.data.leadTime && (
+                    <div>
+                      <dt class="text-xs font-bold text-muted">
+                        زمان تأمین
+                      </dt>
+
+                      <dd class="mt-1 text-sm font-black text-ink">
+                        {product.data.leadTime}
+                      </dd>
+                    </div>
+                  )
+                }
+
+                {
+                  product.data.warranty && (
+                    <div>
+                      <dt class="text-xs font-bold text-muted">
+                        گارانتی / تضمین
+                      </dt>
+
+                      <dd class="mt-1 text-sm font-black text-ink">
+                        {product.data.warranty}
+                      </dd>
+                    </div>
+                  )
+                }
+              </dl>
+            </Card>
+
+            {
+              product.data.documents.length > 0 && (
+                <Card>
+                  <p class="text-sm font-bold text-brand-700">
+                    اسناد فنی
+                  </p>
+
+                  <div class="mt-4 space-y-2">
+                    {
+                      product.data.documents.map(
+                        (document) => (
+                          <a
+                            href={document.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="block rounded-control border border-line px-4 py-3 text-sm font-bold text-ink transition hover:border-brand-200 hover:text-brand-700"
+                          >
+                            {document.title}
+                          </a>
+                        ),
+                      )
+                    }
+                  </div>
+                </Card>
+              )
+            }
+
+            {
+              product.data.relatedServices.length > 0 && (
+                <Card>
+                  <p class="text-sm font-bold text-brand-700">
+                    خدمات مرتبط
+                  </p>
+
+                  <div class="mt-4 space-y-2">
+                    {
+                      product.data.relatedServices.map(
+                        (service) => (
+                          <a
+                            href={`/services/${service}/`}
+                            class="block rounded-control border border-line px-4 py-3 text-sm font-bold text-ink transition hover:border-brand-200 hover:text-brand-700"
+                          >
+                            {getRelatedServiceTitle(service)}
+                          </a>
+                        ),
+                      )
+                    }
+                  </div>
+                </Card>
+              )
+            }
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

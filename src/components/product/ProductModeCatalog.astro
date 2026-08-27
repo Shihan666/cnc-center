@@ -1,0 +1,209 @@
+---
+import { getCollection } from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../common/Badge.astro";
+import Button from "../common/Button.astro";
+import ProductCard from "./ProductCard.astro";
+
+import { siteConfig } from "../../config/site";
+
+import {
+  getActiveProducts,
+  getProductHref,
+  type ProductCommerceMode,
+} from "../../lib/products";
+
+interface Props {
+  mode: ProductCommerceMode;
+  title: string;
+  description: string;
+  canonicalPath: string;
+  badgeLabel: string;
+  emptyTitle: string;
+  emptyDescription: string;
+}
+
+const {
+  mode,
+  title,
+  description,
+  canonicalPath,
+  badgeLabel,
+  emptyTitle,
+  emptyDescription,
+} = Astro.props;
+
+const allProducts = await getCollection("products");
+
+const products = getActiveProducts(allProducts).filter(
+  (product) => product.data.commerceMode === mode,
+);
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}${canonicalPath}`;
+
+const structuredData =
+  products.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: title,
+        itemListElement: products.map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: product.data.name,
+          url: `${siteUrl}${getProductHref(product)}`,
+        })),
+      }
+    : null;
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonical={canonical}
+>
+  {
+    structuredData && (
+      <script
+        slot="head"
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify(structuredData)}
+      ></script>
+    )
+  }
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-12 md:py-18">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-6 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
+            صفحه اصلی
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <a
+            href="/products/"
+            class="transition hover:text-brand-700"
+          >
+            محصولات
+          </a>
+
+          <span aria-hidden="true">/</span>
+
+          <span class="font-bold text-ink-soft">
+            {badgeLabel}
+          </span>
+        </nav>
+
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            {badgeLabel}
+          </Badge>
+
+          <h1 class="mt-5 text-3xl font-black leading-[1.45] tracking-tight text-ink md:text-5xl">
+            {title}
+          </h1>
+
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+            {description}
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button
+              href="/products/"
+              size="lg"
+            >
+              همه محصولات
+            </Button>
+
+            <Button
+              href="/request/part/"
+              variant="secondary"
+              size="lg"
+            >
+              درخواست قطعه
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        {
+          products.length > 0 ? (
+            <>
+              <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p class="text-sm font-bold text-brand-700">
+                    محصولات فعال
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    {badgeLabel}
+                  </h2>
+                </div>
+
+                <p class="text-sm font-bold text-muted">
+                  {new Intl.NumberFormat("fa-IR").format(
+                    products.length,
+                  )}
+                  {" "}
+                  محصول
+                </p>
+              </div>
+
+              <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {
+                  products.map((product) => (
+                    <ProductCard product={product} />
+                  ))
+                }
+              </div>
+            </>
+          ) : (
+            <div class="mx-auto max-w-3xl rounded-panel border border-line bg-surface-raised p-8 text-center shadow-card md:p-12">
+              <div
+                aria-hidden="true"
+                class="mx-auto grid size-14 place-items-center rounded-full bg-brand-50 text-sm font-black text-brand-800"
+              >
+                CNC
+              </div>
+
+              <h2 class="mt-5 text-2xl font-black text-ink">
+                {emptyTitle}
+              </h2>
+
+              <p class="mx-auto mt-3 max-w-xl text-sm leading-8 text-muted">
+                {emptyDescription}
+              </p>
+
+              <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <Button href="/request/part/">
+                  ثبت درخواست قطعه
+                </Button>
+
+                <Button
+                  href="/shop/"
+                  variant="secondary"
+                >
+                  دسته‌بندی قطعات
+                </Button>
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </section>
+  </main>
+</BaseLayout>

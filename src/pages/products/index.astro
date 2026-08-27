@@ -1,0 +1,269 @@
+---
+import { getCollection } from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import ProductCard from "../../components/product/ProductCard.astro";
+
+import { siteConfig } from "../../config/site";
+
+import {
+  getActiveProducts,
+  getProductHref,
+} from "../../lib/products";
+
+const allProducts = await getCollection("products");
+const products = getActiveProducts(allProducts);
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+const canonical = `${siteUrl}/products/`;
+
+const pageTitle = "محصولات و قطعات CNC";
+
+const pageDescription =
+  "فهرست محصولات و قطعات CNC شامل خرید آنلاین، استعلام قیمت و تأمین سفارشی قطعات صنعتی و تجهیزات CNC.";
+
+const structuredData =
+  products.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "محصولات CNC Center",
+        itemListElement: products.map((product, index) => ({
+          "@type": "ListItem",
+          position: index + 1,
+          name: product.data.name,
+          url: `${siteUrl}${getProductHref(product)}`,
+        })),
+      }
+    : null;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+>
+  {
+    structuredData && (
+      <script
+        slot="head"
+        is:inline
+        type="application/ld+json"
+        set:html={JSON.stringify(structuredData)}
+      ></script>
+    )
+  }
+
+  <main>
+    <section class="border-b border-line bg-surface-raised py-12 md:py-18">
+      <div class="site-container">
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            کاتالوگ محصولات
+          </Badge>
+
+          <h1 class="mt-5 text-3xl font-black leading-[1.45] tracking-tight text-ink md:text-5xl">
+            محصولات و قطعات CNC
+          </h1>
+
+          <p class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg">
+            محصولات فعال CNC Center بر اساس نوع قطعه، وضعیت کالا،
+            موجودی و روش سفارش در این بخش نمایش داده می‌شوند.
+          </p>
+
+          <div class="mt-7 flex flex-wrap gap-3">
+            <Button
+              href="/shop/"
+              size="lg"
+            >
+              مشاهده دسته‌بندی‌ها
+            </Button>
+
+            <Button
+              href="/request/part/"
+              variant="secondary"
+              size="lg"
+            >
+              درخواست قطعه
+            </Button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="border-b border-line bg-surface py-10 md:py-12">
+      <div class="site-container">
+        <div class="max-w-3xl">
+          <p class="text-sm font-bold text-brand-700">
+            روش انتخاب محصول
+          </p>
+
+          <h2 class="mt-2 text-2xl font-black text-ink md:text-3xl">
+            سه مسیر برای خرید و تأمین قطعات
+          </h2>
+
+          <p class="mt-3 text-sm leading-7 text-muted">
+            بسته به وضعیت موجودی، قیمت و نوع قطعه می‌توانید از
+            مسیر خرید مستقیم، استعلام قیمت یا تأمین سفارشی استفاده کنید.
+          </p>
+        </div>
+
+        <div class="mt-7 grid gap-4 md:grid-cols-3">
+          <Card padding="lg">
+            <div class="flex h-full flex-col">
+              <Badge variant="success" size="sm">
+                خرید آنلاین
+              </Badge>
+
+              <h3 class="mt-4 text-xl font-black text-ink">
+                محصولات آماده خرید
+              </h3>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                محصولاتی که قیمت قابل نمایش و موجودی مستقیم دارند
+                از این مسیر قابل مشاهده هستند.
+              </p>
+
+              <div class="mt-auto pt-6">
+                <Button
+                  href="/products/buy/"
+                  variant="secondary"
+                  class="w-full"
+                >
+                  مشاهده خرید آنلاین
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card padding="lg">
+            <div class="flex h-full flex-col">
+              <Badge variant="brand" size="sm">
+                استعلام قیمت
+              </Badge>
+
+              <h3 class="mt-4 text-xl font-black text-ink">
+                بررسی قیمت روز
+              </h3>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                برای قطعاتی که قیمت آن‌ها وابسته به موجودی،
+                شرایط بازار یا مشخصات دقیق فنی است.
+              </p>
+
+              <div class="mt-auto pt-6">
+                <Button
+                  href="/products/price-inquiry/"
+                  variant="secondary"
+                  class="w-full"
+                >
+                  مشاهده استعلام قیمت
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          <Card padding="lg">
+            <div class="flex h-full flex-col">
+              <Badge variant="warning" size="sm">
+                تأمین سفارشی
+              </Badge>
+
+              <h3 class="mt-4 text-xl font-black text-ink">
+                قطعات خاص و کمیاب
+              </h3>
+
+              <p class="mt-3 text-sm leading-7 text-muted">
+                قطعات خارج از موجودی یا خاص بر اساس Part Number
+                و مشخصات فنی بررسی و تأمین می‌شوند.
+              </p>
+
+              <div class="mt-auto pt-6">
+                <Button
+                  href="/products/sourcing/"
+                  variant="secondary"
+                  class="w-full"
+                >
+                  مشاهده تأمین سفارشی
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        {
+          products.length > 0 ? (
+            <>
+              <div class="mb-8 flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p class="text-sm font-bold text-brand-700">
+                    کاتالوگ فعال
+                  </p>
+
+                  <h2 class="mt-2 text-2xl font-black text-ink">
+                    محصولات قابل مشاهده
+                  </h2>
+                </div>
+
+                <p class="text-sm font-bold text-muted">
+                  {new Intl.NumberFormat("fa-IR").format(
+                    products.length,
+                  )}
+                  {" "}
+                  محصول
+                </p>
+              </div>
+
+              <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {
+                  products.map((product) => (
+                    <ProductCard product={product} />
+                  ))
+                }
+              </div>
+            </>
+          ) : (
+            <div class="mx-auto max-w-3xl rounded-panel border border-line bg-surface-raised p-8 text-center shadow-card md:p-12">
+              <div
+                aria-hidden="true"
+                class="mx-auto grid size-14 place-items-center rounded-full bg-brand-50 text-lg font-black text-brand-800"
+              >
+                CNC
+              </div>
+
+              <h2 class="mt-5 text-2xl font-black text-ink">
+                کاتالوگ محصولات در حال آماده‌سازی است
+              </h2>
+
+              <p class="mx-auto mt-3 max-w-xl text-sm leading-8 text-muted">
+                هنوز محصول فعال عمومی در کاتالوگ ثبت نشده است.
+                برای استعلام یا تأمین یک قطعه خاص، Part Number و
+                مشخصات تجهیز را برای ما ارسال کنید.
+              </p>
+
+              <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <Button href="/request/part/">
+                  ثبت درخواست قطعه
+                </Button>
+
+                <Button
+                  href="/shop/"
+                  variant="secondary"
+                >
+                  دسته‌بندی قطعات
+                </Button>
+              </div>
+            </div>
+          )
+        }
+      </div>
+    </section>
+  </main>
+</BaseLayout>

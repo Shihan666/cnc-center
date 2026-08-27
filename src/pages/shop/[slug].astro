@@ -1,19 +1,29 @@
 ---
+import { getCollection } from "astro:content";
+
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
 import Card from "../../components/common/Card.astro";
+import ProductCard from "../../components/product/ProductCard.astro";
+
 import { siteConfig } from "../../config/site";
 import {
   shopCategories,
   type ShopCategory,
 } from "../../data/shopCategories";
 
+import {
+  getActiveProducts,
+  getProductHref,
+} from "../../lib/products";
+
 export function getStaticPaths() {
   return shopCategories.map((category) => ({
     params: {
       slug: category.slug,
     },
+
     props: {
       category,
     },
@@ -26,13 +36,22 @@ interface Props {
 
 const { category } = Astro.props;
 
-const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
-const canonical = `${siteUrl}/shop/${category.slug}/`;
+const allProducts = await getCollection("products");
 
-const pageTitle = `${category.title} | فروشگاه قطعات CNC`;
+const categoryProducts = getActiveProducts(allProducts).filter(
+  (product) => product.data.category === category.slug,
+);
+
+const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/shop/${category.slug}/`;
+
+const pageTitle =
+  `${category.title} | فروشگاه قطعات CNC`;
 
 const pageDescription =
-  `${category.description} بررسی مشخصات فنی، موارد مورد نیاز برای تطبیق و ثبت درخواست تأمین ${category.title}.`;
+  `${category.description} بررسی مشخصات فنی، محصولات فعال و ثبت درخواست تأمین ${category.title}.`;
 
 const relatedCategories = shopCategories
   .filter((item) => item.slug !== category.slug)
@@ -48,6 +67,24 @@ const structuredData = {
       url: canonical,
       inLanguage: "fa",
     },
+
+    ...(categoryProducts.length > 0
+      ? [
+          {
+            "@type": "ItemList",
+            name: `محصولات ${category.title}`,
+            itemListElement: categoryProducts.map(
+              (product, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                name: product.data.name,
+                url: `${siteUrl}${getProductHref(product)}`,
+              }),
+            ),
+          },
+        ]
+      : []),
+
     {
       "@type": "BreadcrumbList",
       itemListElement: [
@@ -94,13 +131,19 @@ const structuredData = {
           aria-label="مسیر صفحه"
           class="mb-6 flex flex-wrap items-center gap-2 text-xs text-muted"
         >
-          <a href="/" class="transition hover:text-brand-700">
+          <a
+            href="/"
+            class="transition hover:text-brand-700"
+          >
             صفحه اصلی
           </a>
 
           <span aria-hidden="true">/</span>
 
-          <a href="/shop/" class="transition hover:text-brand-700">
+          <a
+            href="/shop/"
+            class="transition hover:text-brand-700"
+          >
             فروشگاه قطعات
           </a>
 
@@ -134,7 +177,10 @@ const structuredData = {
           </p>
 
           <div class="mt-7 flex flex-wrap gap-3">
-            <Button href="/request/part/" size="lg">
+            <Button
+              href="/request/part/"
+              size="lg"
+            >
               درخواست تأمین {category.title}
             </Button>
 
@@ -206,49 +252,123 @@ const structuredData = {
           </Card>
         </div>
 
-        <div class="mt-8 grid gap-4 md:grid-cols-3">
-          <Card>
-            <p class="text-sm font-bold text-brand-700">
-              خرید آنلاین
-            </p>
+        <section class="mt-12 border-t border-line pt-10">
+          <div class="flex flex-wrap items-end justify-between gap-4">
+            <div>
+              <p class="text-sm font-bold text-brand-700">
+                کاتالوگ این دسته
+              </p>
 
-            <h2 class="mt-2 text-lg font-black text-ink">
-              محصولات آماده فروش
-            </h2>
+              <h2 class="mt-2 text-2xl font-black text-ink">
+                محصولات فعال {category.title}
+              </h2>
+            </div>
 
-            <p class="mt-2 text-sm leading-7 text-muted">
-              در فاز محصول، اقلام دارای قیمت و موجودی مستقیم در همین دسته نمایش داده می‌شوند.
-            </p>
-          </Card>
+            {
+              categoryProducts.length > 0 && (
+                <p class="text-sm font-bold text-muted">
+                  {new Intl.NumberFormat("fa-IR").format(
+                    categoryProducts.length,
+                  )}
+                  {" "}
+                  محصول
+                </p>
+              )
+            }
+          </div>
 
-          <Card>
-            <p class="text-sm font-bold text-brand-700">
-              استعلام قیمت
-            </p>
+          {
+            categoryProducts.length > 0 ? (
+              <div class="mt-7 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                {
+                  categoryProducts.map((product) => (
+                    <ProductCard product={product} />
+                  ))
+                }
+              </div>
+            ) : (
+              <div class="mt-7 rounded-panel border border-line bg-surface-raised p-7 md:p-9">
+                <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
+                  <div>
+                    <h3 class="text-xl font-black text-ink">
+                      هنوز محصول فعال عمومی در این دسته ثبت نشده است
+                    </h3>
 
-            <h2 class="mt-2 text-lg font-black text-ink">
-              اقلام نیازمند بررسی قیمت
-            </h2>
+                    <p class="mt-3 max-w-2xl text-sm leading-7 text-muted">
+                      اگر قطعه موردنظر شما در کاتالوگ دیده نمی‌شود،
+                      Part Number، برند، تصویر پلاک یا مشخصات فنی را
+                      ارسال کنید تا امکان تأمین بررسی شود.
+                    </p>
+                  </div>
 
-            <p class="mt-2 text-sm leading-7 text-muted">
-              برای قطعاتی که قیمت وابسته به وضعیت بازار یا مشخصات دقیق است، مسیر استعلام فعال خواهد بود.
-            </p>
-          </Card>
+                  <Button
+                    href="/request/part/"
+                    variant="secondary"
+                  >
+                    درخواست قطعه
+                  </Button>
+                </div>
+              </div>
+            )
+          }
+        </section>
 
-          <Card>
-            <p class="text-sm font-bold text-brand-700">
-              تأمین سفارشی
-            </p>
+        <section class="mt-12 border-t border-line pt-10">
+          <p class="text-sm font-bold text-brand-700">
+            روش‌های سفارش
+          </p>
 
-            <h2 class="mt-2 text-lg font-black text-ink">
-              قطعات خاص و کمیاب
-            </h2>
+          <h2 class="mt-2 text-2xl font-black text-ink">
+            سه مسیر برای خرید و تأمین قطعات
+          </h2>
 
-            <p class="mt-2 text-sm leading-7 text-muted">
-              در صورت نبود محصول در کاتالوگ، درخواست تأمین با Part Number یا مشخصات فنی ثبت می‌شود.
-            </p>
-          </Card>
-        </div>
+          <div class="mt-6 grid gap-4 md:grid-cols-3">
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                خرید آنلاین
+              </p>
+
+              <h3 class="mt-2 text-lg font-black text-ink">
+                محصولات آماده فروش
+              </h3>
+
+              <p class="mt-2 text-sm leading-7 text-muted">
+                محصولاتی که قیمت و موجودی قابل نمایش دارند،
+                با مسیر خرید مستقیم مشخص می‌شوند.
+              </p>
+            </Card>
+
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                استعلام قیمت
+              </p>
+
+              <h3 class="mt-2 text-lg font-black text-ink">
+                اقلام نیازمند بررسی قیمت
+              </h3>
+
+              <p class="mt-2 text-sm leading-7 text-muted">
+                برای قطعاتی که قیمت آن‌ها وابسته به موجودی،
+                شرایط فنی یا بازار است، درخواست استعلام ثبت می‌شود.
+              </p>
+            </Card>
+
+            <Card>
+              <p class="text-sm font-bold text-brand-700">
+                تأمین سفارشی
+              </p>
+
+              <h3 class="mt-2 text-lg font-black text-ink">
+                قطعات خاص و کمیاب
+              </h3>
+
+              <p class="mt-2 text-sm leading-7 text-muted">
+                برای قطعات خارج از موجودی، بررسی تأمین بر اساس
+                Part Number و مشخصات فنی انجام می‌شود.
+              </p>
+            </Card>
+          </div>
+        </section>
 
         <div class="mt-10 rounded-panel border border-brand-200 bg-brand-50 p-6 md:p-8">
           <div class="grid gap-6 lg:grid-cols-[1fr_auto] lg:items-center">
@@ -262,11 +382,15 @@ const structuredData = {
               </h2>
 
               <p class="mt-3 max-w-2xl text-sm leading-7 text-brand-900">
-                برای کاهش خطای انتخاب، تصویر پلاک، مدل دستگاه و مشخصات قطعه فعلی را همراه درخواست ثبت کنید.
+                برای کاهش خطای انتخاب، تصویر پلاک، مدل دستگاه و
+                مشخصات قطعه فعلی را همراه درخواست ثبت کنید.
               </p>
             </div>
 
-            <Button href="/request/part/" size="lg">
+            <Button
+              href="/request/part/"
+              size="lg"
+            >
               ثبت درخواست قطعه
             </Button>
           </div>
@@ -289,7 +413,10 @@ const structuredData = {
                   class="group rounded-card border border-line bg-surface-raised p-5 transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-card"
                 >
                   <div class="flex items-start justify-between gap-4">
-                    <Badge variant="brand" size="sm">
+                    <Badge
+                      variant="brand"
+                      size="sm"
+                    >
                       {related.code}
                     </Badge>
 

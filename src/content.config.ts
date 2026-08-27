@@ -1,4 +1,4 @@
-﻿import { defineCollection } from "astro:content";
+import { defineCollection } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
 
@@ -21,13 +21,54 @@ const seoSchema = z.object({
 |--------------------------------------------------------------------------
 */
 
-const products = defineCollection({
-  loader: glob({
-    base: "./src/content/products",
-    pattern: "**/*.{md,mdx}",
-  }),
+const productCategorySchema = z.enum([
+  "motors",
+  "drives",
+  "inverter-vfd",
+  "cnc-controllers",
+  "plc-hmi",
+  "encoders-feedback",
+  "electronic-parts",
+  "mechanical-parts",
+  "sensors",
+  "industrial-electrical",
+  "cnc-accessories",
+]);
 
-  schema: z.object({
+const productConditionSchema = z.enum([
+  "new",
+  "used",
+  "refurbished",
+  "tested",
+]);
+
+const productCommerceModeSchema = z.enum([
+  "direct-purchase",
+  "price-inquiry",
+  "sourcing-request",
+]);
+
+const productPriceVisibilitySchema = z.enum([
+  "visible",
+  "hidden",
+]);
+
+const productStatusSchema = z.enum([
+  "draft",
+  "active",
+  "archived",
+]);
+
+const productShippingClassSchema = z.enum([
+  "standard",
+  "fragile",
+  "heavy",
+  "pickup-only",
+  "custom",
+]);
+
+const productSchema = z
+  .object({
     name: z.string(),
     description: z.string(),
 
@@ -35,30 +76,28 @@ const products = defineCollection({
     partNumber: z.string(),
     sku: z.string().optional(),
 
-    category: z.string(),
+    category: productCategorySchema,
     subcategory: z.string().optional(),
     series: z.string().optional(),
     manufacturer: z.string().optional(),
 
-    condition: z.enum([
-      "new",
-      "used",
-      "refurbished",
-      "tested",
-    ]),
+    condition: productConditionSchema,
 
-    commerceMode: z.enum([
-      "direct-purchase",
-      "price-inquiry",
-      "sourcing-request",
-    ]),
+    commerceMode: productCommerceModeSchema,
 
-    priceVisibility: z.enum([
-      "visible",
-      "hidden",
-    ]),
+    priceVisibility: productPriceVisibilitySchema,
 
-    price: z.number().nonnegative().optional(),
+    price: z
+      .number()
+      .nonnegative()
+      .optional(),
+
+    priceUnit: z
+      .enum([
+        "toman",
+        "rial",
+      ])
+      .default("toman"),
 
     stockQuantity: z
       .number()
@@ -66,7 +105,27 @@ const products = defineCollection({
       .nonnegative()
       .default(0),
 
+    status: productStatusSchema.default("active"),
+
     featured: z.boolean().default(false),
+
+    order: z
+      .number()
+      .int()
+      .nonnegative()
+      .default(0),
+
+    leadTime: z.string().optional(),
+
+    warranty: z.string().optional(),
+
+    shippingClass: productShippingClassSchema.default("standard"),
+
+    availabilityNote: z.string().optional(),
+
+    tags: z
+      .array(z.string())
+      .default([]),
 
     images: z
       .array(z.string())
@@ -108,7 +167,52 @@ const products = defineCollection({
       .default([]),
 
     seo: seoSchema.optional(),
+  })
+  .superRefine((product, context) => {
+    if (
+      product.priceVisibility === "visible" &&
+      product.price === undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["price"],
+        message:
+          "Products with visible pricing must define a price.",
+      });
+    }
+
+    if (
+      product.priceVisibility === "hidden" &&
+      product.price !== undefined
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["price"],
+        message:
+          "Hidden-price products must not store a public price in content.",
+      });
+    }
+
+    if (
+      product.commerceMode === "direct-purchase" &&
+      product.priceVisibility !== "visible"
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["priceVisibility"],
+        message:
+          "Direct-purchase products must have visible pricing.",
+      });
+    }
+  });
+
+const products = defineCollection({
+  loader: glob({
+    base: "./src/content/products",
+    pattern: "**/*.{md,mdx}",
   }),
+
+  schema: productSchema,
 });
 
 /*
