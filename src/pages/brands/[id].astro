@@ -28,6 +28,8 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allBrands = await getCollection("brands");
   const brands = getActiveBrands(allBrands);

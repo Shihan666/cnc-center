@@ -18,6 +18,8 @@ import {
   getProductHref,
 } from "../../lib/products";
 
+export const prerender = true;
+
 export function getStaticPaths() {
   return shopCategories.map((category) => ({
     params: {

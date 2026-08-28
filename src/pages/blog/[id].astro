@@ -20,6 +20,8 @@ import {
   resolveArticleRelations,
 } from "../../lib/knowledgeGraph";
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allArticles =
     await getCollection("articles");

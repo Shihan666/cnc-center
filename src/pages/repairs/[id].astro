@@ -35,6 +35,8 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allRepairs = await getCollection("repairs");
   const repairs = getActiveRepairs(allRepairs);

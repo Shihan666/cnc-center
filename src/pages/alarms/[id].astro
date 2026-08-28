@@ -41,6 +41,8 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
+export const prerender = true;
+
 export async function getStaticPaths() {
   const allAlarms = await getCollection("alarms");
   const alarms = getActiveAlarms(allAlarms);
