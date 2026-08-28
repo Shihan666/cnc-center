@@ -8,9 +8,16 @@ import HomeBrands from "../components/home/HomeBrands.astro";
 import HomeWhyProcess from "../components/home/HomeWhyProcess.astro";
 import HomeNationwide from "../components/home/HomeNationwide.astro";
 import HomeFinalCta from "../components/home/HomeFinalCta.astro";
+import { siteConfig } from "../config/site";
+
+const siteUrl =
+  siteConfig.seo.siteUrl.replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/`;
 ---
 
-<BaseLayout>
+<BaseLayout canonical={canonical}>
   <main>
     <HeroSection />
     <QuickActions />
