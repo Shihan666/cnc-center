@@ -1,0 +1,187 @@
+---
+import {
+  getCollection,
+} from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import CheckoutIsland from "../../components/checkout/CheckoutIsland";
+
+import {
+  siteConfig,
+} from "../../config/site";
+
+import {
+  toRialAmount,
+} from "../../lib/commerce";
+
+import {
+  canPurchaseDirectly,
+  formatProductPrice,
+  getActiveProducts,
+  getProductHref,
+  getVisibleProductPrice,
+} from "../../lib/products";
+
+import type {
+  CartCatalogItem,
+} from "../../lib/cart";
+
+const allProducts =
+  await getCollection(
+    "products",
+  );
+
+const activeProducts =
+  getActiveProducts(
+    allProducts,
+  );
+
+const catalog:
+  CartCatalogItem[] = [];
+
+for (const product of activeProducts) {
+  if (!canPurchaseDirectly(product)) {
+    continue;
+  }
+
+  const visiblePrice =
+    getVisibleProductPrice(
+      product,
+    );
+
+  const displayPrice =
+    formatProductPrice(
+      product,
+    );
+
+  if (
+    visiblePrice === null ||
+    displayPrice === null
+  ) {
+    continue;
+  }
+
+  catalog.push({
+    id:
+      product.id,
+
+    name:
+      product.data.name,
+
+    href:
+      getProductHref(
+        product,
+      ),
+
+    brand:
+      product.data.brand,
+
+    partNumber:
+      product.data.partNumber,
+
+    image:
+      product.data.images[0] ??
+      null,
+
+    stockQuantity:
+      product.data.stockQuantity,
+
+    unitPriceRial:
+      toRialAmount(
+        visiblePrice,
+        product.data.priceUnit,
+      ),
+
+    displayPrice,
+
+    shippingClass:
+      product.data.shippingClass,
+  });
+}
+
+const siteUrl =
+  siteConfig.seo.siteUrl
+    .replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/checkout/`;
+---
+
+<BaseLayout
+  title={`تکمیل اطلاعات سفارش | ${siteConfig.brand.name}`}
+  description="بررسی اطلاعات خریدار، مقصد، روش ارسال و خلاصه سبد خرید قطعات CNC پیش از مرحله پرداخت."
+  canonical={canonical}
+  noindex={true}
+>
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-14">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="font-bold transition hover:text-brand-700"
+          >
+            خانه
+          </a>
+
+          <span aria-hidden="true">
+            /
+          </span>
+
+          <a
+            href="/cart/"
+            class="font-bold transition hover:text-brand-700"
+          >
+            سبد خرید
+          </a>
+
+          <span aria-hidden="true">
+            /
+          </span>
+
+          <span>
+            Checkout
+          </span>
+        </nav>
+
+        <div class="max-w-3xl">
+          <Badge
+            variant="brand"
+            size="sm"
+          >
+            Checkout V1
+          </Badge>
+
+          <h1 class="mt-4 text-3xl font-black leading-tight text-ink md:text-4xl">
+            تکمیل اطلاعات سفارش
+          </h1>
+
+          <p class="mt-4 text-base leading-8 text-muted">
+            اطلاعات خریدار و روش ارسال را بررسی کنید. موجودی، قیمت و
+            امکان خرید هر محصول دوباره از کاتالوگ معتبر سایت کنترل می‌شود.
+          </p>
+
+          <div class="mt-5 rounded-control border border-warning-200 bg-warning-50 px-4 py-3">
+            <p class="text-sm font-bold leading-7 text-warning-800">
+              این نسخه هنوز سفارش واقعی ایجاد نمی‌کند و به درگاه پرداخت
+              متصل نیست.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <CheckoutIsland
+          catalog={catalog}
+          client:load
+        />
+      </div>
+    </section>
+  </main>
+</BaseLayout>

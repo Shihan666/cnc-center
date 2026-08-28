@@ -1,0 +1,155 @@
+---
+import {
+  getCollection,
+} from "astro:content";
+
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import CartIsland from "../../components/cart/CartIsland";
+
+import {
+  siteConfig,
+} from "../../config/site";
+
+import {
+  toRialAmount,
+} from "../../lib/commerce";
+
+import {
+  canPurchaseDirectly,
+  formatProductPrice,
+  getActiveProducts,
+  getProductHref,
+  getVisibleProductPrice,
+} from "../../lib/products";
+
+import type {
+  CartCatalogItem,
+} from "../../lib/cart";
+
+const allProducts =
+  await getCollection(
+    "products",
+  );
+
+const activeProducts =
+  getActiveProducts(
+    allProducts,
+  );
+
+const catalog:
+  CartCatalogItem[] = [];
+
+for (const product of activeProducts) {
+  if (!canPurchaseDirectly(product)) {
+    continue;
+  }
+
+  const visiblePrice =
+    getVisibleProductPrice(product);
+
+  const displayPrice =
+    formatProductPrice(product);
+
+  if (
+    visiblePrice === null ||
+    displayPrice === null
+  ) {
+    continue;
+  }
+
+  catalog.push({
+    id:
+      product.id,
+
+    name:
+      product.data.name,
+
+    href:
+      getProductHref(product),
+
+    brand:
+      product.data.brand,
+
+    partNumber:
+      product.data.partNumber,
+
+    image:
+      product.data.images[0] ??
+      null,
+
+    stockQuantity:
+      product.data.stockQuantity,
+
+    unitPriceRial:
+      toRialAmount(
+        visiblePrice,
+        product.data.priceUnit,
+      ),
+
+    displayPrice,
+
+    shippingClass:
+      product.data.shippingClass,
+  });
+}
+
+const siteUrl =
+  siteConfig.seo.siteUrl
+    .replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/cart/`;
+
+const pageTitle =
+  "سبد خرید قطعات CNC";
+
+const pageDescription =
+  "مدیریت اقلام خرید مستقیم CNC Center با کنترل موجودی، تعداد و قیمت معتبر محصولات.";
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  canonical={canonical}
+  noindex={true}
+>
+  <main>
+    <section
+      class="border-b border-line bg-surface-raised py-12 md:py-18"
+    >
+      <div class="site-container">
+        <div class="max-w-4xl">
+          <Badge variant="brand">
+            خرید آنلاین
+          </Badge>
+
+          <h1
+            class="mt-4 text-3xl font-black leading-tight text-ink md:text-5xl"
+          >
+            سبد خرید
+          </h1>
+
+          <p
+            class="mt-5 max-w-3xl text-base leading-8 text-muted md:text-lg"
+          >
+            سبد خرید فقط شناسه محصول و تعداد را در مرورگر نگه می‌دارد.
+            نام، قیمت، موجودی و شرایط قابل خرید هر کالا از کاتالوگ معتبر
+            دوباره تطبیق داده می‌شوند.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section
+      class="section-space bg-surface"
+    >
+      <div class="site-container">
+        <CartIsland
+          catalog={catalog}
+          client:load
+        />
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -6,12 +6,14 @@ import {
 
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import KnowledgeBacklinks from "../../components/knowledge/KnowledgeBacklinks.astro";
+import AddToCartButton from "../../components/cart/AddToCartButton";
 import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
 import Card from "../../components/common/Card.astro";
 import { siteConfig } from "../../config/site";
 
 import {
+  canPurchaseDirectly,
   formatProductPrice,
   getActiveProducts,
   getProductCategoryHref,
@@ -110,6 +112,9 @@ const inventoryLabel =
 
 const formattedPrice =
   formatProductPrice(product);
+
+const directPurchaseEligible =
+  canPurchaseDirectly(product);
 
 /*
  * Schema.org Offer uses ISO 4217 currency codes.
@@ -403,13 +408,23 @@ const breadcrumbStructuredData = {
               }
 
               <div class="mt-6">
-                <Button
-                  href="/request/part/"
-                  size="lg"
-                  class="w-full"
-                >
-                  {ctaLabel}
-                </Button>
+                {
+                  directPurchaseEligible ? (
+                    <AddToCartButton
+                      productId={product.id}
+                      stockQuantity={product.data.stockQuantity}
+                      client:load
+                    />
+                  ) : (
+                    <Button
+                      href="/request/part/"
+                      size="lg"
+                      class="w-full"
+                    >
+                      {ctaLabel}
+                    </Button>
+                  )
+                }
               </div>
             </div>
           </Card>

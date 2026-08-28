@@ -5,6 +5,8 @@ import {
   requestNavigation,
 } from "../../config/navigation";
 
+import CartIndicator from "../cart/CartIndicator";
+
 const pathname = Astro.url.pathname;
 
 function isActive(href: string) {
@@ -88,83 +90,87 @@ function isActive(href: string) {
         </ul>
       </nav>
 
-      <div class="hidden shrink-0 items-center gap-2 lg:flex">
-        <a
-          href={requestNavigation[1].href}
-          class="inline-flex min-h-10 items-center justify-center rounded-control border border-line-strong bg-white px-4 text-sm font-semibold text-ink transition duration-200 ease-standard hover:bg-surface-soft"
-        >
-          {requestNavigation[1].label}
-        </a>
-
-        <a
-          href={requestNavigation[0].href}
-          class="inline-flex min-h-10 items-center justify-center rounded-control bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition duration-200 ease-standard hover:bg-brand-700"
-        >
-          {requestNavigation[0].label}
-        </a>
-      </div>
-
-      <details class="group relative order-first lg:hidden">
-        <summary
-          class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-control border border-line-strong bg-white px-3 text-sm font-semibold text-ink transition hover:bg-surface-soft [&::-webkit-details-marker]:hidden"
-        >
-          <span
-            aria-hidden="true"
-            class="flex w-5 flex-col gap-1"
+      <div class="flex shrink-0 items-center gap-2">
+        <details class="group relative lg:hidden">
+          <summary
+            class="flex min-h-11 cursor-pointer list-none items-center gap-2 rounded-control border border-line-strong bg-white px-3 text-sm font-semibold text-ink transition hover:bg-surface-soft [&::-webkit-details-marker]:hidden"
           >
-            <span class="h-0.5 w-5 rounded-full bg-current"></span>
-            <span class="h-0.5 w-5 rounded-full bg-current"></span>
-            <span class="h-0.5 w-5 rounded-full bg-current"></span>
-          </span>
+            <span
+              aria-hidden="true"
+              class="flex w-5 flex-col gap-1"
+            >
+              <span class="h-0.5 w-5 rounded-full bg-current"></span>
+              <span class="h-0.5 w-5 rounded-full bg-current"></span>
+              <span class="h-0.5 w-5 rounded-full bg-current"></span>
+            </span>
 
-          منو
-        </summary>
+            منو
+          </summary>
 
-        <div
-          class="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-card border border-line bg-white p-2 shadow-panel"
-        >
-          <nav aria-label="منوی موبایل">
-            <ul class="space-y-1">
-              {
-                primaryNavigation.map((item) => (
-                  <li>
-                    <a
-                      href={item.href}
-                      aria-current={isActive(item.href) ? "page" : undefined}
-                      class:list={[
-                        "flex min-h-11 items-center rounded-control px-3 text-sm font-semibold transition",
-                        isActive(item.href)
-                          ? "bg-brand-50 text-brand-800"
-                          : "text-ink-soft hover:bg-surface-soft hover:text-ink",
-                      ]}
-                    >
-                      {item.label}
-                    </a>
-                  </li>
-                ))
-              }
-            </ul>
+          <div
+            class="absolute right-0 top-[calc(100%+0.75rem)] w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-card border border-line bg-white p-2 shadow-panel"
+          >
+            <nav aria-label="منوی موبایل">
+              <ul class="space-y-1">
+                {
+                  primaryNavigation.map((item) => (
+                    <li>
+                      <a
+                        href={item.href}
+                        aria-current={isActive(item.href) ? "page" : undefined}
+                        class:list={[
+                          "flex min-h-11 items-center rounded-control px-3 text-sm font-semibold transition",
+                          isActive(item.href)
+                            ? "bg-brand-50 text-brand-800"
+                            : "text-ink-soft hover:bg-surface-soft hover:text-ink",
+                        ]}
+                      >
+                        {item.label}
+                      </a>
+                    </li>
+                  ))
+                }
+              </ul>
 
-            <div class="my-2 border-t border-line"></div>
+              <div class="my-2 border-t border-line"></div>
 
-            <div class="grid gap-2">
-              <a
-                href={requestNavigation[0].href}
-                class="flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-4 text-sm font-semibold text-white"
-              >
-                {requestNavigation[0].label}
-              </a>
+              <div class="grid gap-2">
+                <a
+                  href={requestNavigation[0].href}
+                  class="flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-4 text-sm font-semibold text-white"
+                >
+                  {requestNavigation[0].label}
+                </a>
 
-              <a
-                href={requestNavigation[1].href}
-                class="flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-white px-4 text-sm font-semibold text-ink"
-              >
-                {requestNavigation[1].label}
-              </a>
-            </div>
-          </nav>
+                <a
+                  href={requestNavigation[1].href}
+                  class="flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-white px-4 text-sm font-semibold text-ink"
+                >
+                  {requestNavigation[1].label}
+                </a>
+              </div>
+            </nav>
+          </div>
+        </details>
+
+        <CartIndicator client:load />
+
+        <div class="hidden items-center gap-2 lg:flex">
+          <a
+            href={requestNavigation[1].href}
+            class="inline-flex min-h-10 items-center justify-center rounded-control border border-line-strong bg-white px-4 text-sm font-semibold text-ink transition duration-200 ease-standard hover:bg-surface-soft"
+          >
+            {requestNavigation[1].label}
+          </a>
+
+          <a
+            href={requestNavigation[0].href}
+            class="inline-flex min-h-10 items-center justify-center rounded-control bg-brand-600 px-4 text-sm font-semibold text-white shadow-sm transition duration-200 ease-standard hover:bg-brand-700"
+          >
+            {requestNavigation[0].label}
+          </a>
         </div>
-      </details>
+      </div>
     </div>
   </div>
 </header>
