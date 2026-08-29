@@ -1,3 +1,6 @@
+import type {
+  CompleteAdminSecondFactorResult,
+} from './service-contract.ts';
 import {
   getAdminAuthThrottleHmacKey,
   getAdminRecoveryCodeHmacKey,
@@ -958,6 +961,319 @@ export async function confirmAdminTotpEnrollment(
         ok: false,
         reason:
           'throttled',
+      };
+    }
+
+    throw error;
+  }
+}
+export async function completeAdminTotpLogin(
+  input: {
+    challengeToken: string;
+    totpToken: string;
+    clientIp: string;
+    now: Date;
+  },
+): Promise<
+  CompleteAdminSecondFactorResult
+> {
+  assertValidDate(
+    input.now,
+    'Admin TOTP login time',
+  );
+
+  const canonicalClientIp =
+    requireCanonicalClientIp(
+      input.clientIp,
+    );
+
+  const challengeTokenHash =
+    hashOpaqueAuthToken(
+      input.challengeToken,
+    );
+
+  const totpEncryptionKey =
+    getAdminTotpEncryptionKey();
+
+  try {
+    return await runAuthTransaction(
+      async (tx) => {
+        const challenge =
+          await tx
+            .lockLoginChallengeByTokenHash(
+              challengeTokenHash,
+            );
+
+        if (
+          !challenge ||
+          challenge.type !== 'mfa' ||
+          !isLoginChallengeActive(
+            challenge,
+            input.now,
+          )
+        ) {
+          return {
+            ok: false,
+            reason:
+              'invalid_challenge',
+          } as const;
+        }
+
+        const admin =
+          await tx.lockAdminForAuth(
+            challenge.adminId,
+          );
+
+        if (
+          !admin ||
+          !admin.isActive
+        ) {
+          return {
+            ok: false,
+            reason:
+              'invalid_challenge',
+          } as const;
+        }
+
+        const keys =
+          mfaThrottleKeys(
+            admin.id,
+            canonicalClientIp,
+          );
+
+        const accountState =
+          await tx.getAuthThrottleState(
+            'mfa_account',
+            keys.account,
+          );
+
+        const ipState =
+          await tx.getAuthThrottleState(
+            'mfa_ip',
+            keys.ip,
+          );
+
+        if (
+          isAuthThrottleBlocked(
+            accountState,
+            input.now,
+          ) ||
+          isAuthThrottleBlocked(
+            ipState,
+            input.now,
+          )
+        ) {
+          return {
+            ok: false,
+            reason: 'throttled',
+          } as const;
+        }
+
+        const totpFactor =
+          await tx
+            .lockAdminTotpFactorByAdminId(
+              admin.id,
+            );
+
+        if (
+          !totpFactor ||
+          totpFactor.confirmedAt ===
+            null
+        ) {
+          return {
+            ok: false,
+            reason:
+              'invalid_challenge',
+          } as const;
+        }
+
+        const secret =
+          decryptTotpSecret(
+            {
+              secretCiphertext:
+                Buffer.from(
+                  totpFactor
+                    .secretCiphertext,
+                ),
+
+              secretNonce:
+                Buffer.from(
+                  totpFactor
+                    .secretNonce,
+                ),
+
+              secretAuthTag:
+                Buffer.from(
+                  totpFactor
+                    .secretAuthTag,
+                ),
+
+              keyVersion:
+                totpFactor.keyVersion,
+            },
+            totpEncryptionKey,
+          );
+
+        const verification =
+          verifyTotpToken({
+            secret,
+
+            token:
+              input.totpToken,
+
+            timestamp:
+              input.now.getTime(),
+
+            lastUsedCounter:
+              totpFactor
+                .lastUsedCounter,
+          });
+
+        if (
+          !verification.valid
+        ) {
+          const transition =
+            transitionLoginChallengeFailure(
+              challenge.attemptCount,
+              input.now,
+            );
+
+          const challengeAdvanced =
+            await tx
+              .applyLoginChallengeFailure(
+                challenge.id,
+                transition,
+              );
+
+          if (
+            !challengeAdvanced
+          ) {
+            throw new Error(
+              'TOTP login challenge failure transition lost its locked state.',
+            );
+          }
+
+          await recordMfaFailure(
+            tx,
+            keys,
+            input.now,
+          );
+
+          return {
+            ok: false,
+            reason:
+              'invalid_second_factor',
+          } as const;
+        }
+
+        const counterAdvanced =
+          await tx
+            .advanceConfirmedAdminTotpCounter(
+              totpFactor.id,
+              totpFactor
+                .lastUsedCounter,
+              verification.counter,
+              input.now,
+            );
+
+        if (
+          !counterAdvanced
+        ) {
+          throw new Error(
+            'Confirmed TOTP counter advance lost its locked state.',
+          );
+        }
+
+        const sessionToken =
+          generateOpaqueAuthToken();
+
+        const sessionTokenHash =
+          hashOpaqueAuthToken(
+            sessionToken,
+          );
+
+        const sessionTiming =
+          createAdminSessionTiming(
+            input.now,
+          );
+
+        await tx.insertAdminSession({
+          adminId:
+            admin.id,
+
+          tokenHash:
+            sessionTokenHash,
+
+          authMethod:
+            'totp',
+
+          timing:
+            sessionTiming,
+        });
+
+        const challengeConsumed =
+          await tx.consumeLoginChallenge(
+            challenge.id,
+            input.now,
+          );
+
+        if (
+          !challengeConsumed
+        ) {
+          throw new Error(
+            'TOTP login challenge consumption lost its locked state.',
+          );
+        }
+
+        await tx.resetAuthThrottle(
+          'mfa_account',
+          keys.account,
+          input.now,
+        );
+
+        await tx.resetAuthThrottle(
+          'mfa_ip',
+          keys.ip,
+          input.now,
+        );
+
+        const lastLoginUpdated =
+          await tx.setAdminLastLoginAt(
+            admin.id,
+            input.now,
+          );
+
+        if (
+          !lastLoginUpdated
+        ) {
+          throw new Error(
+            'TOTP login admin last-login update lost its locked state.',
+          );
+        }
+
+        return {
+          ok: true,
+
+          sessionToken,
+
+          admin: {
+            id:
+              admin.id,
+
+            email:
+              admin.email,
+          },
+        } as const;
+      },
+    );
+  } catch (error) {
+    if (
+      error instanceof
+        MfaThrottleBlockedError
+    ) {
+      return {
+        ok: false,
+        reason: 'throttled',
       };
     }
 
