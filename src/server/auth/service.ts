@@ -59,6 +59,7 @@ import {
 } from './totp.ts';
 import {
   generateRecoveryCodes,
+  isRecoveryCodeFormat,
 } from './recovery-codes.ts';
 
 type PasswordThrottleKeys =
@@ -1248,6 +1249,308 @@ export async function completeAdminTotpLogin(
         ) {
           throw new Error(
             'TOTP login admin last-login update lost its locked state.',
+          );
+        }
+
+        return {
+          ok: true,
+
+          sessionToken,
+
+          admin: {
+            id:
+              admin.id,
+
+            email:
+              admin.email,
+          },
+        } as const;
+      },
+    );
+  } catch (error) {
+    if (
+      error instanceof
+        MfaThrottleBlockedError
+    ) {
+      return {
+        ok: false,
+        reason: 'throttled',
+      };
+    }
+
+    throw error;
+  }
+}
+export async function completeAdminRecoveryLogin(
+  input: {
+    challengeToken: string;
+    recoveryCode: string;
+    clientIp: string;
+    now: Date;
+  },
+): Promise<
+  CompleteAdminSecondFactorResult
+> {
+  assertValidDate(
+    input.now,
+    'Admin recovery login time',
+  );
+
+  const canonicalClientIp =
+    requireCanonicalClientIp(
+      input.clientIp,
+    );
+
+  const challengeTokenHash =
+    hashOpaqueAuthToken(
+      input.challengeToken,
+    );
+
+  const recoveryCodeHmacKey =
+    getAdminRecoveryCodeHmacKey();
+
+  try {
+    return await runAuthTransaction(
+      async (tx) => {
+        const challenge =
+          await tx
+            .lockLoginChallengeByTokenHash(
+              challengeTokenHash,
+            );
+
+        if (
+          !challenge ||
+          challenge.type !== 'mfa' ||
+          !isLoginChallengeActive(
+            challenge,
+            input.now,
+          )
+        ) {
+          return {
+            ok: false,
+            reason:
+              'invalid_challenge',
+          } as const;
+        }
+
+        const admin =
+          await tx.lockAdminForAuth(
+            challenge.adminId,
+          );
+
+        if (
+          !admin ||
+          !admin.isActive
+        ) {
+          return {
+            ok: false,
+            reason:
+              'invalid_challenge',
+          } as const;
+        }
+
+        const keys =
+          mfaThrottleKeys(
+            admin.id,
+            canonicalClientIp,
+          );
+
+        const accountState =
+          await tx.getAuthThrottleState(
+            'mfa_account',
+            keys.account,
+          );
+
+        const ipState =
+          await tx.getAuthThrottleState(
+            'mfa_ip',
+            keys.ip,
+          );
+
+        if (
+          isAuthThrottleBlocked(
+            accountState,
+            input.now,
+          ) ||
+          isAuthThrottleBlocked(
+            ipState,
+            input.now,
+          )
+        ) {
+          return {
+            ok: false,
+            reason: 'throttled',
+          } as const;
+        }
+
+        if (
+          !isRecoveryCodeFormat(
+            input.recoveryCode,
+          )
+        ) {
+          const transition =
+            transitionLoginChallengeFailure(
+              challenge.attemptCount,
+              input.now,
+            );
+
+          const challengeAdvanced =
+            await tx
+              .applyLoginChallengeFailure(
+                challenge.id,
+                transition,
+              );
+
+          if (
+            !challengeAdvanced
+          ) {
+            throw new Error(
+              'Recovery login challenge failure transition lost its locked state.',
+            );
+          }
+
+          await recordMfaFailure(
+            tx,
+            keys,
+            input.now,
+          );
+
+          return {
+            ok: false,
+            reason:
+              'invalid_second_factor',
+          } as const;
+        }
+
+        const recoveryCodeHash =
+          hashRecoveryCodeForLookup(
+            input.recoveryCode,
+            recoveryCodeHmacKey,
+          );
+
+        const recoveryCode =
+          await tx
+            .lockActiveRecoveryCodeByHash(
+              recoveryCodeHash,
+            );
+
+        if (
+          !recoveryCode ||
+          recoveryCode.adminId !==
+            admin.id
+        ) {
+          const transition =
+            transitionLoginChallengeFailure(
+              challenge.attemptCount,
+              input.now,
+            );
+
+          const challengeAdvanced =
+            await tx
+              .applyLoginChallengeFailure(
+                challenge.id,
+                transition,
+              );
+
+          if (
+            !challengeAdvanced
+          ) {
+            throw new Error(
+              'Recovery login challenge failure transition lost its locked state.',
+            );
+          }
+
+          await recordMfaFailure(
+            tx,
+            keys,
+            input.now,
+          );
+
+          return {
+            ok: false,
+            reason:
+              'invalid_second_factor',
+          } as const;
+        }
+
+        const recoveryConsumed =
+          await tx.consumeRecoveryCode(
+            recoveryCode.id,
+            input.now,
+          );
+
+        if (
+          !recoveryConsumed
+        ) {
+          throw new Error(
+            'Recovery-code consumption lost its locked state.',
+          );
+        }
+
+        const sessionToken =
+          generateOpaqueAuthToken();
+
+        const sessionTokenHash =
+          hashOpaqueAuthToken(
+            sessionToken,
+          );
+
+        const sessionTiming =
+          createAdminSessionTiming(
+            input.now,
+          );
+
+        await tx.insertAdminSession({
+          adminId:
+            admin.id,
+
+          tokenHash:
+            sessionTokenHash,
+
+          authMethod:
+            'recovery',
+
+          timing:
+            sessionTiming,
+        });
+
+        const challengeConsumed =
+          await tx.consumeLoginChallenge(
+            challenge.id,
+            input.now,
+          );
+
+        if (
+          !challengeConsumed
+        ) {
+          throw new Error(
+            'Recovery login challenge consumption lost its locked state.',
+          );
+        }
+
+        await tx.resetAuthThrottle(
+          'mfa_account',
+          keys.account,
+          input.now,
+        );
+
+        await tx.resetAuthThrottle(
+          'mfa_ip',
+          keys.ip,
+          input.now,
+        );
+
+        const lastLoginUpdated =
+          await tx.setAdminLastLoginAt(
+            admin.id,
+            input.now,
+          );
+
+        if (
+          !lastLoginUpdated
+        ) {
+          throw new Error(
+            'Recovery login admin last-login update lost its locked state.',
           );
         }
 
