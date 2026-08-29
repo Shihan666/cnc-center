@@ -29,6 +29,8 @@ import type {
 } from './service-contract.ts';
 
 import {
+  canonicalizeAdminEmail,
+  isAdminEmailInputValid,
   isAdminSessionRevocationReason,
   isAuthThrottleBlocked,
   resetAuthThrottleState,
@@ -129,6 +131,27 @@ export type ActiveAdminRecoveryCodeRecord =
     createdAt: Date;
     usedAt: null;
     revokedAt: null;
+  }>;
+
+export type AdminCredentialRecord =
+  LockedAdmin;
+
+export type InsertAdminTotpFactorInput =
+  Readonly<{
+    adminId: string;
+    secretCiphertext: Uint8Array;
+    secretNonce: Uint8Array;
+    secretAuthTag: Uint8Array;
+    keyVersion: number;
+    createdAt: Date;
+    updatedAt: Date;
+  }>;
+
+export type InsertAdminRecoveryCodeInput =
+  Readonly<{
+    adminId: string;
+    codeHash: string;
+    createdAt: Date;
   }>;
 
 export type AuthPersistenceTransaction =
@@ -252,6 +275,25 @@ export type AuthPersistenceTransaction =
       recoveryCodeId: string,
       usedAt: Date,
     ) => Promise<boolean>;
+
+    insertAdminTotpFactor: (
+      input:
+        InsertAdminTotpFactorInput,
+    ) => Promise<
+      AdminTotpFactorRecord
+    >;
+
+    confirmAdminTotpFactor: (
+      factorId: string,
+      expectedUpdatedAt: Date,
+      matchedCounter: number,
+      confirmedAt: Date,
+    ) => Promise<boolean>;
+
+    insertAdminRecoveryCodes: (
+      inputs:
+        readonly InsertAdminRecoveryCodeInput[],
+    ) => Promise<void>;
   }>;
 
 type PersistedThrottleState =
@@ -786,6 +828,112 @@ function mapActiveRecoveryCodeRecord(
   };
 }
 
+function assertCanonicalAdminEmail(
+  value: string,
+): void {
+  if (
+    !isAdminEmailInputValid(
+      value,
+    ) ||
+    canonicalizeAdminEmail(
+      value,
+    ) !== value
+  ) {
+    throw new Error(
+      'Admin email must be canonical and valid.',
+    );
+  }
+}
+
+function assertNonEmptyString(
+  value: string,
+  name: string,
+): void {
+  if (value.length === 0) {
+    throw new Error(
+      `${name} must be non-empty.`,
+    );
+  }
+}
+
+function assertInsertAdminTotpFactorInput(
+  input:
+    InsertAdminTotpFactorInput,
+): void {
+  assertNonEmptyString(
+    input.adminId,
+    'Admin ID',
+  );
+
+  if (
+    !(
+      input.secretCiphertext
+        instanceof Uint8Array
+    ) ||
+    input.secretCiphertext
+      .byteLength === 0
+  ) {
+    throw new Error(
+      'TOTP ciphertext must be a non-empty byte array.',
+    );
+  }
+
+  if (
+    !(
+      input.secretNonce
+        instanceof Uint8Array
+    ) ||
+    input.secretNonce
+      .byteLength !== 12
+  ) {
+    throw new Error(
+      'TOTP nonce must be exactly 12 bytes.',
+    );
+  }
+
+  if (
+    !(
+      input.secretAuthTag
+        instanceof Uint8Array
+    ) ||
+    input.secretAuthTag
+      .byteLength !== 16
+  ) {
+    throw new Error(
+      'TOTP authentication tag must be exactly 16 bytes.',
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(
+      input.keyVersion,
+    ) ||
+    input.keyVersion < 1
+  ) {
+    throw new Error(
+      'TOTP key version must be a positive safe integer.',
+    );
+  }
+
+  assertValidDate(
+    input.createdAt,
+    'TOTP factor creation time',
+  );
+
+  assertValidDate(
+    input.updatedAt,
+    'TOTP factor update time',
+  );
+
+  if (
+    input.updatedAt.getTime() <
+    input.createdAt.getTime()
+  ) {
+    throw new Error(
+      'TOTP factor update time must not precede creation time.',
+    );
+  }
+}
 export async function runAuthTransaction<T>(
   operation: (
     tx: AuthPersistenceTransaction,
@@ -2159,6 +2307,290 @@ export async function runAuthTransaction<T>(
               rows.length === 1
             );
           },
+
+          async insertAdminTotpFactor(
+            input,
+          ) {
+            assertInsertAdminTotpFactorInput(
+              input,
+            );
+
+            const rows =
+              await tx
+                .insert(
+                  adminTotpFactors,
+                )
+                .values({
+                  adminId:
+                    input.adminId,
+
+                  secretCiphertext:
+                    cloneBytes(
+                      input.secretCiphertext,
+                    ),
+
+                  secretNonce:
+                    cloneBytes(
+                      input.secretNonce,
+                    ),
+
+                  secretAuthTag:
+                    cloneBytes(
+                      input.secretAuthTag,
+                    ),
+
+                  keyVersion:
+                    input.keyVersion,
+
+                  lastUsedCounter:
+                    null,
+
+                  confirmedAt:
+                    null,
+
+                  createdAt:
+                    cloneDate(
+                      input.createdAt,
+                    ),
+
+                  updatedAt:
+                    cloneDate(
+                      input.updatedAt,
+                    ),
+                })
+                .returning({
+                  id:
+                    adminTotpFactors.id,
+
+                  adminId:
+                    adminTotpFactors
+                      .adminId,
+
+                  secretCiphertext:
+                    adminTotpFactors
+                      .secretCiphertext,
+
+                  secretNonce:
+                    adminTotpFactors
+                      .secretNonce,
+
+                  secretAuthTag:
+                    adminTotpFactors
+                      .secretAuthTag,
+
+                  keyVersion:
+                    adminTotpFactors
+                      .keyVersion,
+
+                  lastUsedCounter:
+                    adminTotpFactors
+                      .lastUsedCounter,
+
+                  confirmedAt:
+                    adminTotpFactors
+                      .confirmedAt,
+
+                  createdAt:
+                    adminTotpFactors
+                      .createdAt,
+
+                  updatedAt:
+                    adminTotpFactors
+                      .updatedAt,
+                });
+
+            const row =
+              rows[0];
+
+            if (!row) {
+              throw new Error(
+                'TOTP factor insert did not return a persisted row.',
+              );
+            }
+
+            return (
+              mapAdminTotpFactorRecord(
+                row,
+              )
+            );
+          },
+
+          async confirmAdminTotpFactor(
+            factorId,
+            expectedUpdatedAt,
+            matchedCounter,
+            confirmedAt,
+          ) {
+            assertNonEmptyString(
+              factorId,
+              'TOTP factor ID',
+            );
+
+            assertValidDate(
+              expectedUpdatedAt,
+              'Expected TOTP factor update time',
+            );
+
+            assertTotpCounter(
+              matchedCounter,
+              'Matched TOTP counter',
+            );
+
+            assertValidDate(
+              confirmedAt,
+              'TOTP factor confirmation time',
+            );
+
+            if (
+              confirmedAt.getTime() <
+              expectedUpdatedAt.getTime()
+            ) {
+              throw new Error(
+                'TOTP confirmation time must not precede the expected factor state.',
+              );
+            }
+
+            const rows =
+              await tx
+                .update(
+                  adminTotpFactors,
+                )
+                .set({
+                  lastUsedCounter:
+                    matchedCounter,
+
+                  confirmedAt:
+                    cloneDate(
+                      confirmedAt,
+                    ),
+
+                  updatedAt:
+                    cloneDate(
+                      confirmedAt,
+                    ),
+                })
+                .where(
+                  and(
+                    eq(
+                      adminTotpFactors.id,
+                      factorId,
+                    ),
+                    eq(
+                      adminTotpFactors
+                        .updatedAt,
+                      expectedUpdatedAt,
+                    ),
+                    isNull(
+                      adminTotpFactors
+                        .confirmedAt,
+                    ),
+                    isNull(
+                      adminTotpFactors
+                        .lastUsedCounter,
+                    ),
+                  ),
+                )
+                .returning({
+                  id:
+                    adminTotpFactors.id,
+                });
+
+            return (
+              rows.length === 1
+            );
+          },
+
+          async insertAdminRecoveryCodes(
+            inputs,
+          ) {
+            if (inputs.length !== 10) {
+              throw new Error(
+                'Recovery-code provisioning requires exactly ten hashes.',
+              );
+            }
+
+            const first =
+              inputs[0];
+
+            if (!first) {
+              throw new Error(
+                'Recovery-code provisioning input is empty.',
+              );
+            }
+
+            assertNonEmptyString(
+              first.adminId,
+              'Recovery-code admin ID',
+            );
+
+            const seenHashes =
+              new Set<string>();
+
+            const values =
+              inputs.map(
+                (input) => {
+                  if (
+                    input.adminId !==
+                    first.adminId
+                  ) {
+                    throw new Error(
+                      'All recovery codes must belong to the same admin.',
+                    );
+                  }
+
+                  assertSha256HexHash(
+                    input.codeHash,
+                    'Recovery-code hash',
+                  );
+
+                  if (
+                    seenHashes.has(
+                      input.codeHash,
+                    )
+                  ) {
+                    throw new Error(
+                      'Recovery-code hashes must be unique.',
+                    );
+                  }
+
+                  seenHashes.add(
+                    input.codeHash,
+                  );
+
+                  assertValidDate(
+                    input.createdAt,
+                    'Recovery-code creation time',
+                  );
+
+                  return {
+                    adminId:
+                      input.adminId,
+
+                    codeHash:
+                      input.codeHash,
+
+                    createdAt:
+                      cloneDate(
+                        input.createdAt,
+                      ),
+
+                    usedAt:
+                      null,
+
+                    revokedAt:
+                      null,
+                  };
+                },
+              );
+
+            await tx
+              .insert(
+                adminRecoveryCodes,
+              )
+              .values(
+                values,
+              );
+          },
         };
 
       return operation(
@@ -2168,6 +2600,122 @@ export async function runAuthTransaction<T>(
   );
 }
 
+export async function getAdminByCanonicalEmail(
+  email: string,
+): Promise<
+  AdminCredentialRecord | null
+> {
+  assertCanonicalAdminEmail(
+    email,
+  );
+
+  const rows =
+    await getDatabase()
+      .select({
+        id:
+          admins.id,
+
+        email:
+          admins.email,
+
+        passwordHash:
+          admins.passwordHash,
+
+        isActive:
+          admins.isActive,
+
+        passwordChangedAt:
+          admins.passwordChangedAt,
+
+        lastLoginAt:
+          admins.lastLoginAt,
+      })
+      .from(
+        admins,
+      )
+      .where(
+        eq(
+          admins.email,
+          email,
+        ),
+      )
+      .limit(1);
+
+  const row =
+    rows[0];
+
+  return row
+    ? mapLockedAdmin(
+        row,
+      )
+    : null;
+}
+
+export async function updateAdminPasswordHashIfCurrent(
+  adminId: string,
+  expectedPasswordHash: string,
+  replacementPasswordHash: string,
+  updatedAt: Date,
+): Promise<boolean> {
+  assertNonEmptyString(
+    adminId,
+    'Admin ID',
+  );
+
+  assertNonEmptyString(
+    expectedPasswordHash,
+    'Expected admin password hash',
+  );
+
+  assertNonEmptyString(
+    replacementPasswordHash,
+    'Replacement admin password hash',
+  );
+
+  assertValidDate(
+    updatedAt,
+    'Password rehash update time',
+  );
+
+  const rows =
+    await getDatabase()
+      .update(
+        admins,
+      )
+      .set({
+        passwordHash:
+          replacementPasswordHash,
+
+        updatedAt:
+          cloneDate(
+            updatedAt,
+          ),
+      })
+      .where(
+        and(
+          eq(
+            admins.id,
+            adminId,
+          ),
+          eq(
+            admins.passwordHash,
+            expectedPasswordHash,
+          ),
+          eq(
+            admins.isActive,
+            true,
+          ),
+        ),
+      )
+      .returning({
+        id:
+          admins.id,
+      });
+
+  return (
+    rows.length === 1
+  );
+}
 export async function getAuthThrottleState(
   scope: AuthThrottleScope,
   keyHash: string,
