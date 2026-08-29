@@ -7,15 +7,29 @@ import {
   bigint,
   boolean,
   check,
+  customType,
   index,
   integer,
   pgEnum,
   pgTable,
+  primaryKey,
+  smallint,
   text,
   timestamp,
   uniqueIndex,
   uuid,
+  varchar,
 } from 'drizzle-orm/pg-core';
+
+const bytea =
+  customType<{
+    data: Uint8Array;
+    driverData: Uint8Array;
+  }>({
+    dataType() {
+      return 'bytea';
+    },
+  });
 
 /*
 |--------------------------------------------------------------------------
@@ -154,6 +168,35 @@ export const inventoryMovementTypeEnum =
       'return',
       'damage',
       'reservation_release',
+    ],
+  );
+
+export const adminSessionAuthMethodEnum =
+  pgEnum(
+    'admin_session_auth_method',
+    [
+      'totp',
+      'recovery',
+    ],
+  );
+
+export const adminLoginChallengeTypeEnum =
+  pgEnum(
+    'admin_login_challenge_type',
+    [
+      'enrollment',
+      'mfa',
+    ],
+  );
+
+export const adminAuthThrottleScopeEnum =
+  pgEnum(
+    'admin_auth_throttle_scope',
+    [
+      'password_account',
+      'password_ip',
+      'mfa_account',
+      'mfa_ip',
     ],
   );
 
@@ -1134,6 +1177,871 @@ export const orderStatusHistory =
 
 /*
 |--------------------------------------------------------------------------
+| Admin authentication
+|--------------------------------------------------------------------------
+*/
+
+export const admins =
+  pgTable(
+    'admins',
+    {
+      id:
+        uuid('id')
+          .defaultRandom()
+          .primaryKey(),
+
+      email:
+        varchar(
+          'email',
+          {
+            length: 320,
+          },
+        )
+          .notNull(),
+
+      passwordHash:
+        text('password_hash')
+          .notNull(),
+
+      isActive:
+        boolean('is_active')
+          .default(true)
+          .notNull(),
+
+      passwordChangedAt:
+        timestamp(
+          'password_changed_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      lastLoginAt:
+        timestamp(
+          'last_login_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      updatedAt:
+        timestamp(
+          'updated_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+    },
+    (table) => [
+      uniqueIndex(
+        'admins_email_unique',
+      ).on(
+        table.email,
+      ),
+
+      check(
+        'admins_email_canonical',
+        sql`
+          ${table.email}
+          =
+          lower(
+            btrim(${table.email})
+          )
+        `,
+      ),
+
+      check(
+        'admins_email_nonempty',
+        sql`
+          char_length(
+            btrim(${table.email})
+          ) > 0
+        `,
+      ),
+
+      check(
+        'admins_password_hash_nonempty',
+        sql`
+          char_length(
+            ${table.passwordHash}
+          ) > 0
+        `,
+      ),
+    ],
+  );
+
+export const adminSessions =
+  pgTable(
+    'admin_sessions',
+    {
+      id:
+        uuid('id')
+          .defaultRandom()
+          .primaryKey(),
+
+      adminId:
+        uuid('admin_id')
+          .notNull()
+          .references(
+            () => admins.id,
+            {
+              onDelete: 'restrict',
+            },
+          ),
+
+      tokenHash:
+        varchar(
+          'token_hash',
+          {
+            length: 64,
+          },
+        )
+          .notNull(),
+
+      authMethod:
+        adminSessionAuthMethodEnum(
+          'auth_method',
+        )
+          .notNull(),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      lastSeenAt:
+        timestamp(
+          'last_seen_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      idleExpiresAt:
+        timestamp(
+          'idle_expires_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .notNull(),
+
+      absoluteExpiresAt:
+        timestamp(
+          'absolute_expires_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .notNull(),
+
+      revokedAt:
+        timestamp(
+          'revoked_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      revocationReason:
+        varchar(
+          'revocation_reason',
+          {
+            length: 64,
+          },
+        ),
+    },
+    (table) => [
+      uniqueIndex(
+        'admin_sessions_token_hash_unique',
+      ).on(
+        table.tokenHash,
+      ),
+
+      index(
+        'admin_sessions_admin_idx',
+      ).on(
+        table.adminId,
+      ),
+
+      index(
+        'admin_sessions_active_expiry_idx',
+      )
+        .on(
+          table.idleExpiresAt,
+          table.absoluteExpiresAt,
+        )
+        .where(
+          sql`${table.revokedAt} is null`,
+        ),
+
+      check(
+        'admin_sessions_token_hash_format',
+        sql`
+          ${table.tokenHash}
+          ~
+          '^[0-9a-f]{64}$'
+        `,
+      ),
+
+      check(
+        'admin_sessions_idle_after_created',
+        sql`
+          ${table.idleExpiresAt}
+          >
+          ${table.createdAt}
+        `,
+      ),
+
+      check(
+        'admin_sessions_absolute_after_created',
+        sql`
+          ${table.absoluteExpiresAt}
+          >
+          ${table.createdAt}
+        `,
+      ),
+
+      check(
+        'admin_sessions_idle_not_after_absolute',
+        sql`
+          ${table.idleExpiresAt}
+          <=
+          ${table.absoluteExpiresAt}
+        `,
+      ),
+
+      check(
+        'admin_sessions_last_seen_not_before_created',
+        sql`
+          ${table.lastSeenAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+
+      check(
+        'admin_sessions_revocation_pair',
+        sql`
+          (
+            ${table.revokedAt} is null
+            and
+            ${table.revocationReason} is null
+          )
+          or
+          (
+            ${table.revokedAt} is not null
+            and
+            ${table.revocationReason} is not null
+            and
+            char_length(
+              btrim(
+                ${table.revocationReason}
+              )
+            ) > 0
+          )
+        `,
+      ),
+
+      check(
+        'admin_sessions_revoked_not_before_created',
+        sql`
+          ${table.revokedAt} is null
+          or
+          ${table.revokedAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+    ],
+  );
+
+export const adminLoginChallenges =
+  pgTable(
+    'admin_login_challenges',
+    {
+      id:
+        uuid('id')
+          .defaultRandom()
+          .primaryKey(),
+
+      adminId:
+        uuid('admin_id')
+          .notNull()
+          .references(
+            () => admins.id,
+            {
+              onDelete: 'restrict',
+            },
+          ),
+
+      tokenHash:
+        varchar(
+          'token_hash',
+          {
+            length: 64,
+          },
+        )
+          .notNull(),
+
+      type:
+        adminLoginChallengeTypeEnum(
+          'type',
+        )
+          .notNull(),
+
+      attemptCount:
+        smallint('attempt_count')
+          .default(0)
+          .notNull(),
+
+      expiresAt:
+        timestamp(
+          'expires_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .notNull(),
+
+      consumedAt:
+        timestamp(
+          'consumed_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      invalidatedAt:
+        timestamp(
+          'invalidated_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+    },
+    (table) => [
+      uniqueIndex(
+        'admin_login_challenges_token_hash_unique',
+      ).on(
+        table.tokenHash,
+      ),
+
+      uniqueIndex(
+        'admin_login_challenges_active_admin_unique',
+      )
+        .on(
+          table.adminId,
+        )
+        .where(
+          sql`
+            ${table.consumedAt} is null
+            and
+            ${table.invalidatedAt} is null
+          `,
+        ),
+
+      index(
+        'admin_login_challenges_expires_idx',
+      ).on(
+        table.expiresAt,
+      ),
+
+      check(
+        'admin_login_challenges_token_hash_format',
+        sql`
+          ${table.tokenHash}
+          ~
+          '^[0-9a-f]{64}$'
+        `,
+      ),
+
+      check(
+        'admin_login_challenges_attempt_range',
+        sql`
+          ${table.attemptCount} >= 0
+          and
+          ${table.attemptCount} <= 5
+        `,
+      ),
+
+      check(
+        'admin_login_challenges_expiry_after_created',
+        sql`
+          ${table.expiresAt}
+          >
+          ${table.createdAt}
+        `,
+      ),
+
+      check(
+        'admin_login_challenges_terminal_state_exclusive',
+        sql`
+          not (
+            ${table.consumedAt} is not null
+            and
+            ${table.invalidatedAt} is not null
+          )
+        `,
+      ),
+
+      check(
+        'admin_login_challenges_consumed_not_before_created',
+        sql`
+          ${table.consumedAt} is null
+          or
+          ${table.consumedAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+
+      check(
+        'admin_login_challenges_invalidated_not_before_created',
+        sql`
+          ${table.invalidatedAt} is null
+          or
+          ${table.invalidatedAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+    ],
+  );
+
+export const adminTotpFactors =
+  pgTable(
+    'admin_totp_factors',
+    {
+      id:
+        uuid('id')
+          .defaultRandom()
+          .primaryKey(),
+
+      adminId:
+        uuid('admin_id')
+          .notNull()
+          .references(
+            () => admins.id,
+            {
+              onDelete: 'restrict',
+            },
+          ),
+
+      secretCiphertext:
+        bytea(
+          'secret_ciphertext',
+        )
+          .notNull(),
+
+      secretNonce:
+        bytea(
+          'secret_nonce',
+        )
+          .notNull(),
+
+      secretAuthTag:
+        bytea(
+          'secret_auth_tag',
+        )
+          .notNull(),
+
+      keyVersion:
+        smallint('key_version')
+          .notNull(),
+
+      lastUsedCounter:
+        bigint(
+          'last_used_counter',
+          {
+            mode: 'number',
+          },
+        ),
+
+      confirmedAt:
+        timestamp(
+          'confirmed_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      updatedAt:
+        timestamp(
+          'updated_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+    },
+    (table) => [
+      uniqueIndex(
+        'admin_totp_factors_admin_unique',
+      ).on(
+        table.adminId,
+      ),
+
+      check(
+        'admin_totp_factors_ciphertext_nonempty',
+        sql`
+          octet_length(
+            ${table.secretCiphertext}
+          ) > 0
+        `,
+      ),
+
+      check(
+        'admin_totp_factors_nonce_length',
+        sql`
+          octet_length(
+            ${table.secretNonce}
+          ) = 12
+        `,
+      ),
+
+      check(
+        'admin_totp_factors_auth_tag_length',
+        sql`
+          octet_length(
+            ${table.secretAuthTag}
+          ) = 16
+        `,
+      ),
+
+      check(
+        'admin_totp_factors_key_version_positive',
+        sql`${table.keyVersion} >= 1`,
+      ),
+
+      check(
+        'admin_totp_factors_counter_nonnegative',
+        sql`
+          ${table.lastUsedCounter} is null
+          or
+          ${table.lastUsedCounter} >= 0
+        `,
+      ),
+
+      check(
+        'admin_totp_factors_confirmed_not_before_created',
+        sql`
+          ${table.confirmedAt} is null
+          or
+          ${table.confirmedAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+    ],
+  );
+
+export const adminRecoveryCodes =
+  pgTable(
+    'admin_recovery_codes',
+    {
+      id:
+        uuid('id')
+          .defaultRandom()
+          .primaryKey(),
+
+      adminId:
+        uuid('admin_id')
+          .notNull()
+          .references(
+            () => admins.id,
+            {
+              onDelete: 'restrict',
+            },
+          ),
+
+      codeHash:
+        varchar(
+          'code_hash',
+          {
+            length: 64,
+          },
+        )
+          .notNull(),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      usedAt:
+        timestamp(
+          'used_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      revokedAt:
+        timestamp(
+          'revoked_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+    },
+    (table) => [
+      uniqueIndex(
+        'admin_recovery_codes_code_hash_unique',
+      ).on(
+        table.codeHash,
+      ),
+
+      index(
+        'admin_recovery_codes_admin_idx',
+      ).on(
+        table.adminId,
+      ),
+
+      index(
+        'admin_recovery_codes_active_admin_idx',
+      )
+        .on(
+          table.adminId,
+        )
+        .where(
+          sql`
+            ${table.usedAt} is null
+            and
+            ${table.revokedAt} is null
+          `,
+        ),
+
+      check(
+        'admin_recovery_codes_hash_format',
+        sql`
+          ${table.codeHash}
+          ~
+          '^[0-9a-f]{64}$'
+        `,
+      ),
+
+      check(
+        'admin_recovery_codes_terminal_state_exclusive',
+        sql`
+          not (
+            ${table.usedAt} is not null
+            and
+            ${table.revokedAt} is not null
+          )
+        `,
+      ),
+
+      check(
+        'admin_recovery_codes_used_not_before_created',
+        sql`
+          ${table.usedAt} is null
+          or
+          ${table.usedAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+
+      check(
+        'admin_recovery_codes_revoked_not_before_created',
+        sql`
+          ${table.revokedAt} is null
+          or
+          ${table.revokedAt}
+          >=
+          ${table.createdAt}
+        `,
+      ),
+    ],
+  );
+
+export const adminAuthThrottles =
+  pgTable(
+    'admin_auth_throttles',
+    {
+      scope:
+        adminAuthThrottleScopeEnum(
+          'scope',
+        )
+          .notNull(),
+
+      keyHash:
+        varchar(
+          'key_hash',
+          {
+            length: 64,
+          },
+        )
+          .notNull(),
+
+      failureCount:
+        integer('failure_count')
+          .default(0)
+          .notNull(),
+
+      windowStartedAt:
+        timestamp(
+          'window_started_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      lastFailureAt:
+        timestamp(
+          'last_failure_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      blockedUntil:
+        timestamp(
+          'blocked_until',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        ),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+
+      updatedAt:
+        timestamp(
+          'updated_at',
+          {
+            withTimezone: true,
+            mode: 'date',
+          },
+        )
+          .defaultNow()
+          .notNull(),
+    },
+    (table) => [
+      primaryKey({
+        name:
+          'admin_auth_throttles_pkey',
+        columns: [
+          table.scope,
+          table.keyHash,
+        ],
+      }),
+
+      index(
+        'admin_auth_throttles_blocked_idx',
+      ).on(
+        table.blockedUntil,
+      ),
+
+      check(
+        'admin_auth_throttles_key_hash_format',
+        sql`
+          ${table.keyHash}
+          ~
+          '^[0-9a-f]{64}$'
+        `,
+      ),
+
+      check(
+        'admin_auth_throttles_failure_nonnegative',
+        sql`${table.failureCount} >= 0`,
+      ),
+
+      check(
+        'admin_auth_throttles_last_failure_not_before_window',
+        sql`
+          ${table.lastFailureAt} is null
+          or
+          ${table.lastFailureAt}
+          >=
+          ${table.windowStartedAt}
+        `,
+      ),
+    ],
+  );
+
+/*
+|--------------------------------------------------------------------------
 | Relations
 |--------------------------------------------------------------------------
 */
@@ -1356,6 +2264,107 @@ export const orderStatusHistoryRelations =
             ],
             references: [
               orders.id,
+            ],
+          },
+        ),
+    }),
+  );
+export const adminsRelations =
+  relations(
+    admins,
+    ({ one, many }) => ({
+      sessions:
+        many(
+          adminSessions,
+        ),
+
+      loginChallenges:
+        many(
+          adminLoginChallenges,
+        ),
+
+      totpFactor:
+        one(
+          adminTotpFactors,
+        ),
+
+      recoveryCodes:
+        many(
+          adminRecoveryCodes,
+        ),
+    }),
+  );
+
+export const adminSessionsRelations =
+  relations(
+    adminSessions,
+    ({ one }) => ({
+      admin:
+        one(
+          admins,
+          {
+            fields: [
+              adminSessions.adminId,
+            ],
+            references: [
+              admins.id,
+            ],
+          },
+        ),
+    }),
+  );
+
+export const adminLoginChallengesRelations =
+  relations(
+    adminLoginChallenges,
+    ({ one }) => ({
+      admin:
+        one(
+          admins,
+          {
+            fields: [
+              adminLoginChallenges.adminId,
+            ],
+            references: [
+              admins.id,
+            ],
+          },
+        ),
+    }),
+  );
+
+export const adminTotpFactorsRelations =
+  relations(
+    adminTotpFactors,
+    ({ one }) => ({
+      admin:
+        one(
+          admins,
+          {
+            fields: [
+              adminTotpFactors.adminId,
+            ],
+            references: [
+              admins.id,
+            ],
+          },
+        ),
+    }),
+  );
+
+export const adminRecoveryCodesRelations =
+  relations(
+    adminRecoveryCodes,
+    ({ one }) => ({
+      admin:
+        one(
+          admins,
+          {
+            fields: [
+              adminRecoveryCodes.adminId,
+            ],
+            references: [
+              admins.id,
             ],
           },
         ),

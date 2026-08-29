@@ -15,6 +15,13 @@
       "when": 1787964179957,
       "tag": "0001_runtime_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788003212410,
+      "tag": "0002_auth_foundation",
+      "breakpoints": true
     }
   ]
 }
