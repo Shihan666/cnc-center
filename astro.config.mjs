@@ -71,6 +71,23 @@ const excludedSitemapPaths =
     '/checkout/',
   ]);
 
+/**
+ * @param {string} pathname
+ */
+function isExcludedSitemapPath(
+  pathname,
+) {
+  return (
+    excludedSitemapPaths.has(
+      pathname,
+    ) ||
+    pathname === '/admin' ||
+    pathname.startsWith(
+      '/admin/',
+    )
+  );
+}
+
 // https://astro.build/config
 export default defineConfig({
   site,
@@ -88,7 +105,7 @@ export default defineConfig({
 
     sitemap({
       filter: (page) =>
-        !excludedSitemapPaths.has(
+        !isExcludedSitemapPath(
           new URL(page).pathname,
         ),
     }),
