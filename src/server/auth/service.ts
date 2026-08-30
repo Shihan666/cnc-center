@@ -26,20 +26,26 @@ import {
 
 import type {
   AdminLoginNext,
+  AdminSessionRevocationReason,
   BeginAdminLoginResult,
   ConfirmAdminTotpEnrollmentResult,
   PrepareAdminTotpEnrollmentResult,
+  ResolvedAdminSession,
 } from './service-contract.ts';
 
 import {
   canonicalizeAdminEmail,
   createAdminSessionTiming,
   createLoginChallengeExpiresAt,
+  createTouchedIdleExpiry,
+  getAdminSessionExpiryReason,
   isAdminEmailInputValid,
   isAdminPasswordInputValid,
+  isAdminSessionRevocationReason,
   isAuthThrottleBlocked,
   isLoginChallengeActive,
   requireCanonicalClientIp,
+  shouldTouchAdminSession,
   transitionLoginChallengeFailure,
 } from './service-foundation.ts';
 
@@ -1582,4 +1588,297 @@ export async function completeAdminRecoveryLogin(
 
     throw error;
   }
+}
+
+export async function resolveAdminSession(
+  input: {
+    sessionToken: string;
+    now: Date;
+  },
+): Promise<ResolvedAdminSession | null> {
+  assertValidDate(
+    input.now,
+    'Admin session resolution time',
+  );
+
+  const sessionTokenHash =
+    hashOpaqueAuthToken(
+      input.sessionToken,
+    );
+
+  return runAuthTransaction(
+    async (tx) => {
+      const sessionAdminId =
+        await tx
+          .getAdminSessionAdminIdByTokenHash(
+            sessionTokenHash,
+          );
+
+      if (!sessionAdminId) {
+        return null;
+      }
+
+      const admin =
+        await tx.lockAdminForAuth(
+          sessionAdminId,
+        );
+
+      const session =
+        await tx
+          .lockAdminSessionByTokenHash(
+            sessionTokenHash,
+          );
+
+      if (!session) {
+        return null;
+      }
+
+      if (
+        session.adminId !==
+        sessionAdminId
+      ) {
+        throw new Error(
+          'Admin session ownership changed while resolving its lock order.',
+        );
+      }
+
+      if (session.revokedAt !== null) {
+        return null;
+      }
+
+      const expiryReason =
+        getAdminSessionExpiryReason({
+          idleExpiresAt:
+            session.idleExpiresAt,
+          absoluteExpiresAt:
+            session.absoluteExpiresAt,
+          now:
+            input.now,
+        });
+
+      if (expiryReason !== null) {
+        const revoked =
+          await tx.revokeAdminSession(
+            session.id,
+            input.now,
+            expiryReason,
+          );
+
+        if (!revoked) {
+          throw new Error(
+            'Expired admin session revocation lost its locked state.',
+          );
+        }
+
+        return null;
+      }
+
+
+      if (
+        !admin ||
+        !admin.isActive
+      ) {
+        const revoked =
+          await tx.revokeAdminSession(
+            session.id,
+            input.now,
+            'admin_disabled',
+          );
+
+        if (!revoked) {
+          throw new Error(
+            'Disabled-admin session revocation lost its locked state.',
+          );
+        }
+
+        return null;
+      }
+
+      if (
+        !shouldTouchAdminSession(
+          session.lastSeenAt,
+          input.now,
+        )
+      ) {
+        return {
+          sessionId:
+            session.id,
+
+          admin: {
+            id:
+              admin.id,
+
+            email:
+              admin.email,
+          },
+
+          authMethod:
+            session.authMethod,
+
+          createdAt:
+            session.createdAt,
+
+          lastSeenAt:
+            session.lastSeenAt,
+
+          idleExpiresAt:
+            session.idleExpiresAt,
+
+          absoluteExpiresAt:
+            session.absoluteExpiresAt,
+        };
+      }
+
+      const idleExpiresAt =
+        createTouchedIdleExpiry(
+          input.now,
+          session.absoluteExpiresAt,
+        );
+
+      const touched =
+        await tx.touchAdminSession(
+          session.id,
+          session.lastSeenAt,
+          input.now,
+          idleExpiresAt,
+        );
+
+      if (!touched) {
+        throw new Error(
+          'Admin session touch lost its locked state.',
+        );
+      }
+
+      return {
+        sessionId:
+          session.id,
+
+        admin: {
+          id:
+            admin.id,
+
+          email:
+            admin.email,
+        },
+
+        authMethod:
+          session.authMethod,
+
+        createdAt:
+          session.createdAt,
+
+        lastSeenAt:
+          new Date(
+            input.now.getTime(),
+          ),
+
+        idleExpiresAt,
+
+        absoluteExpiresAt:
+          session.absoluteExpiresAt,
+      };
+    },
+  );
+}
+
+export async function revokeAdminSession(
+  input: {
+    sessionToken: string;
+    reason:
+      AdminSessionRevocationReason;
+    now: Date;
+  },
+): Promise<void> {
+  assertValidDate(
+    input.now,
+    'Admin session revocation time',
+  );
+
+  if (
+    !isAdminSessionRevocationReason(
+      input.reason,
+    )
+  ) {
+    throw new Error(
+      'Invalid admin session revocation reason.',
+    );
+  }
+
+  const sessionTokenHash =
+    hashOpaqueAuthToken(
+      input.sessionToken,
+    );
+
+  await runAuthTransaction(
+    async (tx) => {
+      const session =
+        await tx
+          .lockAdminSessionByTokenHash(
+            sessionTokenHash,
+          );
+
+      if (
+        !session ||
+        session.revokedAt !== null
+      ) {
+        return;
+      }
+
+      const revoked =
+        await tx.revokeAdminSession(
+          session.id,
+          input.now,
+          input.reason,
+        );
+
+      if (!revoked) {
+        throw new Error(
+          'Admin session revocation lost its locked state.',
+        );
+      }
+    },
+  );
+}
+
+export async function revokeAllAdminSessions(
+  input: {
+    adminId: string;
+    reason:
+      AdminSessionRevocationReason;
+    now: Date;
+  },
+): Promise<number> {
+  assertValidDate(
+    input.now,
+    'Admin session bulk revocation time',
+  );
+
+  if (
+    !isAdminSessionRevocationReason(
+      input.reason,
+    )
+  ) {
+    throw new Error(
+      'Invalid admin session revocation reason.',
+    );
+  }
+
+  return runAuthTransaction(
+    async (tx) => {
+      const admin =
+        await tx.lockAdminForAuth(
+          input.adminId,
+        );
+
+      if (!admin) {
+        return 0;
+      }
+
+      return tx.revokeAllAdminSessions(
+        admin.id,
+        input.now,
+        input.reason,
+      );
+    },
+  );
 }

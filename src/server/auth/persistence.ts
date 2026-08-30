@@ -219,6 +219,9 @@ export type AuthPersistenceTransaction =
       AdminSessionRecord
     >;
 
+    getAdminSessionAdminIdByTokenHash: (
+      tokenHash: string,
+    ) => Promise<string | null>;
     lockAdminSessionByTokenHash: (
       tokenHash: string,
     ) => Promise<
@@ -1739,6 +1742,37 @@ export async function runAuthTransaction<T>(
             );
           },
 
+          async getAdminSessionAdminIdByTokenHash(
+            tokenHash,
+          ) {
+            assertSha256HexHash(
+              tokenHash,
+              'Admin session token hash',
+            );
+
+            const rows =
+              await tx
+                .select({
+                  adminId:
+                    adminSessions.adminId,
+                })
+                .from(
+                  adminSessions,
+                )
+                .where(
+                  eq(
+                    adminSessions
+                      .tokenHash,
+                    tokenHash,
+                  ),
+                )
+                .limit(1);
+
+            return (
+              rows[0]?.adminId ??
+              null
+            );
+          },
           async lockAdminSessionByTokenHash(
             tokenHash,
           ) {
