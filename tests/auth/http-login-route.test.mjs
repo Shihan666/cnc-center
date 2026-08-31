@@ -1,5 +1,11 @@
 import assert from 'node:assert/strict';
-import test from 'node:test';
+import test, {
+  after,
+} from 'node:test';
+
+import {
+  closeDatabase,
+} from '../../src/server/db/client.ts';
 
 const {
   POST,
@@ -235,3 +241,6 @@ test(
     );
   },
 );
+after(async () => {
+  await closeDatabase();
+});

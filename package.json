@@ -1,51 +1,58 @@
 {
-  "name": "cnc-center",
-  "type": "module",
-  "version": "0.0.1",
-  "engines": {
-    "node": ">=24.7.0"
-  },
-  "scripts": {
-    "dev": "node --env-file-if-exists=.env.local ./node_modules/astro/bin/astro.mjs dev",
-    "build": "astro build",
-    "preview": "astro preview",
-    "astro": "astro",
-    "check": "astro check",
-    "admin:create": "powershell.exe -NoProfile -File ./scripts/admin-bootstrap.ps1",
-    "admin:password-reset": "powershell.exe -NoProfile -File ./scripts/admin-password-reset.ps1",
-    "start": "node ./dist/server/entry.mjs",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
-  },
-  "dependencies": {
-    "@astrojs/node": "11.1.4",
-    "@astrojs/react": "^6.0.4",
-    "@astrojs/sitemap": "^3.7.3",
-    "@fontsource-variable/vazirmatn": "^5.3.0",
-    "@tailwindcss/vite": "^4.3.3",
-    "@types/react": "^19.2.18",
-    "@types/react-dom": "^19.2.5",
-    "astro": "^7.2.7",
-    "drizzle-orm": "0.45.2",
-    "otpauth": "9.5.1",
-    "postgres": "3.4.9",
-    "qrcode": "^1.5.4",
-    "react": "^19.2.8",
-    "react-dom": "^19.2.8",
-    "tailwindcss": "^4.3.3"
-  },
-  "allowScripts": {
-    "esbuild": true
-  },
-  "devDependencies": {
-    "@astrojs/check": "^0.9.10",
-    "@types/qrcode": "^1.5.6",
-    "drizzle-kit": "0.31.10",
-    "typescript": "^6.0.3"
-  },
-  "overrides": {
-    "@esbuild-kit/core-utils": {
-      "esbuild": "0.25.12"
-    }
-  }
+    "name":  "cnc-center",
+    "type":  "module",
+    "version":  "0.0.1",
+    "engines":  {
+                    "node":  "\u003e=24.7.0"
+                },
+    "scripts":  {
+                    "dev":  "node --env-file-if-exists=.env.local ./node_modules/astro/bin/astro.mjs dev",
+                    "build":  "astro build",
+                    "preview":  "astro preview",
+                    "astro":  "astro",
+                    "check":  "astro check",
+                    "admin:create":  "powershell.exe -NoProfile -File ./scripts/admin-bootstrap.ps1",
+                    "admin:password-reset":  "powershell.exe -NoProfile -File ./scripts/admin-password-reset.ps1",
+                    "start":  "node ./dist/server/entry.mjs",
+                    "db:generate":  "drizzle-kit generate",
+                    "db:migrate":  "drizzle-kit migrate",
+                    "test:auth":  "node --env-file=.env.local --test --test-reporter=spec --test-concurrency=1 tests/auth/*.test.mjs",
+                    "test":  "npm run test:auth",
+                    "test:orders":  "node --env-file=.env.local --test --test-reporter=spec --test-concurrency=1 tests/orders/*.test.mjs",
+                    "test:admin":  "node --env-file=.env.local --test --test-reporter=spec --test-concurrency=1 tests/admin/*.test.mjs",
+                    "test:all":  "npm run test:auth \u0026\u0026 npm run test:admin \u0026\u0026 npm run test:orders",
+                    "test:ci":  "npm run db:migrate \u0026\u0026 npm run test:all",
+                    "verify":  "npm run check \u0026\u0026 npm run test:ci \u0026\u0026 npm run build"
+                },
+    "dependencies":  {
+                         "@astrojs/node":  "11.1.4",
+                         "@astrojs/react":  "^6.0.4",
+                         "@astrojs/sitemap":  "^3.7.3",
+                         "@fontsource-variable/vazirmatn":  "^5.3.0",
+                         "@tailwindcss/vite":  "^4.3.3",
+                         "@types/react":  "^19.2.18",
+                         "@types/react-dom":  "^19.2.5",
+                         "astro":  "^7.2.7",
+                         "drizzle-orm":  "0.45.2",
+                         "otpauth":  "9.5.1",
+                         "postgres":  "3.4.9",
+                         "qrcode":  "^1.5.4",
+                         "react":  "^19.2.8",
+                         "react-dom":  "^19.2.8",
+                         "tailwindcss":  "^4.3.3"
+                     },
+    "allowScripts":  {
+                         "esbuild":  true
+                     },
+    "devDependencies":  {
+                            "@astrojs/check":  "^0.9.10",
+                            "@types/qrcode":  "^1.5.6",
+                            "drizzle-kit":  "0.31.10",
+                            "typescript":  "^6.0.3"
+                        },
+    "overrides":  {
+                      "@esbuild-kit/core-utils":  {
+                                                      "esbuild":  "0.25.12"
+                                                  }
+                  }
 }
