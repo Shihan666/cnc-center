@@ -1,0 +1,150 @@
+---
+interface Props {
+  label?: string;
+  class?: string;
+}
+
+const {
+  label = "خروج از حساب",
+  class: className = "",
+} = Astro.props;
+
+const classes = [
+  "flex min-h-10 w-full items-center justify-start gap-2 rounded-control px-3 text-sm font-semibold text-danger transition duration-200 ease-standard",
+  "hover:bg-red-50 focus-visible:outline-none disabled:cursor-wait disabled:opacity-60",
+  className,
+]
+  .filter(Boolean)
+  .join(" ");
+---
+
+<div data-admin-logout-root>
+  <button
+    type="button"
+    class={classes}
+    data-admin-logout
+  >
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      fill="none"
+      class="size-5 shrink-0"
+    >
+      <path
+        d="M10 6H6.75A1.75 1.75 0 0 0 5 7.75v8.5C5 17.217 5.783 18 6.75 18H10"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+      />
+      <path
+        d="M14 8l4 4-4 4M18 12H9"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+
+    <span data-admin-logout-label>
+      {label}
+    </span>
+  </button>
+
+  <p
+    class="mt-2 hidden px-3 text-xs font-medium leading-5 text-danger"
+    role="status"
+    aria-live="polite"
+    data-admin-logout-status
+  >
+  </p>
+</div>
+
+<script>
+  const roots =
+    document.querySelectorAll(
+      "[data-admin-logout-root]",
+    );
+
+  for (const root of roots) {
+    const button =
+      root.querySelector(
+        "[data-admin-logout]",
+      );
+
+    const label =
+      root.querySelector(
+        "[data-admin-logout-label]",
+      );
+
+    const status =
+      root.querySelector(
+        "[data-admin-logout-status]",
+      );
+
+    if (
+      !(button instanceof HTMLButtonElement) ||
+      !(label instanceof HTMLElement) ||
+      !(status instanceof HTMLElement)
+    ) {
+      continue;
+    }
+
+    button.addEventListener(
+      "click",
+      async () => {
+        if (button.disabled) {
+          return;
+        }
+
+        const originalLabel =
+          label.textContent ??
+          "خروج از حساب";
+
+        button.disabled = true;
+        label.textContent =
+          "در حال خروج...";
+
+        status.textContent = "";
+        status.classList.add("hidden");
+
+        try {
+          const response =
+            await fetch(
+              "/api/admin/auth/logout",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                body: "{}",
+                credentials:
+                  "same-origin",
+              },
+            );
+
+          if (!response.ok) {
+            throw new Error(
+              "logout_failed",
+            );
+          }
+
+          window.location.replace(
+            "/admin/auth/login",
+          );
+        } catch {
+          button.disabled = false;
+          label.textContent =
+            originalLabel;
+
+          status.textContent =
+            "خروج انجام نشد. دوباره تلاش کنید.";
+
+          status.classList.remove(
+            "hidden",
+          );
+        }
+      },
+    );
+  }
+</script>

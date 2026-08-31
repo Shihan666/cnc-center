@@ -1,0 +1,315 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+import EmptyState from "../../../components/common/EmptyState.astro";
+
+const productId =
+  Astro.params.id ?? "";
+
+const tabs = [
+  {
+    key: "main",
+    label: "اطلاعات اصلی",
+    active: true,
+  },
+  {
+    key: "commerce",
+    label: "قیمت و موجودی",
+    active: false,
+  },
+  {
+    key: "specifications",
+    label: "مشخصات فنی",
+    active: false,
+  },
+  {
+    key: "images",
+    label: "تصاویر",
+    active: false,
+  },
+  {
+    key: "description",
+    label: "توضیحات",
+    active: false,
+  },
+] as const;
+---
+
+<AdminLayout title="ویرایش محصول">
+  <div class="space-y-6">
+    <nav
+      aria-label="مسیر صفحه"
+      class="flex flex-wrap items-center gap-2 text-sm text-muted"
+    >
+      <a
+        href="/admin/products"
+        class="font-semibold text-brand-700 transition hover:text-brand-800"
+      >
+        محصولات
+      </a>
+
+      <span aria-hidden="true">
+        /
+      </span>
+
+      <span aria-current="page">
+        ویرایش محصول
+      </span>
+    </nav>
+
+    <section
+      class="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between"
+      aria-labelledby="product-edit-title"
+    >
+      <div>
+        <div class="flex flex-wrap items-center gap-3">
+          <h2
+            id="product-edit-title"
+            class="text-2xl font-black text-ink"
+          >
+            ویرایش محصول
+          </h2>
+
+          <Badge
+            variant="neutral"
+            size="sm"
+          >
+            در انتظار اتصال داده
+          </Badge>
+        </div>
+
+        {
+          productId && (
+            <p class="mt-2 text-sm text-muted">
+              شناسه مسیر:
+              <span
+                dir="ltr"
+                class="mr-1 font-mono text-xs text-ink-soft"
+              >
+                {productId}
+              </span>
+            </p>
+          )
+        }
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <Button
+          href="/admin/products"
+          variant="secondary"
+        >
+          بازگشت
+        </Button>
+
+        <Button
+          type="button"
+          variant="primary"
+          disabled
+        >
+          ذخیره تغییرات
+        </Button>
+      </div>
+    </section>
+
+    <section aria-labelledby="product-edit-tabs-title">
+      <h2
+        id="product-edit-tabs-title"
+        class="sr-only"
+      >
+        بخش‌های ویرایش محصول
+      </h2>
+
+      <div
+        class="overflow-x-auto border-b border-line"
+        role="tablist"
+        aria-label="بخش‌های ویرایش محصول"
+      >
+        <div class="flex min-w-max gap-1">
+          {
+            tabs.map((tab) => (
+              <button
+                type="button"
+                role="tab"
+                aria-selected={tab.active}
+                disabled={!tab.active}
+                class:list={[
+                  "min-h-11 border-b-2 px-4 text-sm font-bold transition",
+                  tab.active
+                    ? "border-brand-600 text-brand-800"
+                    : "cursor-default border-transparent text-muted",
+                ]}
+              >
+                {tab.label}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
+      <section aria-labelledby="product-edit-main-title">
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <div class="mb-6">
+            <h2
+              id="product-edit-main-title"
+              class="text-lg font-black text-ink"
+            >
+              اطلاعات اصلی
+            </h2>
+
+            <p class="mt-1 text-sm leading-6 text-muted">
+              اطلاعات واقعی محصول پس از اتصال Admin Products در این بخش بارگذاری می‌شوند.
+            </p>
+          </div>
+
+          <EmptyState
+            title="اطلاعات محصول هنوز بارگذاری نشده"
+            description="پس از آماده‌شدن backend مدیریت محصولات، فرم ویرایش با اطلاعات واقعی محصول تکمیل می‌شود."
+            compact
+          />
+        </Card>
+      </section>
+
+      <aside class="space-y-4">
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <h2 class="text-sm font-black text-ink">
+            وضعیت محصول
+          </h2>
+
+          <div class="mt-4 flex items-center justify-between gap-3">
+            <span class="text-sm text-muted">
+              وضعیت فعلی
+            </span>
+
+            <Badge
+              variant="neutral"
+              size="sm"
+            >
+              —
+            </Badge>
+          </div>
+
+          <p class="mt-3 text-xs leading-5 text-muted">
+            وضعیت واقعی محصول می‌تواند پیش‌نویس، فعال یا بایگانی‌شده باشد.
+          </p>
+        </Card>
+
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <h2 class="text-sm font-black text-ink">
+            عملیات بیشتر
+          </h2>
+
+          <p class="mt-2 text-xs leading-5 text-muted">
+            عملیات حساس از ذخیره عادی جدا نگه داشته می‌شوند.
+          </p>
+
+          <div class="mt-4 grid gap-2">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled
+            >
+              تکثیر محصول
+            </Button>
+
+            <Button
+              type="button"
+              variant="danger"
+              disabled
+            >
+              بایگانی محصول
+            </Button>
+          </div>
+        </Card>
+      </aside>
+    </div>
+
+    <section aria-labelledby="product-edit-future-sections-title">
+      <div class="mb-4">
+        <h2
+          id="product-edit-future-sections-title"
+          class="text-lg font-black text-ink"
+        >
+          بخش‌های دیگر
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          این بخش‌ها پس از اتصال داده و فرم‌های واقعی فعال می‌شوند.
+        </p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <h3 class="font-bold text-ink">
+            قیمت و موجودی
+          </h3>
+
+          <p class="mt-2 text-sm leading-6 text-muted">
+            حالت فروش، قیمت، نمایش قیمت و موجودی.
+          </p>
+        </Card>
+
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <h3 class="font-bold text-ink">
+            مشخصات فنی
+          </h3>
+
+          <p class="mt-2 text-sm leading-6 text-muted">
+            مشخصات پویا، سازگاری و اطلاعات فنی.
+          </p>
+        </Card>
+
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <h3 class="font-bold text-ink">
+            تصاویر
+          </h3>
+
+          <p class="mt-2 text-sm leading-6 text-muted">
+            تصاویر اصلی و تکمیلی محصول.
+          </p>
+        </Card>
+
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <h3 class="font-bold text-ink">
+            توضیحات
+          </h3>
+
+          <p class="mt-2 text-sm leading-6 text-muted">
+            توضیحات فروش، دسترسی و اطلاعات انتشار.
+          </p>
+        </Card>
+      </div>
+    </section>
+  </div>
+</AdminLayout>

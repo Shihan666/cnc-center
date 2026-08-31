@@ -1,0 +1,256 @@
+---
+import AdminLayout from "../../layouts/AdminLayout.astro";
+import Badge from "../../components/common/Badge.astro";
+import Button from "../../components/common/Button.astro";
+import Card from "../../components/common/Card.astro";
+import EmptyState from "../../components/common/EmptyState.astro";
+
+const actionItems = [
+  {
+    label: "آماده ارسال",
+    description: "سفارش‌هایی که باید برای ارسال آماده شوند",
+    href: "/admin/orders",
+    tone: "brand",
+  },
+  {
+    label: "نیازمند بررسی",
+    description: "سفارش‌هایی که قبل از ادامه نیاز به بررسی دارند",
+    href: "/admin/orders",
+    tone: "warning",
+  },
+
+  {
+    label: "ناموجود",
+    description: "محصولاتی که موجودی آن‌ها صفر شده است",
+    href: "/admin/inventory",
+    tone: "danger",
+  },
+] as const;
+
+const todayItems = [
+  {
+    label: "سفارش جدید",
+    description: "سفارش‌های ثبت‌شده امروز",
+  },
+  {
+    label: "نیازمند ارسال",
+    description: "سفارش‌هایی که امروز باید پیگیری شوند",
+  },
+  {
+    label: "پیگیری امروز",
+    description: "مواردی که نیاز به اقدام ادمین دارند",
+  },
+] as const;
+---
+
+<AdminLayout title="داشبورد">
+  <div class="space-y-8">
+    <section aria-labelledby="dashboard-action-title">
+      <div
+        class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"
+      >
+        <div>
+          <h2
+            id="dashboard-action-title"
+            class="text-lg font-black text-ink"
+          >
+            نیازمند اقدام
+          </h2>
+
+          <p class="mt-1 text-sm leading-6 text-muted">
+            مهم‌ترین مواردی که باید بررسی شوند.
+          </p>
+        </div>
+
+        <Badge variant="neutral" size="sm">
+          در انتظار اتصال داده
+        </Badge>
+      </div>
+
+      <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        {
+          actionItems.map((item) => (
+            <a
+              href={item.href}
+              class="group block rounded-card focus-visible:outline-none"
+            >
+              <Card
+                as="div"
+                padding="md"
+                interactive
+                class="h-full shadow-none"
+              >
+                <div class="flex items-start justify-between gap-4">
+                  <div class="min-w-0">
+                    <p class="font-bold text-ink">
+                      {item.label}
+                    </p>
+
+                    <p class="mt-2 text-sm leading-6 text-muted">
+                      {item.description}
+                    </p>
+                  </div>
+
+                  <Badge
+                    variant={item.tone}
+                    size="sm"
+                    class="shrink-0"
+                  >
+                    —
+                  </Badge>
+                </div>
+
+                <p
+                  class="mt-5 text-sm font-semibold text-brand-700 transition group-hover:text-brand-800"
+                >
+                  مشاهده
+                </p>
+              </Card>
+            </a>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="dashboard-today-title">
+      <div class="mb-4">
+        <h2
+          id="dashboard-today-title"
+          class="text-lg font-black text-ink"
+        >
+          امروز
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          نمای سریع کارهای روزانه فروشگاه.
+        </p>
+      </div>
+
+      <div class="grid gap-4 md:grid-cols-3">
+        {
+          todayItems.map((item) => (
+            <Card
+              as="div"
+              padding="md"
+              class="shadow-none"
+            >
+              <p class="text-sm font-semibold text-muted">
+                {item.label}
+              </p>
+
+              <p class="mt-3 text-2xl font-black text-ink">
+                —
+              </p>
+
+              <p class="mt-2 text-sm leading-6 text-muted">
+                {item.description}
+              </p>
+            </Card>
+          ))
+        }
+      </div>
+    </section>
+
+    <section
+      class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]"
+    >
+      <div aria-labelledby="recent-orders-title">
+        <div
+          class="mb-4 flex items-center justify-between gap-4"
+        >
+          <div>
+            <h2
+              id="recent-orders-title"
+              class="text-lg font-black text-ink"
+            >
+              سفارش‌های اخیر
+            </h2>
+
+            <p class="mt-1 text-sm leading-6 text-muted">
+              آخرین سفارش‌ها پس از اتصال داده اینجا نمایش داده می‌شوند.
+            </p>
+          </div>
+
+          <Button
+            href="/admin/orders"
+            variant="ghost"
+            size="sm"
+          >
+            همه سفارش‌ها
+          </Button>
+        </div>
+
+        <Card
+          as="div"
+          padding="none"
+          class="overflow-hidden shadow-none"
+        >
+          <div class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block">
+            <div
+              class="grid grid-cols-[7rem_minmax(10rem,1fr)_9rem_8rem_7rem_5rem] gap-4 text-xs font-bold text-muted"
+            >
+              <span>شماره سفارش</span>
+              <span>مشتری</span>
+              <span>مبلغ</span>
+              <span>وضعیت</span>
+              <span>زمان</span>
+              <span>عملیات</span>
+            </div>
+          </div>
+
+          <div class="p-4 md:p-5">
+            <EmptyState
+              title="هنوز داده‌ای برای نمایش نداریم"
+              description="با اتصال Dashboard به اطلاعات سفارش‌ها، آخرین سفارش‌ها در این بخش نمایش داده می‌شوند."
+              compact
+            />
+          </div>
+        </Card>
+      </div>
+
+      <aside aria-labelledby="quick-actions-title">
+        <div class="mb-4">
+          <h2
+            id="quick-actions-title"
+            class="text-lg font-black text-ink"
+          >
+            عملیات سریع
+          </h2>
+
+          <p class="mt-1 text-sm leading-6 text-muted">
+            مسیر کوتاه برای کارهای پرتکرار.
+          </p>
+        </div>
+
+        <Card
+          as="div"
+          padding="md"
+          class="shadow-none"
+        >
+          <div class="grid gap-3">
+            <Button
+              href="/admin/products/new"
+              variant="primary"
+            >
+              افزودن محصول
+            </Button>
+
+            <Button
+              href="/admin/orders"
+              variant="secondary"
+            >
+              مشاهده سفارش‌ها
+            </Button>
+
+            <Button
+              href="/admin/inventory"
+              variant="secondary"
+            >
+              مدیریت موجودی
+            </Button>
+          </div>
+        </Card>
+      </aside>
+    </section>
+  </div>
+</AdminLayout>

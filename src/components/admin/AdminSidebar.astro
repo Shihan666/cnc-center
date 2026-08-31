@@ -1,0 +1,128 @@
+---
+import AdminLogoutButton from "./AdminLogoutButton.astro";
+
+interface Props {
+  brandName: string;
+  brandLogoUrl?: string;
+  pathname: string;
+}
+
+const {
+  brandName,
+  brandLogoUrl,
+  pathname,
+} = Astro.props;
+
+const items = [
+  {
+    label: "داشبورد",
+    href: "/admin",
+    key: "dashboard",
+  },
+  {
+    label: "سفارش‌ها",
+    href: "/admin/orders",
+    key: "orders",
+  },
+  {
+    label: "محصولات",
+    href: "/admin/products",
+    key: "products",
+  },
+  {
+    label: "موجودی",
+    href: "/admin/inventory",
+    key: "inventory",
+  },
+  {
+    label: "مشتریان",
+    href: "/admin/customers",
+    key: "customers",
+  },
+  {
+    label: "تنظیمات",
+    href: "/admin/settings",
+    key: "settings",
+  },
+] as const;
+
+function isActive(
+  href: string,
+): boolean {
+  if (href === "/admin") {
+    return pathname === "/admin" ||
+      pathname === "/admin/";
+  }
+
+  return pathname.startsWith(
+    `${href}/`,
+  ) || pathname === href;
+}
+---
+
+<aside
+  class="hidden w-64 shrink-0 border-l border-line bg-surface-raised xl:sticky xl:top-0 xl:flex xl:h-screen xl:flex-col xl:overflow-y-auto"
+  aria-label="منوی مدیریت"
+>
+  <div class="border-b border-line px-5 py-5">
+    <a
+      href="/admin"
+      class="flex items-center gap-3 rounded-control"
+      aria-label={`${brandName} — پنل مدیریت`}
+    >
+      {
+        brandLogoUrl ? (
+          <img
+            src={brandLogoUrl}
+            alt=""
+            class="size-10 rounded-control border border-line object-contain"
+          />
+        ) : (
+          <span
+            aria-hidden="true"
+            class="grid size-10 place-items-center rounded-control bg-brand-600 text-xs font-black text-white"
+          >
+            CNC
+          </span>
+        )
+      }
+
+      <span class="min-w-0">
+        <span class="block truncate text-sm font-black text-ink">
+          {brandName}
+        </span>
+
+        <span class="mt-0.5 block text-xs text-muted">
+          پنل مدیریت
+        </span>
+      </span>
+    </a>
+  </div>
+
+  <nav class="flex-1 p-3">
+    <ul class="space-y-1">
+      {
+        items.map((item) => (
+          <li>
+            <a
+              href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              class:list={[
+                "flex min-h-11 items-center rounded-control px-3 text-sm font-semibold transition duration-200 ease-standard",
+                isActive(item.href)
+                  ? "bg-brand-50 text-brand-800"
+                  : "text-ink-soft hover:bg-surface-soft hover:text-ink",
+              ]}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+
+  <div class="border-t border-line p-3">
+    <AdminLogoutButton />
+  </div>
+</aside>

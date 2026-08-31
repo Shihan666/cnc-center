@@ -1,0 +1,168 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Card from "../../../components/common/Card.astro";
+import EmptyState from "../../../components/common/EmptyState.astro";
+
+const customerFilters = [
+  {
+    key: "all",
+    label: "همه",
+    enabled: false,
+  },
+  {
+    key: "has-orders",
+    label: "دارای سفارش",
+    enabled: false,
+  },
+  {
+    key: "new",
+    label: "مشتری جدید",
+    enabled: false,
+  },
+] as const;
+---
+
+<AdminLayout title="مشتریان">
+  <div class="space-y-6">
+    <section
+      class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+      aria-labelledby="customers-heading"
+    >
+      <div class="max-w-2xl">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2
+            id="customers-heading"
+            class="text-lg font-black text-ink"
+          >
+            مشتریان
+          </h2>
+
+          <Badge
+            variant="neutral"
+            size="sm"
+          >
+            در انتظار اتصال داده
+          </Badge>
+        </div>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          این فهرست بعداً از سفارش‌های واقعی و با تجمیع شماره تماس مشتریان ساخته می‌شود.
+        </p>
+      </div>
+    </section>
+
+    <section
+      class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]"
+      aria-labelledby="customers-search-title"
+    >
+      <div>
+        <label
+          id="customers-search-title"
+          for="customers-search"
+          class="mb-2 block text-sm font-semibold text-ink"
+        >
+          جستجو
+        </label>
+
+        <input
+          id="customers-search"
+          name="q"
+          type="search"
+          placeholder="جستجوی مشتریان پس از اتصال داده فعال می‌شود"
+          disabled
+          aria-disabled="true"
+          title="ابتدا read model مشتریان باید به سفارش‌های واقعی متصل شود."
+          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+        />
+      </div>
+
+      <div class="lg:self-end">
+        <p class="mb-2 text-sm font-semibold text-ink">
+          فیلتر
+        </p>
+
+        <div
+          class="flex flex-wrap gap-2"
+          aria-label="فیلتر مشتریان"
+        >
+          {
+            customerFilters.map((filter) => (
+              <button
+                type="button"
+                disabled={!filter.enabled}
+                class:list={[
+                  "min-h-11 rounded-control border px-3.5 text-sm font-semibold",
+                  filter.enabled
+                    ? "border-brand-200 bg-brand-50 text-brand-800"
+                    : "cursor-not-allowed border-line bg-surface-soft text-muted opacity-70",
+                ]}
+              >
+                {filter.label}
+              </button>
+            ))
+          }
+        </div>
+      </div>
+    </section>
+
+    <section
+      aria-labelledby="customers-model-note-title"
+      class="rounded-card border border-line bg-surface-soft px-4 py-3"
+    >
+      <h2
+        id="customers-model-note-title"
+        class="text-sm font-bold text-ink"
+      >
+        مدل مشتری در نسخه فعلی
+      </h2>
+
+      <p class="mt-1 text-xs leading-6 text-muted">
+        مشتری فعلاً پروفایل مستقل ندارد؛ اطلاعات این صفحه از سفارش‌ها استخراج می‌شود و شماره تماس مبنای تجمیع خواهد بود.
+      </p>
+    </section>
+
+    <section aria-labelledby="customers-table-title">
+      <div class="mb-4">
+        <h2
+          id="customers-table-title"
+          class="text-lg font-black text-ink"
+        >
+          فهرست مشتریان
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          پس از آماده‌شدن read model مدیریت مشتریان، اطلاعات واقعی در این جدول نمایش داده می‌شوند.
+        </p>
+      </div>
+
+      <Card
+        as="div"
+        padding="none"
+        class="overflow-hidden shadow-none"
+      >
+        <div
+          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
+        >
+          <div
+            class="grid grid-cols-[minmax(12rem,1fr)_11rem_8rem_11rem_6rem] gap-4 text-xs font-bold text-muted"
+          >
+            <span>مشتری</span>
+            <span>شماره تماس</span>
+            <span>تعداد سفارش</span>
+            <span>آخرین سفارش</span>
+            <span>عملیات</span>
+          </div>
+        </div>
+
+        <div class="p-4 md:p-5">
+          <EmptyState
+            title="هنوز مشتری‌ای برای نمایش نداریم"
+            description="بعد از اتصال Customers به سفارش‌های واقعی، مشتریان تجمیع‌شده در این بخش نمایش داده می‌شوند."
+            compact
+          />
+        </div>
+      </Card>
+    </section>
+  </div>
+</AdminLayout>

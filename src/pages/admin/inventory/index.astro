@@ -1,0 +1,260 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+import EmptyState from "../../../components/common/EmptyState.astro";
+
+const inventoryFilters = [
+  {
+    value: "all",
+    label: "همه",
+  },
+  {
+    value: "in-stock",
+    label: "موجود",
+  },
+  {
+    value: "out-of-stock",
+    label: "ناموجود",
+  },
+] as const;
+
+const movementTypes = [
+  {
+    value: "in",
+    label: "ورود",
+  },
+  {
+    value: "out",
+    label: "خروج",
+  },
+] as const;
+---
+
+<AdminLayout title="موجودی">
+  <div class="space-y-6">
+    <section
+      class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+      aria-labelledby="inventory-heading"
+    >
+      <div class="max-w-xl">
+        <h2
+          id="inventory-heading"
+          class="text-lg font-black text-ink"
+        >
+          مدیریت موجودی
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          موجودی فیزیکی، مقدار رزروشده و سابقه تغییرات کالاها را بررسی کنید.
+        </p>
+      </div>
+
+      <Button
+        type="button"
+        variant="primary"
+        disabled
+      >
+        تغییر موجودی
+      </Button>
+    </section>
+
+    <section
+      class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]"
+      aria-labelledby="inventory-search-title"
+    >
+      <div>
+        <label
+          id="inventory-search-title"
+          for="inventory-search"
+          class="mb-2 block text-sm font-semibold text-ink"
+        >
+          جستجو
+        </label>
+
+        <input
+          id="inventory-search"
+          name="q"
+          type="search"
+          placeholder="جستجوی موجودی پس از اتصال داده فعال می‌شود"
+          disabled
+          aria-disabled="true"
+          title="جستجوی موجودی پس از اتصال داده‌های واقعی فعال می‌شود."
+          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+        />
+      </div>
+
+      <div>
+        <label
+          for="inventory-status"
+          class="mb-2 block text-sm font-semibold text-ink"
+        >
+          وضعیت موجودی
+        </label>
+
+        <select
+          id="inventory-status"
+          name="inventoryStatus"
+          disabled
+          aria-disabled="true"
+          title="فیلتر موجودی پس از اتصال داده‌های واقعی فعال می‌شود."
+          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+        >
+          {
+            inventoryFilters.map((filter) => (
+              <option value={filter.value}>
+                {filter.label}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+    </section>
+
+    <section aria-labelledby="inventory-summary-title">
+      <div class="mb-3 flex items-center justify-between gap-4">
+        <h2
+          id="inventory-summary-title"
+          class="text-sm font-bold text-ink"
+        >
+          وضعیت سریع
+        </h2>
+
+        <Badge
+          variant="neutral"
+          size="sm"
+        >
+          در انتظار اتصال داده
+        </Badge>
+      </div>
+
+      <div class="grid gap-3 xl:max-w-md">
+        <Card
+          as="div"
+          padding="sm"
+          class="shadow-none"
+        >
+          <div class="flex items-center justify-between gap-4">
+            <div>
+              <p class="text-sm font-bold text-ink">
+                ناموجود
+              </p>
+
+              <p class="mt-1 text-xs leading-5 text-muted">
+                کالاهایی که موجودی فیزیکی آن‌ها صفر است.
+              </p>
+            </div>
+
+            <Badge
+              variant="danger"
+              size="sm"
+            >
+              —
+            </Badge>
+          </div>
+        </Card>
+
+
+      </div>
+    </section>
+
+    <section aria-labelledby="inventory-table-title">
+      <div class="mb-4">
+        <h2
+          id="inventory-table-title"
+          class="text-lg font-black text-ink"
+        >
+          موجودی محصولات
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          اطلاعات واقعی Inventory پس از اتصال backend در این جدول نمایش داده می‌شوند.
+        </p>
+      </div>
+
+      <Card
+        as="div"
+        padding="none"
+        class="overflow-hidden shadow-none"
+      >
+        <div
+          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
+        >
+          <div
+            class="grid grid-cols-[minmax(10rem,1fr)_6rem_7rem_6rem_6rem_6rem_4rem] gap-3 text-xs font-bold text-muted"
+          >
+            <span>محصول</span>
+            <span>برند</span>
+            <span>کد / مدل</span>
+            <span>موجودی فیزیکی</span>
+            <span>رزروشده</span>
+            <span>وضعیت</span>
+            <span>عملیات</span>
+          </div>
+        </div>
+
+        <div class="p-4 md:p-5">
+          <EmptyState
+            title="هنوز اطلاعات موجودی برای نمایش نداریم"
+            description="پس از اتصال بخش مدیریت موجودی به داده واقعی، وضعیت هر محصول در این جدول نمایش داده می‌شود."
+            compact
+          />
+        </div>
+      </Card>
+    </section>
+
+    <section aria-labelledby="inventory-history-title">
+      <div class="mb-4">
+        <h2
+          id="inventory-history-title"
+          class="text-lg font-black text-ink"
+        >
+          سابقه تغییرات
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          تاریخچه واقعی تغییر موجودی بر اساس Inventory Movements نمایش داده خواهد شد.
+        </p>
+      </div>
+
+      <Card
+        as="div"
+        padding="none"
+        class="overflow-hidden shadow-none"
+      >
+        <div
+          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
+        >
+          <div
+            class="grid grid-cols-[8rem_minmax(12rem,1fr)_8rem_10rem_8rem] gap-4 text-xs font-bold text-muted"
+          >
+            <span>زمان</span>
+            <span>محصول</span>
+            <span>تغییر</span>
+            <span>نوع عملیات</span>
+            <span>توضیح</span>
+          </div>
+        </div>
+
+        <div class="p-4 md:p-5">
+          <EmptyState
+            title="سابقه‌ای برای نمایش نداریم"
+            description="پس از اتصال backend، تغییرات واقعی موجودی در این بخش ثبت و نمایش داده می‌شوند."
+            compact
+          />
+        </div>
+      </Card>
+
+      <div class="sr-only" aria-hidden="true">
+        {
+          movementTypes.map((movement) => (
+            <span data-movement-type={movement.value}>
+              {movement.label}
+            </span>
+          ))
+        }
+      </div>
+    </section>
+  </div>
+</AdminLayout>

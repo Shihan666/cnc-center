@@ -1,0 +1,223 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Card from "../../../components/common/Card.astro";
+import EmptyState from "../../../components/common/EmptyState.astro";
+
+const statusFilters = [
+  {
+    value: "all",
+    label: "همه",
+  },
+  {
+    value: "pending",
+    label: "در انتظار بررسی",
+  },
+  {
+    value: "awaiting_payment",
+    label: "در انتظار پرداخت",
+  },
+  {
+    value: "paid",
+    label: "پرداخت‌شده",
+  },
+  {
+    value: "processing",
+    label: "در حال آماده‌سازی",
+  },
+  {
+    value: "ready_to_ship",
+    label: "آماده ارسال",
+  },
+  {
+    value: "shipped",
+    label: "ارسال‌شده",
+  },
+  {
+    value: "completed",
+    label: "تکمیل‌شده",
+  },
+  {
+    value: "cancelled",
+    label: "لغوشده",
+  },
+  {
+    value: "expired",
+    label: "منقضی‌شده",
+  },
+] as const;
+
+const actionSummary = [
+  {
+    label: "نیازمند بررسی",
+    status: "pending",
+    tone: "warning",
+  },
+  {
+    label: "آماده ارسال",
+    status: "ready_to_ship",
+    tone: "brand",
+  },
+] as const;
+---
+
+<AdminLayout title="سفارش‌ها">
+  <div class="space-y-6">
+    <section
+      class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+      aria-labelledby="orders-tools-title"
+    >
+      <div class="max-w-xl">
+        <h2
+          id="orders-tools-title"
+          class="text-lg font-black text-ink"
+        >
+          مدیریت سفارش‌ها
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          سفارش موردنظر را پیدا کنید و وضعیت آن را بررسی کنید.
+        </p>
+      </div>
+
+      <div class="w-full xl:max-w-xl">
+        <label
+          for="orders-search"
+          class="mb-2 block text-sm font-semibold text-ink"
+        >
+          جستجو
+        </label>
+
+        <input
+          id="orders-search"
+          name="q"
+          type="search"
+          placeholder="جستجوی سفارش‌ها پس از اتصال داده فعال می‌شود"
+          disabled
+          aria-disabled="true"
+          title="جستجوی سفارش‌ها پس از اتصال داده‌های واقعی فعال می‌شود."
+          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+        />
+      </div>
+    </section>
+
+    <section aria-labelledby="orders-action-summary-title">
+      <div class="mb-3 flex items-center justify-between gap-3">
+        <h2
+          id="orders-action-summary-title"
+          class="text-sm font-bold text-ink"
+        >
+          نیازمند اقدام
+        </h2>
+
+        <Badge
+          variant="neutral"
+          size="sm"
+        >
+          در انتظار اتصال داده
+        </Badge>
+      </div>
+
+      <div class="grid gap-3 sm:grid-cols-2 xl:max-w-2xl">
+        {
+          actionSummary.map((item) => (
+            <div
+              aria-disabled="true"
+              class="cursor-not-allowed rounded-card opacity-70"
+            >
+              <Card
+                as="div"
+                padding="sm"
+                class="shadow-none"
+              >
+                <div class="flex items-center justify-between gap-4">
+                  <span class="text-sm font-bold text-ink">
+                    {item.label}
+                  </span>
+
+                  <Badge
+                    variant={item.tone}
+                    size="sm"
+                  >
+                    —
+                  </Badge>
+                </div>
+              </Card>
+            </div>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="orders-filters-title">
+      <div class="mb-3">
+        <h2
+          id="orders-filters-title"
+          class="text-sm font-bold text-ink"
+        >
+          وضعیت سفارش
+        </h2>
+      </div>
+
+      <div
+        class="flex flex-wrap gap-2"
+        aria-label="فیلتر وضعیت سفارش"
+      >
+        {
+          statusFilters.map((filter) => (
+            <span
+              aria-disabled="true"
+              class="inline-flex min-h-9 cursor-not-allowed items-center rounded-full border border-line bg-surface-soft px-3 text-sm font-semibold text-muted opacity-70"
+            >
+              {filter.label}
+            </span>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="orders-table-title">
+      <div class="mb-4">
+        <h2
+          id="orders-table-title"
+          class="text-lg font-black text-ink"
+        >
+          همه سفارش‌ها
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          اطلاعات سفارش‌ها پس از اتصال بخش مدیریت به پایگاه داده نمایش داده می‌شود.
+        </p>
+      </div>
+
+      <Card
+        as="div"
+        padding="none"
+        class="overflow-hidden shadow-none"
+      >
+        <div
+          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
+        >
+          <div
+            class="grid grid-cols-[7rem_minmax(10rem,1fr)_9rem_9rem_8rem_6rem] gap-4 text-xs font-bold text-muted"
+          >
+            <span>شماره سفارش</span>
+            <span>مشتری</span>
+            <span>مبلغ</span>
+            <span>وضعیت</span>
+            <span>زمان</span>
+            <span>عملیات</span>
+          </div>
+        </div>
+
+        <div class="p-4 md:p-5">
+          <EmptyState
+            title="هنوز سفارشی برای نمایش نداریم"
+            description="وقتی اطلاعات سفارش‌ها به پنل مدیریت متصل شود، سفارش‌ها در این جدول نمایش داده می‌شوند."
+            compact
+          />
+        </div>
+      </Card>
+    </section>
+  </div>
+</AdminLayout>

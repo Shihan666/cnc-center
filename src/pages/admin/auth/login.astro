@@ -1,0 +1,1497 @@
+---
+import AdminAuthLayout from "../../../layouts/AdminAuthLayout.astro";
+---
+
+<AdminAuthLayout title="ورود مدیریت">
+  <section
+    class="overflow-hidden rounded-card border border-line bg-surface-raised shadow-sm"
+    aria-labelledby="admin-login-title"
+    data-admin-auth-root
+  >
+    <div class="border-b border-line px-5 py-5 sm:px-6">
+      <h1
+        id="admin-login-title"
+        class="text-xl font-black text-ink"
+      >
+        ورود به پنل مدیریت
+      </h1>
+
+      <p
+        class="mt-2 text-sm leading-6 text-muted"
+        data-admin-auth-description
+      >
+        ایمیل و رمز عبور مدیریت را وارد کنید.
+      </p>
+    </div>
+
+    <div class="p-5 sm:p-6">
+      <div
+        class="mb-4 hidden rounded-control border border-red-200 bg-red-50 px-3.5 py-3 text-sm leading-6 text-red-800"
+        role="alert"
+        data-admin-auth-error
+      >
+      </div>
+
+      <div
+        class="mb-4 hidden rounded-control border border-brand-200 bg-brand-50 px-3.5 py-3 text-sm leading-6 text-brand-900"
+        role="status"
+        aria-live="polite"
+        data-admin-auth-status
+      >
+      </div>
+
+      <form
+        class="space-y-4"
+        data-login-form
+        novalidate
+      >
+        <div>
+          <label
+            for="admin-email"
+            class="mb-2 block text-sm font-semibold text-ink"
+          >
+            ایمیل
+          </label>
+
+          <input
+            id="admin-email"
+            name="email"
+            type="email"
+            inputmode="email"
+            autocomplete="username"
+            spellcheck="false"
+            required
+            maxlength="320"
+            dir="ltr"
+            class="min-h-11 w-full rounded-control border border-line-strong bg-surface-raised px-3.5 text-left text-sm text-ink outline-none transition placeholder:text-slate-400 focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+            placeholder="admin@example.com"
+            data-login-email
+          />
+        </div>
+
+        <div>
+          <label
+            for="admin-password"
+            class="mb-2 block text-sm font-semibold text-ink"
+          >
+            رمز عبور
+          </label>
+
+          <input
+            id="admin-password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+            dir="ltr"
+            class="min-h-11 w-full rounded-control border border-line-strong bg-surface-raised px-3.5 text-left text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+            data-login-password
+          />
+        </div>
+
+        <button
+          type="submit"
+          class="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 disabled:cursor-wait disabled:opacity-60"
+          data-login-submit
+        >
+          ادامه ورود
+        </button>
+      </form>
+
+      <div
+        class="hidden"
+        data-mfa-stage
+      >
+        <div
+          class="mb-5 flex rounded-control border border-line bg-surface-soft p-1"
+          role="tablist"
+          aria-label="روش ورود دومرحله‌ای"
+        >
+          <button
+            type="button"
+            role="tab"
+            aria-selected="true"
+            class="min-h-10 flex-1 rounded-control bg-surface-raised px-3 text-sm font-bold text-ink shadow-sm"
+            data-mfa-mode="totp"
+          >
+            کد Authenticator
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            aria-selected="false"
+            class="min-h-10 flex-1 rounded-control px-3 text-sm font-semibold text-muted"
+            data-mfa-mode="recovery"
+          >
+            کد بازیابی
+          </button>
+        </div>
+
+        <form
+          class="space-y-4"
+          data-totp-form
+          novalidate
+        >
+          <div>
+            <label
+              for="admin-totp"
+              class="mb-2 block text-sm font-semibold text-ink"
+            >
+              کد ۶ رقمی
+            </label>
+
+            <input
+              id="admin-totp"
+              name="totpToken"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              dir="ltr"
+              class="min-h-11 w-full rounded-control border border-line-strong bg-surface-raised px-3.5 text-center font-mono text-lg tracking-[0.35em] text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              data-totp-token
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 disabled:cursor-wait disabled:opacity-60"
+            data-totp-submit
+          >
+            ورود
+          </button>
+        </form>
+
+        <form
+          class="hidden space-y-4"
+          data-recovery-form
+          novalidate
+        >
+          <div>
+            <label
+              for="admin-recovery-code"
+              class="mb-2 block text-sm font-semibold text-ink"
+            >
+              کد بازیابی
+            </label>
+
+            <input
+              id="admin-recovery-code"
+              name="recoveryCode"
+              type="text"
+              autocomplete="off"
+              autocapitalize="characters"
+              spellcheck="false"
+              dir="ltr"
+              class="min-h-11 w-full rounded-control border border-line-strong bg-surface-raised px-3.5 text-center font-mono text-sm tracking-wide text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              data-recovery-code
+            />
+          </div>
+
+          <p class="text-xs leading-6 text-muted">
+            هر کد بازیابی فقط یک‌بار قابل استفاده است.
+          </p>
+
+          <button
+            type="submit"
+            class="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 disabled:cursor-wait disabled:opacity-60"
+            data-recovery-submit
+          >
+            ورود با کد بازیابی
+          </button>
+        </form>
+
+        <button
+          type="button"
+          class="mt-4 min-h-10 w-full rounded-control text-sm font-semibold text-muted transition hover:bg-surface-soft hover:text-ink"
+          data-restart-login
+        >
+          بازگشت به ایمیل و رمز عبور
+        </button>
+      </div>
+
+      <div
+        class="hidden space-y-5"
+        data-enrollment-stage
+      >
+        <div>
+          <h2 class="text-base font-black text-ink">
+            فعال‌سازی ورود دومرحله‌ای
+          </h2>
+
+          <p class="mt-2 text-sm leading-6 text-muted">
+            این حساب هنوز Authenticator فعال ندارد. کلید زیر را در برنامه Authenticator اضافه کنید و سپس کد ۶ رقمی را وارد کنید.
+          </p>
+        </div>
+
+        <div class="rounded-card border border-line bg-surface-raised p-4 text-center">
+          <p class="text-sm font-bold text-ink">
+            اسکن با Google Authenticator
+          </p>
+
+          <img
+            class="mx-auto mt-3 size-[220px] max-w-full rounded-control bg-white p-2"
+            width="220"
+            height="220"
+            alt="QR Code فعال‌سازی Google Authenticator"
+            data-enrollment-qr
+          />
+
+          <p class="mt-3 text-xs leading-6 text-muted">
+            در Google Authenticator روی + بزنید و «Scan a QR code» را انتخاب کنید.
+          </p>
+        </div>
+
+        <div class="rounded-card border border-line bg-surface-soft p-4">
+          <p class="text-xs font-bold text-muted">
+            کلید راه‌اندازی
+          </p>
+
+          <p
+            dir="ltr"
+            class="mt-2 break-all font-mono text-sm font-bold text-ink"
+            data-enrollment-secret
+          >
+          </p>
+        </div>
+
+        <details class="rounded-card border border-line bg-surface-raised p-4">
+          <summary class="cursor-pointer text-sm font-semibold text-ink">
+            نمایش URI راه‌اندازی
+          </summary>
+
+          <p
+            dir="ltr"
+            class="mt-3 break-all font-mono text-xs leading-6 text-ink-soft"
+            data-enrollment-uri
+          >
+          </p>
+        </details>
+
+        <form
+          class="space-y-4"
+          data-enrollment-confirm-form
+          novalidate
+        >
+          <div>
+            <label
+              for="admin-enrollment-totp"
+              class="mb-2 block text-sm font-semibold text-ink"
+            >
+              کد ۶ رقمی Authenticator
+            </label>
+
+            <input
+              id="admin-enrollment-totp"
+              name="totpToken"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="6"
+              dir="ltr"
+              class="min-h-11 w-full rounded-control border border-line-strong bg-surface-raised px-3.5 text-center font-mono text-lg tracking-[0.35em] text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
+              data-enrollment-totp
+            />
+          </div>
+
+          <button
+            type="submit"
+            class="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100 disabled:cursor-wait disabled:opacity-60"
+            data-enrollment-confirm-submit
+          >
+            تأیید و فعال‌سازی
+          </button>
+        </form>
+
+        <button
+          type="button"
+          class="min-h-10 w-full rounded-control text-sm font-semibold text-muted transition hover:bg-surface-soft hover:text-ink"
+          data-restart-login
+        >
+          شروع دوباره ورود
+        </button>
+      </div>
+
+      <div
+        class="hidden space-y-5"
+        data-recovery-codes-stage
+      >
+        <div>
+          <h2 class="text-base font-black text-ink">
+            کدهای بازیابی را ذخیره کنید
+          </h2>
+
+          <p class="mt-2 text-sm leading-6 text-muted">
+            این کدها فقط همین یک‌بار نمایش داده می‌شوند. آن‌ها را در محل امن نگهداری کنید.
+          </p>
+        </div>
+
+        <div
+          class="grid grid-cols-1 gap-2 rounded-card border border-line bg-surface-soft p-4 sm:grid-cols-2"
+          dir="ltr"
+          data-recovery-codes
+        >
+        </div>
+
+        <a
+          href="/admin"
+          class="inline-flex min-h-11 w-full items-center justify-center rounded-control bg-brand-700 px-4 text-sm font-bold text-white transition hover:bg-brand-800 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-brand-100"
+        >
+          کدها را ذخیره کردم؛ ورود به پنل
+        </a>
+      </div>
+    </div>
+  </section>
+</AdminAuthLayout>
+
+<script>
+  import * as QRCode from "qrcode";
+
+  const root =
+    document.querySelector(
+      "[data-admin-auth-root]",
+    );
+
+  if (root instanceof HTMLElement) {
+    const loginForm =
+      root.querySelector(
+        "[data-login-form]",
+      );
+
+    const emailInput =
+      root.querySelector(
+        "[data-login-email]",
+      );
+
+    const passwordInput =
+      root.querySelector(
+        "[data-login-password]",
+      );
+
+    const loginSubmit =
+      root.querySelector(
+        "[data-login-submit]",
+      );
+
+    const mfaStage =
+      root.querySelector(
+        "[data-mfa-stage]",
+      );
+
+    const totpForm =
+      root.querySelector(
+        "[data-totp-form]",
+      );
+
+    const totpInput =
+      root.querySelector(
+        "[data-totp-token]",
+      );
+
+    const totpSubmit =
+      root.querySelector(
+        "[data-totp-submit]",
+      );
+
+    const recoveryForm =
+      root.querySelector(
+        "[data-recovery-form]",
+      );
+
+    const recoveryInput =
+      root.querySelector(
+        "[data-recovery-code]",
+      );
+
+    const recoverySubmit =
+      root.querySelector(
+        "[data-recovery-submit]",
+      );
+
+    const enrollmentStage =
+      root.querySelector(
+        "[data-enrollment-stage]",
+      );
+
+    const enrollmentSecret =
+      root.querySelector(
+        "[data-enrollment-secret]",
+      );
+
+    const enrollmentUri =
+      root.querySelector(
+        "[data-enrollment-uri]",
+      );
+
+    const enrollmentConfirmForm =
+      root.querySelector(
+        "[data-enrollment-confirm-form]",
+      );
+
+    const enrollmentTotpInput =
+      root.querySelector(
+        "[data-enrollment-totp]",
+      );
+
+    const enrollmentConfirmSubmit =
+      root.querySelector(
+        "[data-enrollment-confirm-submit]",
+      );
+
+    const recoveryCodesStage =
+      root.querySelector(
+        "[data-recovery-codes-stage]",
+      );
+
+    const recoveryCodesContainer =
+      root.querySelector(
+        "[data-recovery-codes]",
+      );
+
+    const description =
+      root.querySelector(
+        "[data-admin-auth-description]",
+      );
+
+    const errorBox =
+      root.querySelector(
+        "[data-admin-auth-error]",
+      );
+
+    const statusBox =
+      root.querySelector(
+        "[data-admin-auth-status]",
+      );
+
+    const mfaModeButtons =
+      root.querySelectorAll(
+        "[data-mfa-mode]",
+      );
+
+    const restartButtons =
+      root.querySelectorAll(
+        "[data-restart-login]",
+      );
+
+    if (
+      loginForm instanceof HTMLFormElement &&
+      emailInput instanceof HTMLInputElement &&
+      passwordInput instanceof HTMLInputElement &&
+      loginSubmit instanceof HTMLButtonElement &&
+      mfaStage instanceof HTMLElement &&
+      totpForm instanceof HTMLFormElement &&
+      totpInput instanceof HTMLInputElement &&
+      totpSubmit instanceof HTMLButtonElement &&
+      recoveryForm instanceof HTMLFormElement &&
+      recoveryInput instanceof HTMLInputElement &&
+      recoverySubmit instanceof HTMLButtonElement &&
+      enrollmentStage instanceof HTMLElement &&
+      enrollmentSecret instanceof HTMLElement &&
+      enrollmentUri instanceof HTMLElement &&
+      enrollmentConfirmForm instanceof HTMLFormElement &&
+      enrollmentTotpInput instanceof HTMLInputElement &&
+      enrollmentConfirmSubmit instanceof HTMLButtonElement &&
+      recoveryCodesStage instanceof HTMLElement &&
+      recoveryCodesContainer instanceof HTMLElement &&
+      description instanceof HTMLElement &&
+      errorBox instanceof HTMLElement &&
+      statusBox instanceof HTMLElement
+    ) {
+      const hideMessage =
+        (element: HTMLElement) => {
+          element.textContent = "";
+          element.classList.add(
+            "hidden",
+          );
+        };
+
+      const showMessage =
+        (
+          element: HTMLElement,
+          message: string,
+        ) => {
+          element.textContent =
+            message;
+
+          element.classList.remove(
+            "hidden",
+          );
+        };
+
+      const clearMessages =
+        () => {
+          hideMessage(errorBox);
+          hideMessage(statusBox);
+        };
+
+      const normalizeDigits =
+        (value: string) => {
+          const persianDigits =
+            "۰۱۲۳۴۵۶۷۸۹";
+
+          const arabicDigits =
+            "٠١٢٣٤٥٦٧٨٩";
+
+          return value
+            .replace(
+              /[۰-۹]/g,
+              (digit) =>
+                String(
+                  persianDigits.indexOf(
+                    digit,
+                  ),
+                ),
+            )
+            .replace(
+              /[٠-٩]/g,
+              (digit) =>
+                String(
+                  arabicDigits.indexOf(
+                    digit,
+                  ),
+                ),
+            );
+        };
+
+      const normalizeTotp =
+        (value: string) =>
+          normalizeDigits(value)
+            .replace(/\D/g, "")
+            .slice(0, 6);
+
+      const setButtonBusy =
+        (
+          button: HTMLButtonElement,
+          busy: boolean,
+        ) => {
+          if (
+            button instanceof
+            HTMLButtonElement
+          ) {
+            button.disabled =
+              busy;
+          }
+        };
+
+      const setStage =
+        (
+          stage:
+            | "login"
+            | "mfa"
+            | "enrollment"
+            | "recovery-codes",
+        ) => {
+          loginForm.classList.add(
+            "hidden",
+          );
+
+          mfaStage.classList.add(
+            "hidden",
+          );
+
+          enrollmentStage.classList.add(
+            "hidden",
+          );
+
+          recoveryCodesStage.classList.add(
+            "hidden",
+          );
+
+          if (
+            stage === "login"
+          ) {
+            loginForm.classList.remove(
+              "hidden",
+            );
+
+            description.textContent =
+              "ایمیل و رمز عبور مدیریت را وارد کنید.";
+
+            return;
+          }
+
+          if (
+            stage === "mfa"
+          ) {
+            mfaStage.classList.remove(
+              "hidden",
+            );
+
+            description.textContent =
+              "مرحله دوم ورود را تکمیل کنید.";
+
+            return;
+          }
+
+          if (
+            stage ===
+            "enrollment"
+          ) {
+            enrollmentStage.classList.remove(
+              "hidden",
+            );
+
+            description.textContent =
+              "ورود دومرحله‌ای را برای این حساب فعال کنید.";
+
+            return;
+          }
+
+          recoveryCodesStage.classList.remove(
+            "hidden",
+          );
+
+          description.textContent =
+            "فعال‌سازی ورود دومرحله‌ای تکمیل شد.";
+        };
+
+      const resetToLogin =
+        (
+          message =
+            "جلسه ورود منقضی شده است. دوباره وارد شوید.",
+        ) => {
+          setStage("login");
+
+          passwordInput.value =
+            "";
+
+          totpInput.value =
+            "";
+
+          recoveryInput.value =
+            "";
+
+          enrollmentTotpInput.value =
+            "";
+
+          enrollmentSecret.textContent =
+            "";
+
+          enrollmentUri.textContent =
+            "";
+
+          root
+            .querySelector<HTMLImageElement>(
+              "[data-enrollment-qr]",
+            )
+            ?.removeAttribute(
+              "src",
+            );
+
+          recoveryCodesContainer.replaceChildren();
+
+          clearMessages();
+
+          showMessage(
+            errorBox,
+            message,
+          );
+
+          passwordInput.focus();
+        };
+
+      const safeReadJson =
+        async (
+          response: Response,
+        ): Promise<
+          Record<
+            string,
+            unknown
+          > | null
+        > => {
+          try {
+            const value: unknown =
+              await response.json();
+
+            if (
+              typeof value !==
+                "object" ||
+              value === null ||
+              Array.isArray(value)
+            ) {
+              return null;
+            }
+
+            return value as
+              Record<
+                string,
+                unknown
+              >;
+          } catch {
+            return null;
+          }
+        };
+
+      const getErrorMessage =
+        (
+          status: number,
+          reason: string | null,
+          stage:
+            | "login"
+            | "totp"
+            | "recovery"
+            | "enrollment",
+        ) => {
+          if (
+            reason ===
+              "throttled" ||
+            status === 429
+          ) {
+            return "تعداد تلاش‌ها زیاد شده است. کمی بعد دوباره تلاش کنید.";
+          }
+
+          if (
+            reason ===
+            "invalid_credentials"
+          ) {
+            return "ایمیل یا رمز عبور صحیح نیست.";
+          }
+
+          if (
+            reason ===
+            "invalid_second_factor"
+          ) {
+            return stage ===
+              "recovery"
+              ? "کد بازیابی واردشده معتبر نیست."
+              : "کد ورود دومرحله‌ای معتبر نیست.";
+          }
+
+          if (
+            reason ===
+            "invalid_challenge"
+          ) {
+            return "جلسه ورود منقضی شده است. دوباره وارد شوید.";
+          }
+
+          return "انجام درخواست ممکن نشد. دوباره تلاش کنید.";
+        };
+
+      const postJson =
+        async (
+          url: string,
+          body:
+            Readonly<
+              Record<
+                string,
+                unknown
+              >
+            >,
+        ) =>
+          fetch(
+            url,
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+
+              credentials:
+                "same-origin",
+
+              body:
+                JSON.stringify(
+                  body,
+                ),
+            },
+          );
+
+      const prepareEnrollment =
+        async () => {
+          clearMessages();
+
+          try {
+            const response =
+              await postJson(
+                "/api/admin/auth/enrollment/prepare",
+                {},
+              );
+
+            const body =
+              await safeReadJson(
+                response,
+              );
+
+            if (
+              !response.ok ||
+              !body ||
+              body.ok !== true ||
+              typeof
+                body.secretBase32 !==
+                "string" ||
+              typeof
+                body.enrollmentUri !==
+                "string"
+            ) {
+              const reason =
+                body &&
+                typeof body.reason ===
+                  "string"
+                  ? body.reason
+                  : null;
+
+              if (
+                reason ===
+                "invalid_challenge"
+              ) {
+                resetToLogin();
+
+                return;
+              }
+
+              showMessage(
+                errorBox,
+                getErrorMessage(
+                  response.status,
+                  reason,
+                  "enrollment",
+                ),
+              );
+
+              return;
+            }
+
+            enrollmentSecret.textContent =
+              body.secretBase32;
+
+            enrollmentUri.textContent =
+              body.enrollmentUri;
+
+            const enrollmentQr =
+              root.querySelector<HTMLImageElement>(
+                "[data-enrollment-qr]",
+              );
+
+            if (
+              !(enrollmentQr instanceof
+                HTMLImageElement)
+            ) {
+              throw new Error(
+                "Enrollment QR image is missing.",
+              );
+            }
+
+            enrollmentQr.src =
+              await QRCode.toDataURL(
+                body.enrollmentUri,
+                {
+                  errorCorrectionLevel:
+                    "M",
+                  margin: 2,
+                  width: 220,
+                },
+              );
+
+            setStage(
+              "enrollment",
+            );
+
+            enrollmentTotpInput.focus();
+          } catch {
+            showMessage(
+              errorBox,
+              "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+            );
+          }
+        };
+
+      loginForm.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+          clearMessages();
+
+          const email =
+            emailInput.value.trim();
+
+          const password =
+            passwordInput.value;
+
+          if (
+            !email ||
+            !password
+          ) {
+            showMessage(
+              errorBox,
+              "ایمیل و رمز عبور را وارد کنید.",
+            );
+
+            return;
+          }
+
+          setButtonBusy(
+            loginSubmit,
+            true,
+          );
+
+          try {
+            const response =
+              await postJson(
+                "/api/admin/auth/login",
+                {
+                  email,
+                  password,
+                },
+              );
+
+            const body =
+              await safeReadJson(
+                response,
+              );
+
+            if (
+              !response.ok ||
+              !body ||
+              body.ok !== true
+            ) {
+              const reason =
+                body &&
+                typeof body.reason ===
+                  "string"
+                  ? body.reason
+                  : null;
+
+              showMessage(
+                errorBox,
+                getErrorMessage(
+                  response.status,
+                  reason,
+                  "login",
+                ),
+              );
+
+              return;
+            }
+
+            passwordInput.value =
+              "";
+
+            if (
+              body.next ===
+              "mfa"
+            ) {
+              setStage("mfa");
+              totpInput.focus();
+
+              return;
+            }
+
+            if (
+              body.next ===
+              "enrollment"
+            ) {
+              await prepareEnrollment();
+
+              return;
+            }
+
+            showMessage(
+              errorBox,
+              "پاسخ ورود معتبر نبود. دوباره تلاش کنید.",
+            );
+          } catch {
+            showMessage(
+              errorBox,
+              "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+            );
+          } finally {
+            setButtonBusy(
+              loginSubmit,
+              false,
+            );
+          }
+        },
+      );
+
+      totpInput.addEventListener(
+        "input",
+        () => {
+          totpInput.value =
+            normalizeTotp(
+              totpInput.value,
+            );
+        },
+      );
+
+      enrollmentTotpInput.addEventListener(
+        "input",
+        () => {
+          enrollmentTotpInput.value =
+            normalizeTotp(
+              enrollmentTotpInput.value,
+            );
+        },
+      );
+
+      totpForm.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+          clearMessages();
+
+          const totpToken =
+            normalizeTotp(
+              totpInput.value,
+            );
+
+          if (
+            totpToken.length !== 6
+          ) {
+            showMessage(
+              errorBox,
+              "کد ۶ رقمی را کامل وارد کنید.",
+            );
+
+            return;
+          }
+
+          setButtonBusy(
+            totpSubmit,
+            true,
+          );
+
+          try {
+            const response =
+              await postJson(
+                "/api/admin/auth/totp",
+                {
+                  totpToken,
+                },
+              );
+
+            const body =
+              await safeReadJson(
+                response,
+              );
+
+            if (
+              response.ok &&
+              body &&
+              body.ok === true
+            ) {
+              window.location.replace(
+                "/admin",
+              );
+
+              return;
+            }
+
+            const reason =
+              body &&
+              typeof body.reason ===
+                "string"
+                ? body.reason
+                : null;
+
+            if (
+              reason ===
+              "invalid_challenge"
+            ) {
+              resetToLogin();
+
+              return;
+            }
+
+            showMessage(
+              errorBox,
+              getErrorMessage(
+                response.status,
+                reason,
+                "totp",
+              ),
+            );
+          } catch {
+            showMessage(
+              errorBox,
+              "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+            );
+          } finally {
+            setButtonBusy(
+              totpSubmit,
+              false,
+            );
+          }
+        },
+      );
+
+      recoveryForm.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+          clearMessages();
+
+          const recoveryCode =
+            recoveryInput.value.trim();
+
+          if (!recoveryCode) {
+            showMessage(
+              errorBox,
+              "کد بازیابی را وارد کنید.",
+            );
+
+            return;
+          }
+
+          setButtonBusy(
+            recoverySubmit,
+            true,
+          );
+
+          try {
+            const response =
+              await postJson(
+                "/api/admin/auth/recovery",
+                {
+                  recoveryCode,
+                },
+              );
+
+            const body =
+              await safeReadJson(
+                response,
+              );
+
+            if (
+              response.ok &&
+              body &&
+              body.ok === true
+            ) {
+              window.location.replace(
+                "/admin",
+              );
+
+              return;
+            }
+
+            const reason =
+              body &&
+              typeof body.reason ===
+                "string"
+                ? body.reason
+                : null;
+
+            if (
+              reason ===
+              "invalid_challenge"
+            ) {
+              resetToLogin();
+
+              return;
+            }
+
+            showMessage(
+              errorBox,
+              getErrorMessage(
+                response.status,
+                reason,
+                "recovery",
+              ),
+            );
+          } catch {
+            showMessage(
+              errorBox,
+              "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+            );
+          } finally {
+            setButtonBusy(
+              recoverySubmit,
+              false,
+            );
+          }
+        },
+      );
+
+      enrollmentConfirmForm.addEventListener(
+        "submit",
+        async (event) => {
+          event.preventDefault();
+          clearMessages();
+
+          const totpToken =
+            normalizeTotp(
+              enrollmentTotpInput.value,
+            );
+
+          if (
+            totpToken.length !== 6
+          ) {
+            showMessage(
+              errorBox,
+              "کد ۶ رقمی را کامل وارد کنید.",
+            );
+
+            return;
+          }
+
+          setButtonBusy(
+            enrollmentConfirmSubmit,
+            true,
+          );
+
+          try {
+            const response =
+              await postJson(
+                "/api/admin/auth/enrollment/confirm",
+                {
+                  totpToken,
+                },
+              );
+
+            const body =
+              await safeReadJson(
+                response,
+              );
+
+            if (
+              !response.ok ||
+              !body ||
+              body.ok !== true
+            ) {
+              const reason =
+                body &&
+                typeof body.reason ===
+                  "string"
+                  ? body.reason
+                  : null;
+
+              if (
+                reason ===
+                "invalid_challenge"
+              ) {
+                resetToLogin();
+
+                return;
+              }
+
+              showMessage(
+                errorBox,
+                getErrorMessage(
+                  response.status,
+                  reason,
+                  "totp",
+                ),
+              );
+
+              return;
+            }
+
+            if (
+              !Array.isArray(
+                body.recoveryCodes,
+              ) ||
+              !body.recoveryCodes.every(
+                (code: unknown) =>
+                  typeof code ===
+                  "string",
+              )
+            ) {
+              showMessage(
+                errorBox,
+                "پاسخ فعال‌سازی کامل نبود. برای ادامه از نو وارد شوید.",
+              );
+
+              return;
+            }
+
+            recoveryCodesContainer.replaceChildren();
+
+            for (
+              const code of
+              body.recoveryCodes
+            ) {
+              const item =
+                document.createElement(
+                  "code",
+                );
+
+              item.className =
+                "rounded-control border border-line bg-surface-raised px-3 py-2 text-center font-mono text-xs font-bold text-ink";
+
+              item.textContent =
+                code;
+
+              recoveryCodesContainer.append(
+                item,
+              );
+            }
+
+            enrollmentSecret.textContent =
+              "";
+
+            enrollmentUri.textContent =
+              "";
+
+            root
+              .querySelector<HTMLImageElement>(
+                "[data-enrollment-qr]",
+              )
+              ?.removeAttribute(
+                "src",
+              );
+
+            enrollmentTotpInput.value =
+              "";
+
+            setStage(
+              "recovery-codes",
+            );
+
+            showMessage(
+              statusBox,
+              "ورود دومرحله‌ای با موفقیت فعال شد.",
+            );
+          } catch {
+            showMessage(
+              errorBox,
+              "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+            );
+          } finally {
+            setButtonBusy(
+              enrollmentConfirmSubmit,
+              false,
+            );
+          }
+        },
+      );
+
+      for (
+        const button of
+        mfaModeButtons
+      ) {
+        if (
+          !(button instanceof
+            HTMLButtonElement)
+        ) {
+          continue;
+        }
+
+        button.addEventListener(
+          "click",
+          () => {
+            clearMessages();
+
+            const mode =
+              button.dataset
+                .mfaMode;
+
+            for (
+              const candidate of
+              mfaModeButtons
+            ) {
+              if (
+                candidate instanceof
+                HTMLButtonElement
+              ) {
+                const active =
+                  candidate ===
+                  button;
+
+                candidate.setAttribute(
+                  "aria-selected",
+                  active
+                    ? "true"
+                    : "false",
+                );
+
+                candidate.classList.toggle(
+                  "bg-surface-raised",
+                  active,
+                );
+
+                candidate.classList.toggle(
+                  "shadow-sm",
+                  active,
+                );
+
+                candidate.classList.toggle(
+                  "font-bold",
+                  active,
+                );
+
+                candidate.classList.toggle(
+                  "text-ink",
+                  active,
+                );
+
+                candidate.classList.toggle(
+                  "text-muted",
+                  !active,
+                );
+              }
+            }
+
+            if (
+              mode ===
+              "recovery"
+            ) {
+              totpForm.classList.add(
+                "hidden",
+              );
+
+              recoveryForm.classList.remove(
+                "hidden",
+              );
+
+              recoveryInput.focus();
+
+              return;
+            }
+
+            recoveryForm.classList.add(
+              "hidden",
+            );
+
+            totpForm.classList.remove(
+              "hidden",
+            );
+
+            totpInput.focus();
+          },
+        );
+      }
+
+      for (
+        const button of
+        restartButtons
+      ) {
+        if (
+          button instanceof
+          HTMLButtonElement
+        ) {
+          button.addEventListener(
+            "click",
+            () => {
+              setStage("login");
+              clearMessages();
+
+              passwordInput.value =
+                "";
+
+              totpInput.value =
+                "";
+
+              recoveryInput.value =
+                "";
+
+              enrollmentTotpInput.value =
+                "";
+
+              enrollmentSecret.textContent =
+                "";
+
+              enrollmentUri.textContent =
+                "";
+
+              recoveryCodesContainer.replaceChildren();
+
+              passwordInput.focus();
+            },
+          );
+        }
+      }
+    }
+  }
+</script>

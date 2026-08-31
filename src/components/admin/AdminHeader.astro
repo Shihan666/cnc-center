@@ -1,0 +1,183 @@
+---
+import AdminLogoutButton from "./AdminLogoutButton.astro";
+
+interface Props {
+  pageTitle: string;
+  adminEmail: string;
+}
+
+const {
+  pageTitle,
+  adminEmail,
+} = Astro.props;
+---
+
+<header
+  class="sticky top-0 z-30 border-b border-line bg-surface-raised/95 backdrop-blur"
+>
+  <div class="flex min-h-16 items-center gap-3 px-4 md:px-6">
+    <details class="relative xl:hidden">
+      <summary
+        class="flex size-10 cursor-pointer list-none items-center justify-center rounded-control border border-line-strong bg-white text-ink transition hover:bg-surface-soft [&::-webkit-details-marker]:hidden"
+        aria-label="باز کردن منوی مدیریت"
+      >
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          class="size-5"
+        >
+          <path
+            d="M5 7h14M5 12h14M5 17h14"
+            stroke="currentColor"
+            stroke-width="1.8"
+            stroke-linecap="round"
+          />
+        </svg>
+      </summary>
+
+      <div
+        class="absolute right-0 top-[calc(100%+0.5rem)] w-64 rounded-card border border-line bg-white p-2 shadow-panel"
+      >
+        <nav aria-label="منوی موبایل مدیریت">
+          <ul class="space-y-1 text-sm font-semibold">
+            <li>
+              <a
+                class="block rounded-control px-3 py-2.5 hover:bg-surface-soft"
+                href="/admin"
+              >
+                داشبورد
+              </a>
+            </li>
+
+            <li>
+              <a
+                class="block rounded-control px-3 py-2.5 hover:bg-surface-soft"
+                href="/admin/orders"
+              >
+                سفارش‌ها
+              </a>
+            </li>
+
+            <li>
+              <a
+                class="block rounded-control px-3 py-2.5 hover:bg-surface-soft"
+                href="/admin/products"
+              >
+                محصولات
+              </a>
+            </li>
+
+            <li>
+              <a
+                class="block rounded-control px-3 py-2.5 hover:bg-surface-soft"
+                href="/admin/inventory"
+              >
+                موجودی
+              </a>
+            </li>
+
+            <li>
+              <a
+                class="block rounded-control px-3 py-2.5 hover:bg-surface-soft"
+                href="/admin/customers"
+              >
+                مشتریان
+              </a>
+            </li>
+
+            <li>
+              <a
+                class="block rounded-control px-3 py-2.5 hover:bg-surface-soft"
+                href="/admin/settings"
+              >
+                تنظیمات
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </details>
+
+    <div class="min-w-0 flex-1">
+      <h1
+        class="truncate text-lg font-black text-ink md:text-xl"
+      >
+        {pageTitle}
+      </h1>
+    </div>
+
+    <div class="hidden max-w-md flex-1 md:block">
+      <label
+        class="sr-only"
+        for="admin-global-search"
+      >
+        جستجوی سراسری
+      </label>
+
+      <input
+        id="admin-global-search"
+        type="search"
+        placeholder="جستجوی سراسری هنوز فعال نشده است"
+        disabled
+        aria-disabled="true"
+        title="جستجوی سراسری پس از اتصال داده‌های لازم فعال می‌شود."
+        class="min-h-10 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+      />
+    </div>
+
+    <details class="group relative shrink-0">
+      <summary
+        class="flex min-h-10 cursor-pointer list-none items-center gap-2 rounded-control px-2.5 text-sm font-semibold text-ink-soft transition hover:bg-surface-soft hover:text-ink [&::-webkit-details-marker]:hidden"
+        aria-label="حساب ادمین"
+      >
+        <span
+          dir="ltr"
+          class="hidden max-w-44 truncate sm:block"
+        >
+          {adminEmail}
+        </span>
+
+        <span class="sm:hidden">
+          حساب
+        </span>
+
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 20 20"
+          fill="none"
+          class="size-4 transition group-open:rotate-180"
+        >
+          <path
+            d="m6 8 4 4 4-4"
+            stroke="currentColor"
+            stroke-width="1.6"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </summary>
+
+      <div
+        class="absolute left-0 top-[calc(100%+0.5rem)] w-64 overflow-hidden rounded-card border border-line bg-white shadow-panel"
+      >
+        <div class="px-4 py-3">
+          <p class="text-xs font-semibold text-muted">
+            حساب ادمین
+          </p>
+
+          <p
+            dir="ltr"
+            class="mt-1 truncate text-sm font-bold text-ink"
+          >
+            {adminEmail}
+          </p>
+        </div>
+
+        <div class="border-t border-line p-2">
+          <AdminLogoutButton />
+        </div>
+      </div>
+    </details>
+  </div>
+</header>

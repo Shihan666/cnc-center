@@ -1,0 +1,677 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+
+import { siteConfig } from "../../../config/site";
+import {
+  commerceConfig,
+  shippingMethods,
+} from "../../../config/commerce";
+
+const storeFields = [
+  {
+    label: "نام فروشگاه",
+    value: siteConfig.brand.name,
+  },
+  {
+    label: "نام کوتاه",
+    value: siteConfig.brand.shortName,
+  },
+  {
+    label: "توضیح کوتاه",
+    value: siteConfig.brand.tagline,
+  },
+] as const;
+
+const contactFields = [
+  {
+    label: "تلفن اصلی",
+    value: siteConfig.contact.primaryPhone,
+  },
+  {
+    label: "تلفن دوم",
+    value: siteConfig.contact.secondaryPhone,
+  },
+  {
+    label: "موبایل",
+    value: siteConfig.contact.mobile,
+  },
+  {
+    label: "واتساپ",
+    value: siteConfig.contact.whatsapp,
+  },
+  {
+    label: "تلگرام",
+    value: siteConfig.contact.telegram,
+  },
+  {
+    label: "اینستاگرام",
+    value: siteConfig.contact.instagram,
+  },
+  {
+    label: "ایمیل عمومی",
+    value: siteConfig.contact.email,
+  },
+] as const;
+
+const locationFields = [
+  {
+    label: "کشور",
+    value: siteConfig.location.country,
+  },
+  {
+    label: "استان",
+    value: siteConfig.location.province,
+  },
+  {
+    label: "شهر",
+    value: siteConfig.location.city,
+  },
+  {
+    label: "محدوده خدمات",
+    value: siteConfig.location.serviceArea,
+  },
+] as const;
+
+const settingsSections = [
+  {
+    id: "store",
+    label: "فروشگاه",
+  },
+  {
+    id: "orders",
+    label: "سفارش و ارسال",
+  },
+  {
+    id: "payment",
+    label: "پرداخت",
+  },
+  {
+    id: "notifications",
+    label: "اعلان‌ها",
+  },
+  {
+    id: "security",
+    label: "امنیت حساب",
+  },
+] as const;
+---
+
+<AdminLayout title="تنظیمات">
+  <div class="space-y-6">
+    <section
+      class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+      aria-labelledby="settings-heading"
+    >
+      <div class="max-w-2xl">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2
+            id="settings-heading"
+            class="text-lg font-black text-ink"
+          >
+            تنظیمات
+          </h2>
+
+          <Badge
+            variant="neutral"
+            size="sm"
+          >
+            فقط نمایش
+          </Badge>
+        </div>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          این صفحه فعلاً وضعیت تنظیمات موجود پروژه را نمایش می‌دهد و هنوز به ذخیره‌سازی مدیریتی متصل نشده است.
+        </p>
+      </div>
+
+      <Button
+        type="button"
+        variant="primary"
+        disabled
+      >
+        ذخیره تغییرات
+      </Button>
+    </section>
+
+    <div class="space-y-6">
+      <aside
+        class="w-full"
+        aria-label="بخش‌های تنظیمات"
+      >
+        <Card
+          as="div"
+          padding="sm"
+          class="shadow-none"
+        >
+          <nav>
+            <ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+              {
+                settingsSections.map((section) => (
+                  <li>
+                    <a
+                      href={`#${section.id}`}
+                      class="block min-h-11 rounded-control border border-line bg-surface-raised px-3 py-2.5 text-center text-sm font-semibold text-ink-soft transition hover:border-line-strong hover:bg-surface-soft hover:text-ink"
+                    >
+                      {section.label}
+                    </a>
+                  </li>
+                ))
+              }
+            </ul>
+          </nav>
+        </Card>
+      </aside>
+
+      <div class="space-y-6">
+        <section
+          id="store"
+          aria-labelledby="store-settings-title"
+          class="scroll-mt-6"
+        >
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="store-settings-title"
+                  class="text-base font-black text-ink"
+                >
+                  فروشگاه
+                </h2>
+
+                <p class="mt-1 text-sm leading-6 text-muted">
+                  نام فروشگاه، اطلاعات تماس، موقعیت و هویت بصری.
+                </p>
+              </div>
+
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                Config فعلی
+              </Badge>
+            </div>
+
+            <div class="mt-6">
+              <h3 class="text-sm font-bold text-ink">
+                اطلاعات اصلی
+              </h3>
+
+              <div class="mt-3 grid gap-4 md:grid-cols-2">
+                {
+                  storeFields.map((field, index) => (
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-semibold text-ink">
+                        {field.label}
+                      </span>
+
+                      <input
+
+                        type="text"
+
+                        id={`admin-settings-store-${index + 1}`}
+
+                        name={`admin-settings-store-${index + 1}`}
+
+                        value={field.value}
+                        disabled
+                        class="min-h-11 w-full cursor-not-allowed rounded-control border border-line bg-surface-soft px-3.5 text-sm text-ink-soft"
+                      />
+                    </label>
+                  ))
+                }
+              </div>
+            </div>
+
+            <div class="mt-6 border-t border-line pt-6">
+              <h3 class="text-sm font-bold text-ink">
+                لوگو
+              </h3>
+
+              <div class="mt-3 rounded-card border border-dashed border-line-strong bg-surface-soft p-4">
+                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex items-center gap-3">
+                    <div
+                      class="grid size-12 place-items-center rounded-control border border-line bg-surface-raised text-xs font-black text-ink"
+                      dir="ltr"
+                      aria-hidden="true"
+                    >
+                      CNC
+                    </div>
+
+                    <div>
+                      <p class="text-sm font-bold text-ink">
+                        لوگوی فروشگاه
+                      </p>
+
+                      <p class="mt-1 text-xs leading-5 text-muted">
+                        مسیر تنظیم‌شده فعلی:
+                        <span
+                          dir="ltr"
+                          class="font-mono text-ink-soft"
+                        >
+                          {siteConfig.brand.logo}
+                        </span>
+                      </p>
+
+                      <p class="mt-1 text-xs leading-5 text-muted">
+                        فایل لوگوی تنظیم‌شده فعلاً در assetهای پروژه موجود نیست.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled
+                    >
+                      تغییر لوگو
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      disabled
+                    >
+                      حذف لوگو
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 border-t border-line pt-6">
+              <h3 class="text-sm font-bold text-ink">
+                تماس
+              </h3>
+
+              <div class="mt-3 grid gap-4 md:grid-cols-2">
+                {
+                  contactFields.map((field, index) => (
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-semibold text-ink">
+                        {field.label}
+                      </span>
+
+                      <input
+
+                        type="text"
+
+                        id={`admin-settings-contact-${index + 1}`}
+
+                        name={`admin-settings-contact-${index + 1}`}
+
+                        value={field.value}
+                        placeholder="تنظیم نشده"
+                        disabled
+                        class="min-h-11 w-full cursor-not-allowed rounded-control border border-line bg-surface-soft px-3.5 text-sm text-ink-soft placeholder:text-muted"
+                      />
+                    </label>
+                  ))
+                }
+              </div>
+            </div>
+
+            <div class="mt-6 border-t border-line pt-6">
+              <h3 class="text-sm font-bold text-ink">
+                موقعیت
+              </h3>
+
+              <div class="mt-3 grid gap-4 md:grid-cols-2">
+                {
+                  locationFields.map((field, index) => (
+                    <label class="block">
+                      <span class="mb-2 block text-sm font-semibold text-ink">
+                        {field.label}
+                      </span>
+
+                      <input
+
+                        type="text"
+
+                        id={`admin-settings-location-${index + 1}`}
+
+                        name={`admin-settings-location-${index + 1}`}
+
+                        value={field.value}
+                        disabled
+                        class="min-h-11 w-full cursor-not-allowed rounded-control border border-line bg-surface-soft px-3.5 text-sm text-ink-soft"
+                      />
+                    </label>
+                  ))
+                }
+
+                <label class="block md:col-span-2">
+                  <span class="mb-2 block text-sm font-semibold text-ink">
+                    آدرس
+                  </span>
+
+                  <textarea
+
+                    id="admin-settings-location-address"
+
+                    name="admin-settings-location-address"
+
+                    rows="3"
+                    disabled
+                    placeholder="تنظیم نشده"
+                    class="w-full cursor-not-allowed rounded-control border border-line bg-surface-soft px-3.5 py-3 text-sm text-ink-soft placeholder:text-muted"
+                  >{siteConfig.location.address}</textarea>
+                </label>
+              </div>
+            </div>
+
+            <div class="mt-6 border-t border-line pt-6">
+              <h3 class="text-sm font-bold text-ink">
+                اطلاعات فاکتور و شرکت
+              </h3>
+
+              <p class="mt-2 text-sm leading-6 text-muted">
+                برای اطلاعات حقوقی، شناسه ملی، کد اقتصادی و قالب فاکتور هنوز قرارداد backend تعریف نشده است.
+              </p>
+
+              <Button
+                type="button"
+                variant="secondary"
+                class="mt-3"
+                disabled
+              >
+                تنظیم اطلاعات فاکتور
+              </Button>
+            </div>
+
+            <div class="mt-6 border-t border-line pt-6">
+              <h3 class="text-sm font-bold text-ink">
+                Favicon
+              </h3>
+
+              <p class="mt-2 text-sm leading-6 text-muted">
+                سایت و پنل مدیریت در حال حاضر از
+                <span
+                  dir="ltr"
+                  class="font-mono text-ink-soft"
+                >
+                  /favicon.svg
+                </span>
+                استفاده می‌کنند. ویرایش آن هنوز به مدیریت فایل متصل نشده است.
+              </p>
+
+              <Button
+                type="button"
+                variant="secondary"
+                class="mt-3"
+                disabled
+              >
+                تغییر Favicon
+              </Button>
+            </div>
+          </Card>
+        </section>
+
+        <section
+          id="orders"
+          aria-labelledby="order-settings-title"
+          class="scroll-mt-6"
+        >
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <div>
+              <h2
+                id="order-settings-title"
+                class="text-base font-black text-ink"
+              >
+                سفارش و ارسال
+              </h2>
+
+              <p class="mt-1 text-sm leading-6 text-muted">
+                روش‌های ارسال فعلی از Commerce Config خوانده می‌شوند و در این صفحه قابل تغییر نیستند.
+              </p>
+            </div>
+
+            <div class="mt-5 overflow-hidden rounded-card border border-line">
+              <div class="border-b border-line bg-surface-soft px-4 py-3">
+                <div class="grid grid-cols-[minmax(0,1fr)_8rem_8rem] gap-4 text-xs font-bold text-muted">
+                  <span>روش ارسال</span>
+                  <span>هزینه</span>
+                  <span>نیاز به آدرس</span>
+                </div>
+              </div>
+
+              <div class="divide-y divide-line">
+                {
+                  shippingMethods.map((method) => (
+                    <div class="grid grid-cols-[minmax(0,1fr)_8rem_8rem] gap-4 px-4 py-3 text-sm">
+                      <div>
+                        <p class="font-bold text-ink">
+                          {method.label}
+                        </p>
+
+                        <p class="mt-1 text-xs leading-5 text-muted">
+                          {method.description}
+                        </p>
+                      </div>
+
+                      <span class="text-ink-soft">
+                        {method.feeMode === "free"
+                          ? "رایگان"
+                          : "پس از استعلام"}
+                      </span>
+
+                      <span class="text-ink-soft">
+                        {method.requiresAddress
+                          ? "بله"
+                          : "خیر"}
+                      </span>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+          </Card>
+        </section>
+
+        <section
+          id="payment"
+          aria-labelledby="payment-settings-title"
+          class="scroll-mt-6"
+        >
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <div class="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <h2
+                  id="payment-settings-title"
+                  class="text-base font-black text-ink"
+                >
+                  پرداخت
+                </h2>
+
+                <p class="mt-1 text-sm leading-6 text-muted">
+                  وضعیت عمومی اتصال پرداخت قابل مشاهده است، اما اطلاعات محرمانه نمایش داده نمی‌شوند.
+                </p>
+              </div>
+
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                {commerceConfig.payment.productionEnabled
+                  ? "فعال"
+                  : "غیرفعال در Production"}
+              </Badge>
+            </div>
+
+            <dl class="mt-5 grid gap-4 sm:grid-cols-2">
+              <div class="rounded-card border border-line bg-surface-soft p-4">
+                <dt class="text-xs font-bold text-muted">
+                  ارائه‌دهنده
+                </dt>
+
+                <dd
+                  dir="ltr"
+                  class="mt-1 text-sm font-bold text-ink"
+                >
+                  {commerceConfig.payment.provider}
+                </dd>
+              </div>
+
+              <div class="rounded-card border border-line bg-surface-soft p-4">
+                <dt class="text-xs font-bold text-muted">
+                  ارز درگاه
+                </dt>
+
+                <dd
+                  dir="ltr"
+                  class="mt-1 text-sm font-bold text-ink"
+                >
+                  {commerceConfig.payment.gatewayAmountCurrency}
+                </dd>
+              </div>
+            </dl>
+
+            <div class="mt-4 rounded-card border border-line bg-surface-soft p-4">
+              <p class="text-sm font-bold text-ink">
+                اطلاعات محرمانه پرداخت
+              </p>
+
+              <p class="mt-1 text-xs leading-6 text-muted">
+                شناسه‌ها و credentialهای پرداخت از تنظیمات محیط اجرا خوانده می‌شوند و عمداً در پنل مدیریت نمایش داده نمی‌شوند.
+              </p>
+            </div>
+          </Card>
+        </section>
+
+        <section
+          id="notifications"
+          aria-labelledby="notification-settings-title"
+          class="scroll-mt-6"
+        >
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <div>
+              <h2
+                id="notification-settings-title"
+                class="text-base font-black text-ink"
+              >
+                اعلان‌ها
+              </h2>
+
+              <p class="mt-1 text-sm leading-6 text-muted">
+                هنوز سرویس یا قرارداد backend برای تنظیم اعلان‌های مدیریتی تعریف نشده است.
+              </p>
+            </div>
+
+            <div class="mt-5 space-y-3">
+              {
+                [
+                  "سفارش جدید",
+                  "نیاز به ارسال",
+                  "ناموجود شدن کالا",
+                ].map((label, index) => (
+                  <label class="flex items-center justify-between gap-4 rounded-card border border-line bg-surface-soft px-4 py-3">
+                    <span class="text-sm font-semibold text-ink">
+                      {label}
+                    </span>
+
+                    <input
+
+                      type="checkbox"
+
+                      id={`admin-settings-notification-${index + 1}`}
+
+                      name={`admin-settings-notification-${index + 1}`}
+
+                      disabled
+                      class="size-4 cursor-not-allowed"
+                    />
+                  </label>
+                ))
+              }
+            </div>
+          </Card>
+        </section>
+
+        <section
+          id="security"
+          aria-labelledby="security-settings-title"
+          class="scroll-mt-6"
+        >
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <div>
+              <h2
+                id="security-settings-title"
+                class="text-base font-black text-ink"
+              >
+                امنیت حساب
+              </h2>
+
+              <p class="mt-1 text-sm leading-6 text-muted">
+                تنظیمات امنیتی حساس از مسیر مستقل احراز هویت مدیریت می‌شوند و در این صفحه secret یا credential نمایش داده نمی‌شود.
+              </p>
+            </div>
+
+            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+              <div class="rounded-card border border-line bg-surface-soft p-4">
+                <p class="text-sm font-bold text-ink">
+                  رمز عبور
+                </p>
+
+                <p class="mt-1 text-xs leading-5 text-muted">
+                  مدیریت تغییر رمز عبور هنوز به این صفحه متصل نشده است.
+                </p>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  class="mt-3"
+                  disabled
+                >
+                  تغییر رمز عبور
+                </Button>
+              </div>
+
+              <div class="rounded-card border border-line bg-surface-soft p-4">
+                <p class="text-sm font-bold text-ink">
+                  ورود دومرحله‌ای
+                </p>
+
+                <p class="mt-1 text-xs leading-5 text-muted">
+                  مدیریت TOTP و recovery codes از UI تنظیمات هنوز فعال نشده است.
+                </p>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  class="mt-3"
+                  disabled
+                >
+                  مدیریت ورود دومرحله‌ای
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </section>
+      </div>
+    </div>
+  </div>
+</AdminLayout>

@@ -1,0 +1,278 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+import EmptyState from "../../../components/common/EmptyState.astro";
+
+const statusFilters = [
+  {
+    value: "all",
+    label: "همه",
+  },
+  {
+    value: "active",
+    label: "فعال",
+  },
+  {
+    value: "draft",
+    label: "پیش‌نویس",
+  },
+  {
+    value: "archived",
+    label: "بایگانی‌شده",
+  },
+] as const;
+
+const inventoryFilters = [
+  {
+    value: "all",
+    label: "همه موجودی‌ها",
+  },
+  {
+    value: "in-stock",
+    label: "موجود",
+  },
+  {
+    value: "out-of-stock",
+    label: "ناموجود",
+  },
+] as const;
+
+const categories = [
+  {
+    value: "",
+    label: "همه دسته‌بندی‌ها",
+  },
+  {
+    value: "motors",
+    label: "موتورها",
+  },
+  {
+    value: "drives",
+    label: "درایوها",
+  },
+  {
+    value: "inverter-vfd",
+    label: "اینورتر و VFD",
+  },
+  {
+    value: "cnc-controllers",
+    label: "کنترلرهای CNC",
+  },
+  {
+    value: "plc-hmi",
+    label: "PLC و HMI",
+  },
+  {
+    value: "encoders-feedback",
+    label: "انکودر و فیدبک",
+  },
+  {
+    value: "electronic-parts",
+    label: "قطعات الکترونیکی",
+  },
+  {
+    value: "mechanical-parts",
+    label: "قطعات مکانیکی",
+  },
+  {
+    value: "sensors",
+    label: "سنسورها",
+  },
+  {
+    value: "industrial-electrical",
+    label: "برق صنعتی",
+  },
+  {
+    value: "cnc-accessories",
+    label: "متعلقات CNC",
+  },
+] as const;
+---
+
+<AdminLayout title="محصولات">
+  <div class="space-y-6">
+    <section
+      class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
+      aria-labelledby="products-heading"
+    >
+      <div class="max-w-xl">
+        <h2
+          id="products-heading"
+          class="text-lg font-black text-ink"
+        >
+          مدیریت محصولات
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          محصول را پیدا کنید، وضعیت آن را بررسی کنید یا برای افزودن محصول جدید آماده شوید.
+        </p>
+      </div>
+
+      <Button
+        href="/admin/products/new"
+        variant="primary"
+        disabled
+        ariaLabel="افزودن محصول — پس از آماده‌شدن فرم محصول فعال می‌شود"
+      >
+        افزودن محصول
+      </Button>
+    </section>
+
+    <section
+      class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]"
+      aria-labelledby="products-search-title"
+    >
+      <div>
+        <label
+          id="products-search-title"
+          for="products-search"
+          class="mb-2 block text-sm font-semibold text-ink"
+        >
+          جستجو
+        </label>
+
+        <input
+          id="products-search"
+          name="q"
+          type="search"
+          placeholder="جستجوی محصولات پس از اتصال داده فعال می‌شود"
+          disabled
+          aria-disabled="true"
+          title="جستجوی محصولات پس از اتصال داده‌های واقعی فعال می‌شود."
+          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+        />
+      </div>
+
+      <div>
+        <label
+          for="products-category"
+          class="mb-2 block text-sm font-semibold text-ink"
+        >
+          دسته‌بندی
+        </label>
+
+        <select
+          id="products-category"
+          name="category"
+          disabled
+          aria-disabled="true"
+          title="فیلتر دسته‌بندی پس از اتصال داده‌های واقعی فعال می‌شود."
+          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
+        >
+          {
+            categories.map((category) => (
+              <option value={category.value}>
+                {category.label}
+              </option>
+            ))
+          }
+        </select>
+      </div>
+    </section>
+
+    <section aria-labelledby="product-status-filter-title">
+      <div class="mb-3 flex items-center justify-between gap-4">
+        <h2
+          id="product-status-filter-title"
+          class="text-sm font-bold text-ink"
+        >
+          وضعیت محصول
+        </h2>
+
+        <Badge variant="neutral" size="sm">
+          در انتظار اتصال داده
+        </Badge>
+      </div>
+
+      <div
+        class="flex flex-wrap gap-2"
+        aria-label="فیلتر وضعیت محصول"
+      >
+        {
+          statusFilters.map((filter) => (
+            <span
+              class="inline-flex min-h-9 items-center rounded-full border border-line bg-surface-raised px-3 text-sm font-semibold text-ink-soft"
+            >
+              {filter.label}
+            </span>
+          ))
+        }
+      </div>
+    </section>
+
+    <section aria-labelledby="product-inventory-filter-title">
+      <div class="mb-3">
+        <h2
+          id="product-inventory-filter-title"
+          class="text-sm font-bold text-ink"
+        >
+          موجودی
+        </h2>
+      </div>
+
+      <div
+        class="flex flex-wrap gap-2"
+        aria-label="فیلتر موجودی محصول"
+      >
+        {
+          inventoryFilters.map((filter) => (
+            <span
+              class="inline-flex min-h-9 items-center rounded-full border border-line bg-surface-raised px-3 text-sm font-semibold text-ink-soft"
+            >
+              {filter.label}
+            </span>
+          ))
+        }
+      </div>
+
+
+    </section>
+
+    <section aria-labelledby="products-table-title">
+      <div class="mb-4">
+        <h2
+          id="products-table-title"
+          class="text-lg font-black text-ink"
+        >
+          همه محصولات
+        </h2>
+
+        <p class="mt-1 text-sm leading-6 text-muted">
+          پس از اتصال بخش مدیریت محصول، اطلاعات واقعی در این جدول نمایش داده می‌شوند.
+        </p>
+      </div>
+
+      <Card
+        as="div"
+        padding="none"
+        class="overflow-hidden shadow-none"
+      >
+        <div
+          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
+        >
+          <div
+            class="grid grid-cols-[minmax(10rem,1fr)_6rem_7rem_7rem_6rem_6rem_4rem] gap-3 text-xs font-bold text-muted"
+          >
+            <span>محصول</span>
+            <span>برند</span>
+            <span>کد / مدل</span>
+            <span>قیمت</span>
+            <span>موجودی</span>
+            <span>وضعیت</span>
+            <span>عملیات</span>
+          </div>
+        </div>
+
+        <div class="p-4 md:p-5">
+          <EmptyState
+            title="هنوز محصولی برای نمایش نداریم"
+            description="بعد از اتصال Admin Products به منبع داده واقعی، محصولات در این جدول نمایش داده می‌شوند."
+            compact
+          />
+        </div>
+      </Card>
+    </section>
+  </div>
+</AdminLayout>

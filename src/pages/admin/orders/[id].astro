@@ -1,0 +1,354 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import Button from "../../../components/common/Button.astro";
+import Card from "../../../components/common/Card.astro";
+import EmptyState from "../../../components/common/EmptyState.astro";
+
+const orderId =
+  Astro.params.id ?? "";
+---
+
+<AdminLayout title="جزئیات سفارش">
+  <div class="space-y-6">
+    <nav
+      aria-label="مسیر صفحه"
+      class="flex flex-wrap items-center gap-2 text-sm text-muted"
+    >
+      <a
+        href="/admin/orders"
+        class="font-semibold text-brand-700 transition hover:text-brand-800"
+      >
+        سفارش‌ها
+      </a>
+
+      <span aria-hidden="true">
+        /
+      </span>
+
+      <span aria-current="page">
+        جزئیات سفارش
+      </span>
+    </nav>
+
+    <section
+      class="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between"
+      aria-labelledby="order-detail-title"
+    >
+      <div>
+        <div class="flex flex-wrap items-center gap-3">
+          <h2
+            id="order-detail-title"
+            class="text-2xl font-black text-ink"
+          >
+            جزئیات سفارش
+          </h2>
+
+          <Badge
+            variant="neutral"
+            size="sm"
+          >
+            در انتظار اتصال داده
+          </Badge>
+        </div>
+
+        {
+          orderId && (
+            <p class="mt-2 text-sm text-muted">
+              شناسه مسیر:
+              <span
+                dir="ltr"
+                class="mr-1 font-mono text-xs text-ink-soft"
+              >
+                {orderId}
+              </span>
+            </p>
+          )
+        }
+      </div>
+
+      <Button
+        href="/admin/orders"
+        variant="secondary"
+      >
+        بازگشت به سفارش‌ها
+      </Button>
+    </section>
+
+    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+      <div class="space-y-6">
+        <section aria-labelledby="order-items-title">
+          <div class="mb-4">
+            <h2
+              id="order-items-title"
+              class="text-lg font-black text-ink"
+            >
+              اقلام سفارش
+            </h2>
+
+            <p class="mt-1 text-sm leading-6 text-muted">
+              کالاها و تعداد هر مورد در این بخش نمایش داده می‌شوند.
+            </p>
+          </div>
+
+          <Card
+            as="div"
+            padding="none"
+            class="overflow-hidden shadow-none"
+          >
+            <div
+              class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
+            >
+              <div
+                class="grid grid-cols-[minmax(12rem,1fr)_6rem_9rem_9rem] gap-4 text-xs font-bold text-muted"
+              >
+                <span>کالا</span>
+                <span>تعداد</span>
+                <span>قیمت واحد</span>
+                <span>جمع</span>
+              </div>
+            </div>
+
+            <div class="p-4 md:p-5">
+              <EmptyState
+                title="اطلاعات اقلام هنوز بارگذاری نشده"
+                description="پس از اتصال Admin Orders به پایگاه داده، اقلام این سفارش در این قسمت نمایش داده می‌شوند."
+                compact
+              />
+            </div>
+          </Card>
+        </section>
+
+        <section aria-labelledby="order-timeline-title">
+          <div class="mb-4">
+            <h2
+              id="order-timeline-title"
+              class="text-lg font-black text-ink"
+            >
+              روند سفارش
+            </h2>
+
+            <p class="mt-1 text-sm leading-6 text-muted">
+              تاریخچه تغییر وضعیت سفارش در این قسمت نمایش داده می‌شود.
+            </p>
+          </div>
+
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <EmptyState
+              title="تاریخچه‌ای برای نمایش نداریم"
+              description="Timeline واقعی از order status history خوانده خواهد شد."
+              compact
+            />
+          </Card>
+        </section>
+      </div>
+
+      <aside class="space-y-6">
+        <section aria-labelledby="order-totals-title">
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <h2
+              id="order-totals-title"
+              class="text-lg font-black text-ink"
+            >
+              مبلغ سفارش
+            </h2>
+
+            <dl class="mt-5 space-y-3 text-sm">
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-muted">
+                  جمع کالاها
+                </dt>
+
+                <dd class="font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-muted">
+                  هزینه ارسال
+                </dt>
+
+                <dd class="font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div class="border-t border-line pt-3">
+                <div class="flex items-center justify-between gap-4">
+                  <dt class="font-bold text-ink">
+                    مبلغ نهایی
+                  </dt>
+
+                  <dd class="text-lg font-black text-ink">
+                    —
+                  </dd>
+                </div>
+              </div>
+            </dl>
+          </Card>
+        </section>
+
+        <section aria-labelledby="order-customer-title">
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <h2
+              id="order-customer-title"
+              class="text-lg font-black text-ink"
+            >
+              مشتری
+            </h2>
+
+            <dl class="mt-5 space-y-3 text-sm">
+              <div>
+                <dt class="text-muted">
+                  نام
+                </dt>
+
+                <dd class="mt-1 font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-muted">
+                  موبایل
+                </dt>
+
+                <dd
+                  dir="ltr"
+                  class="mt-1 text-right font-bold text-ink"
+                >
+                  —
+                </dd>
+              </div>
+            </dl>
+          </Card>
+        </section>
+
+        <section aria-labelledby="order-shipping-title">
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <h2
+              id="order-shipping-title"
+              class="text-lg font-black text-ink"
+            >
+              ارسال
+            </h2>
+
+            <dl class="mt-5 space-y-3 text-sm">
+              <div>
+                <dt class="text-muted">
+                  روش ارسال
+                </dt>
+
+                <dd class="mt-1 font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-muted">
+                  شهر
+                </dt>
+
+                <dd class="mt-1 font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-muted">
+                  آدرس
+                </dt>
+
+                <dd class="mt-1 leading-7 text-ink">
+                  —
+                </dd>
+              </div>
+            </dl>
+          </Card>
+        </section>
+
+        <section aria-labelledby="order-payment-title">
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <h2
+              id="order-payment-title"
+              class="text-lg font-black text-ink"
+            >
+              پرداخت
+            </h2>
+
+            <dl class="mt-5 space-y-3 text-sm">
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-muted">
+                  وضعیت
+                </dt>
+
+                <dd>
+                  <Badge
+                    variant="neutral"
+                    size="sm"
+                  >
+                    —
+                  </Badge>
+                </dd>
+              </div>
+
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-muted">
+                  مبلغ
+                </dt>
+
+                <dd class="font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div class="flex items-center justify-between gap-4">
+                <dt class="text-muted">
+                  روش پرداخت
+                </dt>
+
+                <dd class="font-bold text-ink">
+                  —
+                </dd>
+              </div>
+
+              <div>
+                <dt class="text-muted">
+                  شماره پیگیری
+                </dt>
+
+                <dd
+                  dir="ltr"
+                  class="mt-1 text-right font-mono text-xs text-ink"
+                >
+                  —
+                </dd>
+              </div>
+            </dl>
+          </Card>
+        </section>
+      </aside>
+    </div>
+  </div>
+</AdminLayout>
