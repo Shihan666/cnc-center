@@ -4,9 +4,160 @@ import Badge from "../../../components/common/Badge.astro";
 import Button from "../../../components/common/Button.astro";
 import Card from "../../../components/common/Card.astro";
 import EmptyState from "../../../components/common/EmptyState.astro";
+import { formatRialAmount } from "../../../lib/cart";
+
+type OrderStatus =
+  | "pending"
+  | "paid"
+  | "processing"
+  | "ready_to_ship"
+  | "shipped"
+  | "completed"
+  | "cancelled"
+  | "failed"
+  | "expired";
+
+type AdminOrderDetailItem = {
+  id: string;
+  productId: string;
+  productName: string;
+  brand: string;
+  partNumber: string;
+  quantity: number;
+  unitPriceRial: number;
+  lineTotalRial: number;
+  shippingClass: string;
+  createdAt: string;
+};
+
+type AdminOrderPayment = {
+  id: string;
+  provider: string;
+  environment: string;
+  status: string;
+  amountRial: number;
+  currency: string;
+  refId: string | null;
+  createdAt: string;
+  requestedAt: string | null;
+  verifiedAt: string | null;
+  failedAt: string | null;
+};
+
+type AdminOrderStatusHistoryItem = {
+  id: string;
+  fromStatus: OrderStatus | null;
+  toStatus: OrderStatus;
+  reason: string | null;
+  createdAt: string;
+};
+
+type AdminOrderDetail = {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  customerName: string;
+  customerPhone: string;
+  customerCity: string;
+  customerAddress: string;
+  customerNotes: string;
+  shippingMethodId: string;
+  shippingMethodLabel: string;
+  subtotalRial: number;
+  shippingFeeRial: number | null;
+  totalRial: number | null;
+  currency: string;
+  paymentReady: boolean;
+  createdAt: string;
+  updatedAt: string;
+  paidAt: string | null;
+  items: AdminOrderDetailItem[];
+  payments: AdminOrderPayment[];
+  statusHistory: AdminOrderStatusHistoryItem[];
+};
+
+type AdminOrderDetailResponse = {
+  ok: boolean;
+  order?: AdminOrderDetail;
+};
 
 const orderId =
   Astro.params.id ?? "";
+
+const apiUrl =
+  new URL(
+    `/api/admin/orders/${encodeURIComponent(orderId)}`,
+    Astro.request.url,
+  );
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        cookie:
+          Astro.request.headers.get(
+            "cookie",
+          ) ?? "",
+      },
+    },
+  );
+
+let data: AdminOrderDetailResponse | null =
+  null;
+
+try {
+  data =
+    await response.json();
+} catch {
+  data = null;
+}
+
+const order =
+  response.ok &&
+  data?.ok === true
+    ? data.order ?? null
+    : null;
+
+const isNotFound =
+  response.status === 404;
+
+const hasOrderError =
+  !isNotFound &&
+  (
+    !response.ok ||
+    data?.ok !== true ||
+    !order
+  );
+
+
+const statusLabels: Record<OrderStatus, string> = {
+  pending: "در انتظار بررسی",
+  paid: "پرداخت شده",
+  processing: "در حال پردازش",
+  ready_to_ship: "آماده ارسال",
+  shipped: "ارسال شده",
+  completed: "تکمیل شده",
+  cancelled: "لغو شده",
+  failed: "ناموفق",
+  expired: "منقضی شده",
+};
+
+const nextAdminStatus: Partial<
+  Record<OrderStatus, OrderStatus>
+> = {
+  paid: "processing",
+  processing: "ready_to_ship",
+  ready_to_ship: "shipped",
+  shipped: "completed",
+};
+
+const nextStatus =
+  order
+    ? nextAdminStatus[order.status] ?? null
+    : null;
+
+
 ---
 
 <AdminLayout title="جزئیات سفارش">
@@ -41,15 +192,23 @@ const orderId =
             id="order-detail-title"
             class="text-2xl font-black text-ink"
           >
-            جزئیات سفارش
+            {
+              order
+                ? `سفارش ${order.orderNumber}`
+                : "جزئیات سفارش"
+            }
           </h2>
 
-          <Badge
-            variant="neutral"
-            size="sm"
-          >
-            در انتظار اتصال داده
-          </Badge>
+          {
+            order && (
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                {statusLabels[order.status]}
+              </Badge>
+            )
+          }
         </div>
 
         {
@@ -65,17 +224,148 @@ const orderId =
             </p>
           )
         }
+
+        {
+          order && (
+            <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted">
+              <div class="flex items-center gap-1">
+                <dt>
+                  ثبت:
+                </dt>
+
+                <dd>
+                  <time datetime={order.createdAt}>
+                    {
+                      new Date(
+                        order.createdAt,
+                      ).toLocaleString(
+                        "fa-IR",
+                      )
+                    }
+                  </time>
+                </dd>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <dt>
+                  آخرین بروزرسانی:
+                </dt>
+
+                <dd>
+                  <time datetime={order.updatedAt}>
+                    {
+                      new Date(
+                        order.updatedAt,
+                      ).toLocaleString(
+                        "fa-IR",
+                      )
+                    }
+                  </time>
+                </dd>
+              </div>
+
+              {
+                order.paidAt ? (
+                  <div class="flex items-center gap-1">
+                    <dt>
+                      پرداخت:
+                    </dt>
+
+                    <dd>
+                      <time datetime={order.paidAt}>
+                        {
+                          new Date(
+                            order.paidAt,
+                          ).toLocaleString(
+                            "fa-IR",
+                          )
+                        }
+                      </time>
+                    </dd>
+                  </div>
+                ) : null
+              }
+            </dl>
+          )
+        }
       </div>
 
-      <Button
-        href="/admin/orders"
-        variant="secondary"
-      >
-        بازگشت به سفارش‌ها
-      </Button>
+      <div class="flex flex-wrap items-center gap-3">
+        {
+          order && nextStatus ? (
+            <div
+              data-order-status-root
+              data-order-id={order.id}
+              data-next-status={nextStatus}
+            >
+              <button
+                type="button"
+                data-order-status-submit
+                class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                تغییر وضعیت به {statusLabels[nextStatus]}
+              </button>
+
+              <p
+                class="mt-2 hidden max-w-xs text-xs font-medium leading-5 text-danger"
+                role="status"
+                aria-live="polite"
+                data-order-status-message
+              >
+              </p>
+            </div>
+          ) : null
+        }
+
+        <Button
+          href="/admin/orders"
+          variant="secondary"
+        >
+          بازگشت به سفارش‌ها
+        </Button>
+      </div>
     </section>
 
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+    {
+      isNotFound ? (
+        <section role="status">
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <EmptyState
+              title="سفارش پیدا نشد"
+              description="سفارشی با این شناسه وجود ندارد یا دیگر در دسترس نیست."
+              compact
+            />
+          </Card>
+        </section>
+      ) : hasOrderError ? (
+        <section role="alert">
+          <Card
+            as="div"
+            padding="md"
+            class="shadow-none"
+          >
+            <EmptyState
+              title="دریافت جزئیات سفارش انجام نشد"
+              description="ارتباط با سرور یا دریافت اطلاعات سفارش با مشکل روبه‌رو شد. دوباره تلاش کنید."
+              compact
+            />
+
+            <div class="mt-4 flex justify-center">
+              <a
+                href={Astro.url.pathname}
+                class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+              >
+                تلاش مجدد
+              </a>
+            </div>
+          </Card>
+        </section>
+      ) : order ? (
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div class="space-y-6">
         <section aria-labelledby="order-items-title">
           <div class="mb-4">
@@ -109,13 +399,56 @@ const orderId =
               </div>
             </div>
 
-            <div class="p-4 md:p-5">
-              <EmptyState
-                title="اطلاعات اقلام هنوز بارگذاری نشده"
-                description="پس از اتصال Admin Orders به پایگاه داده، اقلام این سفارش در این قسمت نمایش داده می‌شوند."
-                compact
-              />
-            </div>
+            {
+              order.items.length === 0 ? (
+                <div class="p-4 md:p-5">
+                  <EmptyState
+                    title="قلمی برای این سفارش ثبت نشده"
+                    description="در حال حاضر هیچ قلمی برای این سفارش وجود ندارد."
+                    compact
+                  />
+                </div>
+              ) : (
+                <div class="divide-y divide-line">
+                  {
+                    order.items.map((item) => (
+                      <div class="grid gap-3 px-5 py-4 md:grid-cols-[minmax(12rem,1fr)_6rem_9rem_9rem] md:items-center md:gap-4">
+                        <div class="min-w-0">
+                          <p class="font-bold text-ink">
+                            {item.productName}
+                          </p>
+
+                          <p class="mt-1 text-xs text-muted">
+                            {item.brand} — {item.partNumber}
+                          </p>
+                        </div>
+
+                        <div class="text-sm text-ink">
+                          <span class="font-bold md:hidden">
+                            تعداد:{" "}
+                          </span>
+                          {item.quantity}
+                        </div>
+
+                        <div class="text-sm text-ink">
+                          <span class="font-bold md:hidden">
+                            قیمت واحد:{" "}
+                          </span>
+                          {formatRialAmount(item.unitPriceRial)}
+                        </div>
+
+                        <div class="text-sm font-bold text-ink">
+                          <span class="md:hidden">
+                            جمع:{" "}
+                          </span>
+                          {formatRialAmount(item.lineTotalRial)}
+                        </div>
+                      </div>
+                    ))
+                  }
+                </div>
+              )
+            }
           </Card>
         </section>
 
@@ -138,11 +471,75 @@ const orderId =
             padding="md"
             class="shadow-none"
           >
-            <EmptyState
-              title="تاریخچه‌ای برای نمایش نداریم"
-              description="Timeline واقعی از order status history خوانده خواهد شد."
-              compact
-            />
+            {
+              order.statusHistory.length === 0 ? (
+                <EmptyState
+                  title="تاریخچه‌ای برای نمایش نداریم"
+                  description="هنوز تغییر وضعیتی برای این سفارش ثبت نشده است."
+                  compact
+                />
+              ) : (
+                <ol class="space-y-4">
+                  {
+                    order.statusHistory.map((entry) => (
+                      <li class="border-b border-line pb-4 last:border-b-0 last:pb-0">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                          <div class="flex flex-wrap items-center gap-2">
+                            {
+                              entry.fromStatus ? (
+                                <>
+                                  <Badge
+                                    variant="neutral"
+                                    size="sm"
+                                  >
+                                    {statusLabels[entry.fromStatus]}
+                                  </Badge>
+
+                                  <span
+                                    aria-hidden="true"
+                                    class="text-muted"
+                                  >
+                                    ←
+                                  </span>
+                                </>
+                              ) : null
+                            }
+
+                            <Badge
+                              variant="neutral"
+                              size="sm"
+                            >
+                              {statusLabels[entry.toStatus]}
+                            </Badge>
+                          </div>
+
+                          <time
+                            datetime={entry.createdAt}
+                            class="text-xs text-muted"
+                          >
+                            {
+                              new Date(
+                                entry.createdAt,
+                              ).toLocaleString(
+                                "fa-IR",
+                              )
+                            }
+                          </time>
+                        </div>
+
+                        {
+                          entry.reason ? (
+                            <p class="mt-3 text-sm leading-6 text-muted">
+                              {entry.reason}
+                            </p>
+                          ) : null
+                        }
+                      </li>
+                    ))
+                  }
+                </ol>
+              )
+            }
           </Card>
         </section>
       </div>
@@ -168,7 +565,7 @@ const orderId =
                 </dt>
 
                 <dd class="font-bold text-ink">
-                  —
+                  {formatRialAmount(order.subtotalRial)}
                 </dd>
               </div>
 
@@ -178,7 +575,11 @@ const orderId =
                 </dt>
 
                 <dd class="font-bold text-ink">
-                  —
+                  {
+                    order.shippingFeeRial !== null
+                      ? formatRialAmount(order.shippingFeeRial)
+                      : "—"
+                  }
                 </dd>
               </div>
 
@@ -189,7 +590,11 @@ const orderId =
                   </dt>
 
                   <dd class="text-lg font-black text-ink">
-                    —
+                    {
+                      order.totalRial !== null
+                        ? formatRialAmount(order.totalRial)
+                        : "—"
+                    }
                   </dd>
                 </div>
               </div>
@@ -217,7 +622,7 @@ const orderId =
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
-                  —
+                  {order.customerName}
                 </dd>
               </div>
 
@@ -230,9 +635,23 @@ const orderId =
                   dir="ltr"
                   class="mt-1 text-right font-bold text-ink"
                 >
-                  —
+                  {order.customerPhone}
                 </dd>
               </div>
+
+              {
+                order.customerNotes.trim() ? (
+                  <div>
+                    <dt class="text-muted">
+                      یادداشت مشتری
+                    </dt>
+
+                    <dd class="mt-1 whitespace-pre-wrap leading-7 text-ink">
+                      {order.customerNotes}
+                    </dd>
+                  </div>
+                ) : null
+              }
             </dl>
           </Card>
         </section>
@@ -257,7 +676,7 @@ const orderId =
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
-                  —
+                  {order.shippingMethodLabel}
                 </dd>
               </div>
 
@@ -267,7 +686,7 @@ const orderId =
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
-                  —
+                  {order.customerCity}
                 </dd>
               </div>
 
@@ -277,7 +696,7 @@ const orderId =
                 </dt>
 
                 <dd class="mt-1 leading-7 text-ink">
-                  —
+                  {order.customerAddress}
                 </dd>
               </div>
             </dl>
@@ -297,58 +716,257 @@ const orderId =
               پرداخت
             </h2>
 
-            <dl class="mt-5 space-y-3 text-sm">
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-muted">
-                  وضعیت
-                </dt>
+            {
+              order.payments.length === 0 ? (
+                <div class="mt-5">
+                  <EmptyState
+                    title="پرداختی ثبت نشده"
+                    description="هنوز هیچ رکورد پرداختی برای این سفارش ثبت نشده است."
+                    compact
+                  />
+                </div>
+              ) : (
+                <div class="mt-5 space-y-5">
+                  {
+                    order.payments.map((payment) => (
+                      <dl class="space-y-3 border-b border-line pb-5 text-sm last:border-b-0 last:pb-0">
+                        <div class="flex items-center justify-between gap-4">
+                          <dt class="text-muted">
+                            وضعیت
+                          </dt>
 
-                <dd>
-                  <Badge
-                    variant="neutral"
-                    size="sm"
-                  >
-                    —
-                  </Badge>
-                </dd>
-              </div>
+                          <dd>
+                            <Badge
+                              variant="neutral"
+                              size="sm"
+                            >
+                              {payment.status}
+                            </Badge>
+                          </dd>
+                        </div>
 
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-muted">
-                  مبلغ
-                </dt>
+                        <div class="flex items-center justify-between gap-4">
+                          <dt class="text-muted">
+                            مبلغ
+                          </dt>
 
-                <dd class="font-bold text-ink">
-                  —
-                </dd>
-              </div>
+                          <dd class="font-bold text-ink">
+                            {formatRialAmount(payment.amountRial)}
+                          </dd>
+                        </div>
 
-              <div class="flex items-center justify-between gap-4">
-                <dt class="text-muted">
-                  روش پرداخت
-                </dt>
+                        <div class="flex items-center justify-between gap-4">
+                          <dt class="text-muted">
+                            روش پرداخت
+                          </dt>
 
-                <dd class="font-bold text-ink">
-                  —
-                </dd>
-              </div>
+                          <dd class="font-bold text-ink">
+                            {payment.provider}
+                          </dd>
+                        </div>
 
-              <div>
-                <dt class="text-muted">
-                  شماره پیگیری
-                </dt>
+                        <div>
+                          <dt class="text-muted">
+                            شماره پیگیری
+                          </dt>
 
-                <dd
-                  dir="ltr"
-                  class="mt-1 text-right font-mono text-xs text-ink"
-                >
-                  —
-                </dd>
-              </div>
-            </dl>
+                          <dd
+                            dir="ltr"
+                            class="mt-1 text-right font-mono text-xs text-ink"
+                          >
+                            {payment.refId ?? "—"}
+                          </dd>
+                        </div>
+
+                        <div class="flex items-center justify-between gap-4">
+                          <dt class="text-muted">
+                            زمان ثبت
+                          </dt>
+
+                          <dd class="text-xs text-ink">
+                            <time datetime={payment.createdAt}>
+                              {
+                                new Date(
+                                  payment.createdAt,
+                                ).toLocaleString(
+                                  "fa-IR",
+                                )
+                              }
+                            </time>
+                          </dd>
+                        </div>
+                      </dl>
+                    ))
+                  }
+                </div>
+              )
+            }
           </Card>
         </section>
       </aside>
-    </div>
+        </div>
+      ) : null
+    }
   </div>
 </AdminLayout>
+
+<script>
+  const statusRoots =
+    document.querySelectorAll(
+      "[data-order-status-root]",
+    );
+
+  for (const root of statusRoots) {
+    const button =
+      root.querySelector(
+        "[data-order-status-submit]",
+      );
+
+    const message =
+      root.querySelector(
+        "[data-order-status-message]",
+      );
+
+    if (
+      !(root instanceof HTMLElement) ||
+      !(button instanceof HTMLButtonElement) ||
+      !(message instanceof HTMLElement)
+    ) {
+      continue;
+    }
+
+    const orderId =
+      root.dataset.orderId ?? "";
+
+    const nextStatus =
+      root.dataset.nextStatus ?? "";
+
+    button.addEventListener(
+      "click",
+      async () => {
+        if (
+          button.disabled ||
+          !orderId ||
+          !nextStatus
+        ) {
+          return;
+        }
+
+        const originalLabel =
+          button.textContent ??
+          "تغییر وضعیت";
+
+        button.disabled = true;
+        button.textContent =
+          "در حال ثبت...";
+
+        message.textContent = "";
+        message.classList.add("hidden");
+
+        try {
+          const response =
+            await fetch(
+              `/api/admin/orders/${encodeURIComponent(orderId)}/status`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type":
+                    "application/json",
+                },
+                credentials:
+                  "same-origin",
+                body:
+                  JSON.stringify({
+                    toStatus:
+                      nextStatus,
+                  }),
+              },
+            );
+
+          let body:
+            Record<string, unknown> | null =
+              null;
+
+          try {
+            const value: unknown =
+              await response.json();
+
+            if (
+              typeof value ===
+                "object" &&
+              value !== null &&
+              !Array.isArray(value)
+            ) {
+              body =
+                value as
+                  Record<
+                    string,
+                    unknown
+                  >;
+            }
+          } catch {
+            body = null;
+          }
+
+          if (
+            !response.ok ||
+            body?.ok !== true
+          ) {
+            const reason =
+              typeof body?.reason ===
+                "string"
+                ? body.reason
+                : null;
+
+            if (
+              response.status === 401 ||
+              reason ===
+                "invalid_session"
+            ) {
+              window.location.replace(
+                "/admin/auth/login",
+              );
+
+              return;
+            }
+
+            if (
+              response.status === 409 ||
+              reason ===
+                "invalid_transition"
+            ) {
+              message.textContent =
+                "وضعیت سفارش تغییر کرده یا این انتقال دیگر مجاز نیست. صفحه را دوباره بارگذاری کنید.";
+            } else {
+              message.textContent =
+                "تغییر وضعیت سفارش انجام نشد. دوباره تلاش کنید.";
+            }
+
+            message.classList.remove(
+              "hidden",
+            );
+
+            button.disabled = false;
+            button.textContent =
+              originalLabel;
+
+            return;
+          }
+
+          window.location.reload();
+        } catch {
+          message.textContent =
+            "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.";
+
+          message.classList.remove(
+            "hidden",
+          );
+
+          button.disabled = false;
+          button.textContent =
+            originalLabel;
+        }
+      },
+    );
+  }
+</script>

@@ -1,8 +1,9 @@
-﻿---
+---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import Badge from "../../../components/common/Badge.astro";
 import Card from "../../../components/common/Card.astro";
 import EmptyState from "../../../components/common/EmptyState.astro";
+import { formatRialAmount } from "../../../lib/cart";
 
 type OrderStatus =
   | "pending"
@@ -16,38 +17,173 @@ type OrderStatus =
   | "expired";
 
 type AdminOrder = {
-  id: string | number;
+  id: string;
+  orderNumber: string;
   status: OrderStatus;
+  customerName: string;
+  customerPhone: string;
+  customerCity: string;
+  subtotalRial: number;
+  shippingFeeRial: number | null;
+  totalRial: number | null;
+  currency: string;
+  paymentReady: boolean;
   createdAt: string;
-  customerName?: string | null;
+  paidAt: string | null;
 };
 
+const apiUrl =
+  new URL(
+    "/api/admin/orders",
+    Astro.request.url,
+  );
+
+for (
+  const key of [
+    "q",
+    "status",
+    "page",
+    "pageSize",
+  ] as const
+) {
+  const value =
+    Astro.url.searchParams.get(
+      key,
+    );
+
+  if (value !== null) {
+    apiUrl.searchParams.set(
+      key,
+      value,
+    );
+  }
+}
+
 const response = await fetch(
-  new URL("/api/admin/orders", Astro.request.url),
+  apiUrl,
   {
     headers: {
-      cookie: Astro.request.headers.get("cookie") ?? "",
+      cookie:
+        Astro.request.headers.get(
+          "cookie",
+        ) ?? "",
     },
   },
 );
 
-const data: {
+type AdminOrdersResponse = {
   ok: boolean;
+  query?: {
+    q: string;
+    status: OrderStatus | null;
+    page: number;
+    pageSize: number;
+  };
   orders?: AdminOrder[];
   pagination?: {
     total: number;
     page: number;
+    pageSize: number;
     totalPages: number;
   };
-} = await response.json();
+};
 
-const orders: AdminOrder[] = data.ok
-  ? data.orders ?? []
-  : [];
+let data: AdminOrdersResponse | null =
+  null;
 
-const pagination = data.ok
-  ? data.pagination
-  : null;
+try {
+  data =
+    await response.json();
+} catch {
+  data = null;
+}
+
+const hasOrdersError =
+  !response.ok ||
+  data?.ok !== true;
+
+const orders: AdminOrder[] =
+  !hasOrdersError
+    ? data?.orders ?? []
+    : [];
+
+const query =
+  !hasOrdersError
+    ? data?.query ?? null
+    : null;
+
+const pagination =
+  !hasOrdersError
+    ? data?.pagination ?? null
+    : null;
+
+function createPageUrl(
+  page: number,
+): string {
+  const params =
+    new URLSearchParams();
+
+  if (query?.q) {
+    params.set(
+      "q",
+      query.q,
+    );
+  }
+
+  if (query?.status) {
+    params.set(
+      "status",
+      query.status,
+    );
+  }
+
+  if (
+    query?.pageSize !==
+    undefined
+  ) {
+    params.set(
+      "pageSize",
+      String(query.pageSize),
+    );
+  }
+
+  params.set(
+    "page",
+    String(page),
+  );
+
+  return `/admin/orders?${params.toString()}`;
+}
+
+if (
+  pagination &&
+  pagination.totalPages > 0 &&
+  pagination.page > pagination.totalPages
+) {
+  return Astro.redirect(
+    createPageUrl(
+      pagination.totalPages,
+    ),
+  );
+}
+
+const previousPageUrl =
+  pagination &&
+  pagination.page > 1
+    ? createPageUrl(
+        pagination.page - 1,
+      )
+    : null;
+
+const nextPageUrl =
+  pagination &&
+  pagination.totalPages > 0 &&
+  pagination.page <
+    pagination.totalPages
+    ? createPageUrl(
+        pagination.page + 1,
+      )
+    : null;
 
 const statusLabels: Record<OrderStatus, string> = {
   pending: "در انتظار بررسی",
@@ -77,11 +213,119 @@ const statusLabels: Record<OrderStatus, string> = {
     <section>
       <Card
         as="div"
+        padding="md"
+        class="shadow-none"
+      >
+        <form
+          method="get"
+          action="/admin/orders"
+          class="grid gap-4 md:grid-cols-[minmax(0,1fr)_220px_auto]"
+        >
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-ink">
+              جستجو
+            </span>
+
+            <input
+              type="search"
+              name="q"
+              value={query?.q ?? ""}
+              placeholder="شماره سفارش، نام، تلفن یا شهر"
+              class="h-11 w-full rounded-xl border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-brand"
+            />
+          </label>
+
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-ink">
+              وضعیت
+            </span>
+
+            <select
+              name="status"
+              class="h-11 w-full rounded-xl border border-line bg-white px-3 text-sm text-ink outline-none transition focus:border-brand"
+            >
+              <option
+                value="all"
+                selected={!query?.status}
+              >
+                همه وضعیت‌ها
+              </option>
+
+              {
+                (
+                  Object.entries(
+                    statusLabels,
+                  ) as [
+                    OrderStatus,
+                    string,
+                  ][]
+                ).map(
+                  ([
+                    status,
+                    label,
+                  ]) => (
+                    <option
+                      value={status}
+                      selected={
+                        query?.status ===
+                        status
+                      }
+                    >
+                      {label}
+                    </option>
+                  ),
+                )
+              }
+            </select>
+          </label>
+
+          <div class="flex items-end gap-2">
+            <button
+              type="submit"
+              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-bold text-white transition hover:opacity-90"
+            >
+              اعمال فیلتر
+            </button>
+
+            <a
+              href="/admin/orders"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+            >
+              پاک کردن
+            </a>
+          </div>
+        </form>
+      </Card>
+    </section>
+
+    <section>
+      <Card
+        as="div"
         padding="none"
         class="overflow-hidden shadow-none"
       >
         {
-          orders.length === 0 ? (
+          hasOrdersError ? (
+            <div
+              class="p-5"
+              role="alert"
+            >
+              <EmptyState
+                title="دریافت سفارش‌ها انجام نشد"
+                description="ارتباط با سرور یا دریافت اطلاعات سفارش‌ها با مشکل روبه‌رو شد. دوباره تلاش کنید."
+                compact
+              />
+
+              <div class="mt-4 flex justify-center">
+                <a
+                  href={Astro.url.pathname + Astro.url.search}
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+                >
+                  تلاش مجدد
+                </a>
+              </div>
+            </div>
+          ) : orders.length === 0 ? (
             <div class="p-5">
               <EmptyState
                 title="سفارشی وجود ندارد"
@@ -94,19 +338,32 @@ const statusLabels: Record<OrderStatus, string> = {
               <div class="divide-y divide-line">
                 {
                   orders.map((order: AdminOrder) => (
-                    <div class="grid gap-3 px-5 py-4 md:grid-cols-5 md:items-center">
+                    <div class="grid gap-3 px-5 py-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_auto_minmax(0,1fr)_auto_auto] md:items-center">
 
                       <span class="font-bold text-ink">
-                        {order.id}
+                        {order.orderNumber}
                       </span>
 
-                      <span class="text-sm text-muted">
-                        {order.customerName ?? "-"}
+                      <span class="min-w-0 text-sm text-muted">
+                        <span class="block truncate text-ink">
+                          {order.customerName}
+                        </span>
+                        <span class="block truncate">
+                          {order.customerCity} — {order.customerPhone}
+                        </span>
                       </span>
 
                       <Badge variant="neutral">
                         {statusLabels[order.status]}
                       </Badge>
+
+                      <span class="text-sm font-bold text-ink">
+                        {
+                          order.totalRial !== null
+                            ? formatRialAmount(order.totalRial)
+                            : "—"
+                        }
+                      </span>
 
                       <span class="text-sm text-muted">
                         {new Date(order.createdAt).toLocaleDateString("fa-IR")}
@@ -130,10 +387,57 @@ const statusLabels: Record<OrderStatus, string> = {
     </section>
 
     {
-      pagination && (
-        <section class="text-sm text-muted">
-          صفحه {pagination.page} از {pagination.totalPages}
-          — مجموع {pagination.total} سفارش
+      pagination &&
+      pagination.total > 0 && (
+        <section class="flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            صفحه {pagination.page} از {pagination.totalPages}
+            {" — "}
+            مجموع {pagination.total} سفارش
+          </p>
+
+          <nav
+            aria-label="صفحه‌بندی سفارش‌ها"
+            class="flex items-center gap-2"
+          >
+            {
+              previousPageUrl ? (
+                <a
+                  href={previousPageUrl}
+                  rel="prev"
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 font-bold text-ink transition hover:bg-surface"
+                >
+                  صفحه قبل
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  class="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-line px-4 font-bold text-muted opacity-50"
+                >
+                  صفحه قبل
+                </span>
+              )
+            }
+
+            {
+              nextPageUrl ? (
+                <a
+                  href={nextPageUrl}
+                  rel="next"
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 font-bold text-ink transition hover:bg-surface"
+                >
+                  صفحه بعد
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  class="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-line px-4 font-bold text-muted opacity-50"
+                >
+                  صفحه بعد
+                </span>
+              )
+            }
+          </nav>
         </section>
       )
     }
