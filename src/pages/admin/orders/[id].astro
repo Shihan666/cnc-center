@@ -14,7 +14,7 @@ type OrderStatus =
   | "shipped"
   | "completed"
   | "cancelled"
-  | "failed"
+  | "awaiting_payment"
   | "expired";
 
 type AdminOrderDetailItem = {
@@ -139,7 +139,7 @@ const statusLabels: Record<OrderStatus, string> = {
   shipped: "ارسال شده",
   completed: "تکمیل شده",
   cancelled: "لغو شده",
-  failed: "ناموفق",
+  awaiting_payment: "در انتظار پرداخت",
   expired: "منقضی شده",
 };
 
