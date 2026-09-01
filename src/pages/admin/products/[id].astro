@@ -4,312 +4,1951 @@ import Badge from "../../../components/common/Badge.astro";
 import Button from "../../../components/common/Button.astro";
 import Card from "../../../components/common/Card.astro";
 import EmptyState from "../../../components/common/EmptyState.astro";
+import { formatRialAmount } from "../../../lib/cart";
+
+type ProductStatus =
+  | "draft"
+  | "active"
+  | "archived";
+
+type ProductCondition =
+  | "new"
+  | "used"
+  | "refurbished"
+  | "tested";
+
+type CommerceMode =
+  | "direct-purchase"
+  | "price-inquiry"
+  | "sourcing-request";
+
+type PriceVisibility =
+  | "visible"
+  | "hidden";
+
+type ShippingClass =
+  | "standard"
+  | "fragile"
+  | "heavy"
+  | "pickup-only"
+  | "custom";
+
+type PriceHistoryItem = {
+  id: string;
+  amountRial: number;
+  currency: string;
+  validFrom: string;
+  validTo: string | null;
+  createdAt: string;
+};
+
+type InventoryMovementItem = {
+  id: string;
+  type: string;
+  quantityDelta: number;
+  referenceType: string | null;
+  referenceId: string | null;
+  note: string | null;
+  createdAt: string;
+};
+
+type AdminProduct = {
+  id: string;
+  contentId: string;
+  sku: string | null;
+  partNumber: string;
+  name: string;
+  brand: string;
+  manufacturer: string | null;
+  condition: ProductCondition;
+  commerceMode: CommerceMode;
+  priceVisibility: PriceVisibility;
+  shippingClass: ShippingClass;
+  status: ProductStatus;
+  currentPriceRial: number | null;
+  onHand: number;
+  reserved: number;
+  available: number;
+  createdAt: string;
+  updatedAt: string;
+  priceHistory: PriceHistoryItem[];
+  inventoryMovements: InventoryMovementItem[];
+};
+
+type ProductResponse = {
+  ok: boolean;
+  reason?: string;
+  product?: AdminProduct;
+};
 
 const productId =
   Astro.params.id ?? "";
 
-const tabs = [
-  {
-    key: "main",
-    label: "اطلاعات اصلی",
-    active: true,
-  },
-  {
-    key: "commerce",
-    label: "قیمت و موجودی",
-    active: false,
-  },
-  {
-    key: "specifications",
-    label: "مشخصات فنی",
-    active: false,
-  },
-  {
-    key: "images",
-    label: "تصاویر",
-    active: false,
-  },
-  {
-    key: "description",
-    label: "توضیحات",
-    active: false,
-  },
-] as const;
+const apiUrl =
+  new URL(
+    `/api/admin/products/${encodeURIComponent(productId)}`,
+    Astro.request.url,
+  );
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        cookie:
+          Astro.request.headers.get(
+            "cookie",
+          ) ?? "",
+      },
+    },
+  );
+
+let data: ProductResponse | null =
+  null;
+
+try {
+  data = await response.json();
+} catch {
+  data = null;
+}
+
+const product =
+  response.ok &&
+  data?.ok === true
+    ? data.product ?? null
+    : null;
+
+const notFound =
+  response.status === 404;
+
+const loadError =
+  !product && !notFound;
+
+const inputClass =
+  "min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100";
+
+const labelClass =
+  "mb-2 block text-sm font-semibold text-ink";
+
+const statusLabels: Record<
+  ProductStatus,
+  string
+> = {
+  draft: "پیش‌نویس",
+  active: "فعال",
+  archived: "بایگانی‌شده",
+};
+
+const statusVariants: Record<
+  ProductStatus,
+  "neutral" | "success" | "warning"
+> = {
+  draft: "neutral",
+  active: "success",
+  archived: "warning",
+};
+
+const conditionLabels: Record<
+  ProductCondition,
+  string
+> = {
+  new: "نو",
+  used: "کارکرده",
+  refurbished: "بازسازی‌شده",
+  tested: "تست‌شده",
+};
+
+const commerceModeLabels: Record<
+  CommerceMode,
+  string
+> = {
+  "direct-purchase": "خرید مستقیم",
+  "price-inquiry": "استعلام قیمت",
+  "sourcing-request": "درخواست تأمین",
+};
+
+const visibilityLabels: Record<
+  PriceVisibility,
+  string
+> = {
+  visible: "قابل نمایش",
+  hidden: "مخفی",
+};
+
+const shippingLabels: Record<
+  ShippingClass,
+  string
+> = {
+  standard: "استاندارد",
+  fragile: "شکستنی",
+  heavy: "سنگین",
+  "pickup-only": "فقط تحویل حضوری",
+  custom: "سفارشی",
+};
+
+function formatDate(
+  value: string | null,
+): string {
+  if (!value) {
+    return "جاری";
+  }
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime(),
+    )
+  ) {
+    return "—";
+  }
+
+  return date.toLocaleString(
+    "fa-IR",
+  );
+}
+
+function formatMovementDelta(
+  value: number,
+): string {
+  const formatted =
+    Math.abs(value).toLocaleString(
+      "fa-IR",
+    );
+
+  if (value > 0) {
+    return `+${formatted}`;
+  }
+
+  if (value < 0) {
+    return `−${formatted}`;
+  }
+
+  return formatted;
+}
 ---
 
-<AdminLayout title="ویرایش محصول">
+<AdminLayout title="جزئیات محصول">
   <div class="space-y-6">
-    <nav
-      aria-label="مسیر صفحه"
-      class="flex flex-wrap items-center gap-2 text-sm text-muted"
-    >
-      <a
-        href="/admin/products"
-        class="font-semibold text-brand-700 transition hover:text-brand-800"
-      >
-        محصولات
-      </a>
-
-      <span aria-hidden="true">
-        /
-      </span>
-
-      <span aria-current="page">
-        ویرایش محصول
-      </span>
-    </nav>
-
-    <section
-      class="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between"
-      aria-labelledby="product-edit-title"
-    >
-      <div>
-        <div class="flex flex-wrap items-center gap-3">
-          <h2
-            id="product-edit-title"
-            class="text-2xl font-black text-ink"
-          >
-            ویرایش محصول
-          </h2>
-
-          <Badge
-            variant="neutral"
-            size="sm"
-          >
-            در انتظار اتصال داده
-          </Badge>
-        </div>
-
-        {
-          productId && (
-            <p class="mt-2 text-sm text-muted">
-              شناسه مسیر:
-              <span
-                dir="ltr"
-                class="mr-1 font-mono text-xs text-ink-soft"
-              >
-                {productId}
-              </span>
-            </p>
-          )
-        }
-      </div>
-
-      <div class="flex flex-wrap gap-3">
-        <Button
-          href="/admin/products"
-          variant="secondary"
-        >
-          بازگشت
-        </Button>
-
-        <Button
-          type="button"
-          variant="primary"
-          disabled
-        >
-          ذخیره تغییرات
-        </Button>
-      </div>
-    </section>
-
-    <section aria-labelledby="product-edit-tabs-title">
-      <h2
-        id="product-edit-tabs-title"
-        class="sr-only"
-      >
-        بخش‌های ویرایش محصول
-      </h2>
-
-      <div
-        class="overflow-x-auto border-b border-line"
-        role="tablist"
-        aria-label="بخش‌های ویرایش محصول"
-      >
-        <div class="flex min-w-max gap-1">
-          {
-            tabs.map((tab) => (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab.active}
-                disabled={!tab.active}
-                class:list={[
-                  "min-h-11 border-b-2 px-4 text-sm font-bold transition",
-                  tab.active
-                    ? "border-brand-600 text-brand-800"
-                    : "cursor-default border-transparent text-muted",
-                ]}
-              >
-                {tab.label}
-              </button>
-            ))
-          }
-        </div>
-      </div>
-    </section>
-
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-      <section aria-labelledby="product-edit-main-title">
+    {
+      notFound ? (
         <Card
-          as="div"
+          as="section"
           padding="md"
           class="shadow-none"
         >
-          <div class="mb-6">
-            <h2
-              id="product-edit-main-title"
-              class="text-lg font-black text-ink"
-            >
-              اطلاعات اصلی
-            </h2>
-
-            <p class="mt-1 text-sm leading-6 text-muted">
-              اطلاعات واقعی محصول پس از اتصال Admin Products در این بخش بارگذاری می‌شوند.
-            </p>
-          </div>
-
           <EmptyState
-            title="اطلاعات محصول هنوز بارگذاری نشده"
-            description="پس از آماده‌شدن backend مدیریت محصولات، فرم ویرایش با اطلاعات واقعی محصول تکمیل می‌شود."
+            title="محصول پیدا نشد"
+            description="محصول موردنظر وجود ندارد یا شناسه آن معتبر نیست."
             compact
           />
-        </Card>
-      </section>
 
-      <aside class="space-y-4">
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
-        >
-          <h2 class="text-sm font-black text-ink">
-            وضعیت محصول
-          </h2>
-
-          <div class="mt-4 flex items-center justify-between gap-3">
-            <span class="text-sm text-muted">
-              وضعیت فعلی
-            </span>
-
-            <Badge
-              variant="neutral"
-              size="sm"
-            >
-              —
-            </Badge>
-          </div>
-
-          <p class="mt-3 text-xs leading-5 text-muted">
-            وضعیت واقعی محصول می‌تواند پیش‌نویس، فعال یا بایگانی‌شده باشد.
-          </p>
-        </Card>
-
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
-        >
-          <h2 class="text-sm font-black text-ink">
-            عملیات بیشتر
-          </h2>
-
-          <p class="mt-2 text-xs leading-5 text-muted">
-            عملیات حساس از ذخیره عادی جدا نگه داشته می‌شوند.
-          </p>
-
-          <div class="mt-4 grid gap-2">
+          <div class="mt-4 flex justify-center">
             <Button
-              type="button"
+              href="/admin/products"
               variant="secondary"
-              disabled
             >
-              تکثیر محصول
-            </Button>
-
-            <Button
-              type="button"
-              variant="danger"
-              disabled
-            >
-              بایگانی محصول
+              بازگشت به محصولات
             </Button>
           </div>
         </Card>
-      </aside>
-    </div>
-
-    <section aria-labelledby="product-edit-future-sections-title">
-      <div class="mb-4">
-        <h2
-          id="product-edit-future-sections-title"
-          class="text-lg font-black text-ink"
-        >
-          بخش‌های دیگر
-        </h2>
-
-        <p class="mt-1 text-sm leading-6 text-muted">
-          این بخش‌ها پس از اتصال داده و فرم‌های واقعی فعال می‌شوند.
-        </p>
-      </div>
-
-      <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      ) : loadError ? (
         <Card
-          as="div"
+          as="section"
           padding="md"
           class="shadow-none"
         >
-          <h3 class="font-bold text-ink">
-            قیمت و موجودی
-          </h3>
+          <EmptyState
+            title="دریافت محصول ناموفق بود"
+            description="اطلاعات محصول از سرور دریافت نشد. صفحه را دوباره بارگذاری کنید."
+            compact
+          />
 
-          <p class="mt-2 text-sm leading-6 text-muted">
-            حالت فروش، قیمت، نمایش قیمت و موجودی.
-          </p>
+          <div class="mt-4 flex justify-center">
+            <Button
+              href="/admin/products"
+              variant="secondary"
+            >
+              بازگشت به محصولات
+            </Button>
+          </div>
         </Card>
+      ) : product ? (
+        <>
+          <section
+            class="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between"
+          >
+            <div class="min-w-0">
+              <div
+                class="flex flex-wrap items-center gap-2"
+              >
+                <h1
+                  class="text-2xl font-black text-ink"
+                >
+                  {product.name}
+                </h1>
 
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
-        >
-          <h3 class="font-bold text-ink">
-            مشخصات فنی
-          </h3>
+                <Badge
+                  variant={statusVariants[product.status]}
+                  size="sm"
+                >
+                  {statusLabels[product.status]}
+                </Badge>
+              </div>
 
-          <p class="mt-2 text-sm leading-6 text-muted">
-            مشخصات پویا، سازگاری و اطلاعات فنی.
-          </p>
-        </Card>
+              <div
+                class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted"
+              >
+                <span>
+                  برند: {product.brand}
+                </span>
 
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
-        >
-          <h3 class="font-bold text-ink">
-            تصاویر
-          </h3>
+                <span dir="ltr">
+                  Part Number: {product.partNumber}
+                </span>
 
-          <p class="mt-2 text-sm leading-6 text-muted">
-            تصاویر اصلی و تکمیلی محصول.
-          </p>
-        </Card>
+                {
+                  product.sku && (
+                    <span dir="ltr">
+                      SKU: {product.sku}
+                    </span>
+                  )
+                }
+              </div>
+            </div>
 
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
-        >
-          <h3 class="font-bold text-ink">
-            توضیحات
-          </h3>
+            <Button
+              href="/admin/products"
+              variant="secondary"
+            >
+              بازگشت به محصولات
+            </Button>
+          </section>
 
-          <p class="mt-2 text-sm leading-6 text-muted">
-            توضیحات فروش، دسترسی و اطلاعات انتشار.
-          </p>
-        </Card>
-      </div>
-    </section>
+          <div
+            class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+          >
+            <Card
+              as="div"
+              padding="md"
+              class="shadow-none"
+            >
+              <p
+                class="text-xs font-semibold text-muted"
+              >
+                قیمت فعلی
+              </p>
+
+              <p
+                class="mt-2 text-lg font-black text-ink"
+              >
+                {
+                  product.currentPriceRial === null
+                    ? "بدون قیمت"
+                    : formatRialAmount(
+                        product.currentPriceRial,
+                      )
+                }
+              </p>
+            </Card>
+
+            <Card
+              as="div"
+              padding="md"
+              class="shadow-none"
+            >
+              <p
+                class="text-xs font-semibold text-muted"
+              >
+                موجودی فیزیکی
+              </p>
+
+              <p
+                class="mt-2 text-lg font-black text-ink"
+              >
+                {product.onHand.toLocaleString("fa-IR")}
+              </p>
+            </Card>
+
+            <Card
+              as="div"
+              padding="md"
+              class="shadow-none"
+            >
+              <p
+                class="text-xs font-semibold text-muted"
+              >
+                رزروشده
+              </p>
+
+              <p
+                class="mt-2 text-lg font-black text-ink"
+              >
+                {product.reserved.toLocaleString("fa-IR")}
+              </p>
+            </Card>
+
+            <Card
+              as="div"
+              padding="md"
+              class="shadow-none"
+            >
+              <p
+                class="text-xs font-semibold text-muted"
+              >
+                قابل فروش
+              </p>
+
+              <p
+                class="mt-2 text-lg font-black text-ink"
+              >
+                {product.available.toLocaleString("fa-IR")}
+              </p>
+            </Card>
+          </div>
+
+          <div
+            id="product-page-error"
+            class="hidden rounded-control border border-danger-200 bg-danger-50 px-4 py-3 text-sm font-semibold text-danger-700"
+            role="alert"
+            aria-live="polite"
+          ></div>
+
+          <div
+            class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]"
+          >
+            <div class="space-y-6">
+              <Card
+                as="section"
+                padding="md"
+                class="shadow-none"
+              >
+                <div>
+                  <h2
+                    class="text-lg font-black text-ink"
+                  >
+                    اطلاعات اصلی محصول
+                  </h2>
+
+                  <p
+                    class="mt-1 text-sm leading-6 text-muted"
+                  >
+                    این اطلاعات مستقیماً در داده‌های تجاری محصول ذخیره می‌شوند.
+                  </p>
+                </div>
+
+                <form
+                  id="product-metadata-form"
+                  class="mt-6 space-y-5"
+                  data-endpoint={`/api/admin/products/${encodeURIComponent(product.id)}`}
+                  novalidate
+                >
+                  <div
+                    class="grid gap-5 md:grid-cols-2"
+                  >
+                    <div class="md:col-span-2">
+                      <label
+                        for="product-name"
+                        class={labelClass}
+                      >
+                        نام محصول
+                      </label>
+
+                      <input
+                        id="product-name"
+                        name="name"
+                        type="text"
+                        value={product.name}
+                        maxlength="500"
+                        required
+                        autocomplete="off"
+                        class={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-brand"
+                        class={labelClass}
+                      >
+                        برند
+                      </label>
+
+                      <input
+                        id="product-brand"
+                        name="brand"
+                        type="text"
+                        value={product.brand}
+                        maxlength="500"
+                        required
+                        autocomplete="off"
+                        class={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-manufacturer"
+                        class={labelClass}
+                      >
+                        سازنده
+                      </label>
+
+                      <input
+                        id="product-manufacturer"
+                        name="manufacturer"
+                        type="text"
+                        value={product.manufacturer ?? ""}
+                        maxlength="500"
+                        autocomplete="off"
+                        class={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-part-number"
+                        class={labelClass}
+                      >
+                        Part Number
+                      </label>
+
+                      <input
+                        id="product-part-number"
+                        name="partNumber"
+                        type="text"
+                        value={product.partNumber}
+                        maxlength="500"
+                        required
+                        dir="ltr"
+                        autocomplete="off"
+                        class={inputClass}
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-sku"
+                        class={labelClass}
+                      >
+                        SKU
+                      </label>
+
+                      <input
+                        id="product-sku"
+                        name="sku"
+                        type="text"
+                        value={product.sku ?? ""}
+                        maxlength="200"
+                        dir="ltr"
+                        autocomplete="off"
+                        class={inputClass}
+                      />
+                    </div>
+
+                    <div class="md:col-span-2">
+                      <label
+                        for="product-content-id"
+                        class={labelClass}
+                      >
+                        Content ID
+                      </label>
+
+                      <input
+                        id="product-content-id"
+                        name="contentId"
+                        type="text"
+                        value={product.contentId}
+                        maxlength="500"
+                        required
+                        dir="ltr"
+                        autocomplete="off"
+                        class={inputClass}
+                      />
+
+                      <p
+                        class="mt-1.5 text-xs leading-5 text-muted"
+                      >
+                        این شناسه محصول را به محتوای ویرایشی سایت متصل می‌کند.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-condition"
+                        class={labelClass}
+                      >
+                        وضعیت کالا
+                      </label>
+
+                      <select
+                        id="product-condition"
+                        name="condition"
+                        required
+                        class={inputClass}
+                      >
+                        <option
+                          value="new"
+                          selected={product.condition === "new"}
+                        >
+                          نو
+                        </option>
+                        <option
+                          value="used"
+                          selected={product.condition === "used"}
+                        >
+                          کارکرده
+                        </option>
+                        <option
+                          value="refurbished"
+                          selected={product.condition === "refurbished"}
+                        >
+                          بازسازی‌شده
+                        </option>
+                        <option
+                          value="tested"
+                          selected={product.condition === "tested"}
+                        >
+                          تست‌شده
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-commerce-mode"
+                        class={labelClass}
+                      >
+                        روش فروش
+                      </label>
+
+                      <select
+                        id="product-commerce-mode"
+                        name="commerceMode"
+                        required
+                        class={inputClass}
+                      >
+                        <option
+                          value="direct-purchase"
+                          selected={product.commerceMode === "direct-purchase"}
+                        >
+                          خرید مستقیم
+                        </option>
+                        <option
+                          value="price-inquiry"
+                          selected={product.commerceMode === "price-inquiry"}
+                        >
+                          استعلام قیمت
+                        </option>
+                        <option
+                          value="sourcing-request"
+                          selected={product.commerceMode === "sourcing-request"}
+                        >
+                          درخواست تأمین
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-price-visibility"
+                        class={labelClass}
+                      >
+                        نمایش قیمت
+                      </label>
+
+                      <select
+                        id="product-price-visibility"
+                        name="priceVisibility"
+                        required
+                        class={inputClass}
+                      >
+                        <option
+                          value="visible"
+                          selected={product.priceVisibility === "visible"}
+                        >
+                          قابل نمایش
+                        </option>
+                        <option
+                          value="hidden"
+                          selected={product.priceVisibility === "hidden"}
+                        >
+                          مخفی
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-shipping-class"
+                        class={labelClass}
+                      >
+                        کلاس ارسال
+                      </label>
+
+                      <select
+                        id="product-shipping-class"
+                        name="shippingClass"
+                        required
+                        class={inputClass}
+                      >
+                        <option
+                          value="standard"
+                          selected={product.shippingClass === "standard"}
+                        >
+                          استاندارد
+                        </option>
+                        <option
+                          value="fragile"
+                          selected={product.shippingClass === "fragile"}
+                        >
+                          شکستنی
+                        </option>
+                        <option
+                          value="heavy"
+                          selected={product.shippingClass === "heavy"}
+                        >
+                          سنگین
+                        </option>
+                        <option
+                          value="pickup-only"
+                          selected={product.shippingClass === "pickup-only"}
+                        >
+                          فقط تحویل حضوری
+                        </option>
+                        <option
+                          value="custom"
+                          selected={product.shippingClass === "custom"}
+                        >
+                          سفارشی
+                        </option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label
+                        for="product-status"
+                        class={labelClass}
+                      >
+                        وضعیت محصول
+                      </label>
+
+                      <select
+                        id="product-status"
+                        name="status"
+                        required
+                        class={inputClass}
+                      >
+                        <option
+                          value="draft"
+                          selected={product.status === "draft"}
+                        >
+                          پیش‌نویس
+                        </option>
+                        <option
+                          value="active"
+                          selected={product.status === "active"}
+                        >
+                          فعال
+                        </option>
+                        <option
+                          value="archived"
+                          selected={product.status === "archived"}
+                        >
+                          بایگانی‌شده
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div
+                    class="flex justify-end border-t border-line pt-5"
+                  >
+                    <Button
+                      type="submit"
+                      variant="primary"
+                    >
+                      ذخیره تغییرات
+                    </Button>
+                  </div>
+                </form>
+              </Card>
+
+              <Card
+                as="section"
+                padding="md"
+                class="shadow-none"
+              >
+                <h2
+                  class="text-lg font-black text-ink"
+                >
+                  تاریخچه قیمت
+                </h2>
+
+                <p
+                  class="mt-1 text-sm leading-6 text-muted"
+                >
+                  تغییر قیمت، رکورد جاری را می‌بندد و یک رکورد قیمت جدید ایجاد می‌کند.
+                </p>
+
+                {
+                  product.priceHistory.length === 0 ? (
+                    <div class="mt-5">
+                      <EmptyState
+                        title="هنوز قیمتی ثبت نشده"
+                        description="اولین قیمت را از بخش مدیریت قیمت ثبت کنید."
+                        compact
+                      />
+                    </div>
+                  ) : (
+                    <div class="mt-5 overflow-x-auto">
+                      <table
+                        class="w-full min-w-[44rem] text-right text-sm"
+                      >
+                        <thead>
+                          <tr
+                            class="border-b border-line text-xs text-muted"
+                          >
+                            <th class="px-3 py-3">
+                              قیمت
+                            </th>
+                            <th class="px-3 py-3">
+                              ارز
+                            </th>
+                            <th class="px-3 py-3">
+                              شروع اعتبار
+                            </th>
+                            <th class="px-3 py-3">
+                              پایان اعتبار
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody
+                          class="divide-y divide-line"
+                        >
+                          {
+                            product.priceHistory.map(
+                              (item) => (
+                                <tr>
+                                  <td
+                                    class="px-3 py-3 font-semibold text-ink"
+                                  >
+                                    {formatRialAmount(item.amountRial)}
+                                  </td>
+                                  <td
+                                    class="px-3 py-3 text-muted"
+                                    dir="ltr"
+                                  >
+                                    {item.currency}
+                                  </td>
+                                  <td
+                                    class="px-3 py-3 text-muted"
+                                  >
+                                    {formatDate(item.validFrom)}
+                                  </td>
+                                  <td
+                                    class="px-3 py-3 text-muted"
+                                  >
+                                    {formatDate(item.validTo)}
+                                  </td>
+                                </tr>
+                              ),
+                            )
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                }
+              </Card>
+
+              <Card
+                as="section"
+                padding="md"
+                class="shadow-none"
+              >
+                <h2
+                  class="text-lg font-black text-ink"
+                >
+                  تاریخچه موجودی
+                </h2>
+
+                <p
+                  class="mt-1 text-sm leading-6 text-muted"
+                >
+                  هر اصلاح موجودی همراه با مقدار تغییر و یادداشت ثبت می‌شود.
+                </p>
+
+                {
+                  product.inventoryMovements.length === 0 ? (
+                    <div class="mt-5">
+                      <EmptyState
+                        title="هنوز حرکتی ثبت نشده"
+                        description="با اولین اصلاح موجودی، سابقه آن در این بخش نمایش داده می‌شود."
+                        compact
+                      />
+                    </div>
+                  ) : (
+                    <div class="mt-5 overflow-x-auto">
+                      <table
+                        class="w-full min-w-[48rem] text-right text-sm"
+                      >
+                        <thead>
+                          <tr
+                            class="border-b border-line text-xs text-muted"
+                          >
+                            <th class="px-3 py-3">
+                              نوع
+                            </th>
+                            <th class="px-3 py-3">
+                              تغییر
+                            </th>
+                            <th class="px-3 py-3">
+                              مرجع
+                            </th>
+                            <th class="px-3 py-3">
+                              یادداشت
+                            </th>
+                            <th class="px-3 py-3">
+                              زمان
+                            </th>
+                          </tr>
+                        </thead>
+
+                        <tbody
+                          class="divide-y divide-line"
+                        >
+                          {
+                            product.inventoryMovements.map(
+                              (item) => (
+                                <tr>
+                                  <td
+                                    class="px-3 py-3 font-semibold text-ink"
+                                    dir="ltr"
+                                  >
+                                    {item.type}
+                                  </td>
+                                  <td
+                                    class="px-3 py-3 font-bold text-ink"
+                                    dir="ltr"
+                                  >
+                                    {formatMovementDelta(item.quantityDelta)}
+                                  </td>
+                                  <td
+                                    class="px-3 py-3 text-muted"
+                                    dir="ltr"
+                                  >
+                                    {
+                                      item.referenceType
+                                        ? `${item.referenceType}${item.referenceId ? ` / ${item.referenceId}` : ""}`
+                                        : "—"
+                                    }
+                                  </td>
+                                  <td
+                                    class="max-w-xs px-3 py-3 text-muted"
+                                  >
+                                    {item.note ?? "—"}
+                                  </td>
+                                  <td
+                                    class="px-3 py-3 text-muted"
+                                  >
+                                    {formatDate(item.createdAt)}
+                                  </td>
+                                </tr>
+                              ),
+                            )
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  )
+                }
+              </Card>
+            </div>
+
+            <aside class="space-y-6">
+              <Card
+                as="section"
+                padding="md"
+                class="shadow-none"
+              >
+                <h2
+                  class="text-base font-black text-ink"
+                >
+                  مدیریت قیمت
+                </h2>
+
+                <p
+                  class="mt-1 text-xs leading-5 text-muted"
+                >
+                  مبلغ را به ریال وارد کنید.
+                </p>
+
+                <form
+                  id="product-price-form"
+                  class="mt-5 space-y-4"
+                  data-endpoint={`/api/admin/products/${encodeURIComponent(product.id)}/price`}
+                  novalidate
+                >
+                  <div>
+                    <label
+                      for="product-price"
+                      class={labelClass}
+                    >
+                      قیمت جدید
+                    </label>
+
+                    <input
+                      id="product-price"
+                      name="amountRial"
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputmode="numeric"
+                      dir="ltr"
+                      value={product.currentPriceRial ?? ""}
+                      required
+                      class={inputClass}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                  >
+                    ثبت قیمت
+                  </Button>
+                </form>
+              </Card>
+
+              <Card
+                as="section"
+                padding="md"
+                class="shadow-none"
+              >
+                <h2
+                  class="text-base font-black text-ink"
+                >
+                  اصلاح موجودی
+                </h2>
+
+                <p
+                  class="mt-1 text-xs leading-5 text-muted"
+                >
+                  عدد مثبت موجودی را افزایش و عدد منفی آن را کاهش می‌دهد.
+                </p>
+
+                <form
+                  id="product-inventory-form"
+                  class="mt-5 space-y-4"
+                  data-endpoint={`/api/admin/products/${encodeURIComponent(product.id)}/inventory`}
+                  novalidate
+                >
+                  <div>
+                    <label
+                      for="inventory-delta"
+                      class={labelClass}
+                    >
+                      مقدار تغییر
+                    </label>
+
+                    <input
+                      id="inventory-delta"
+                      name="quantityDelta"
+                      type="number"
+                      step="1"
+                      inputmode="numeric"
+                      required
+                      dir="ltr"
+                      class={inputClass}
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      for="inventory-note"
+                      class={labelClass}
+                    >
+                      یادداشت
+                    </label>
+
+                    <textarea
+                      id="inventory-note"
+                      name="note"
+                      maxlength="500"
+                      rows="3"
+                      class={`${inputClass} py-3`}
+                    ></textarea>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                  >
+                    ثبت اصلاح موجودی
+                  </Button>
+                </form>
+              </Card>
+
+              <Card
+                as="section"
+                padding="md"
+                class="shadow-none"
+              >
+                <h2
+                  class="text-base font-black text-ink"
+                >
+                  وضعیت تجاری
+                </h2>
+
+                <dl
+                  class="mt-4 space-y-3 text-sm"
+                >
+                  <div
+                    class="flex items-center justify-between gap-3"
+                  >
+                    <dt class="text-muted">
+                      وضعیت
+                    </dt>
+                    <dd class="font-semibold text-ink">
+                      {statusLabels[product.status]}
+                    </dd>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between gap-3"
+                  >
+                    <dt class="text-muted">
+                      وضعیت کالا
+                    </dt>
+                    <dd class="font-semibold text-ink">
+                      {conditionLabels[product.condition]}
+                    </dd>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between gap-3"
+                  >
+                    <dt class="text-muted">
+                      روش فروش
+                    </dt>
+                    <dd class="font-semibold text-ink">
+                      {commerceModeLabels[product.commerceMode]}
+                    </dd>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between gap-3"
+                  >
+                    <dt class="text-muted">
+                      نمایش قیمت
+                    </dt>
+                    <dd class="font-semibold text-ink">
+                      {visibilityLabels[product.priceVisibility]}
+                    </dd>
+                  </div>
+
+                  <div
+                    class="flex items-center justify-between gap-3"
+                  >
+                    <dt class="text-muted">
+                      ارسال
+                    </dt>
+                    <dd class="font-semibold text-ink">
+                      {shippingLabels[product.shippingClass]}
+                    </dd>
+                  </div>
+                </dl>
+              </Card>
+
+              {
+                product.status !== "archived" && (
+                  <Card
+                    as="section"
+                    padding="md"
+                    class="shadow-none"
+                  >
+                    <h2
+                      class="text-base font-black text-ink"
+                    >
+                      بایگانی محصول
+                    </h2>
+
+                    <p
+                      class="mt-1 text-xs leading-5 text-muted"
+                    >
+                      محصول حذف فیزیکی نمی‌شود؛ فقط وضعیت آن به بایگانی‌شده تغییر می‌کند.
+                    </p>
+
+                    <form
+                      id="product-archive-form"
+                      class="mt-4"
+                      data-endpoint={`/api/admin/products/${encodeURIComponent(product.id)}`}
+                      data-content-id={product.contentId}
+                      data-sku={product.sku ?? ""}
+                      data-part-number={product.partNumber}
+                      data-name={product.name}
+                      data-brand={product.brand}
+                      data-manufacturer={product.manufacturer ?? ""}
+                      data-condition={product.condition}
+                      data-commerce-mode={product.commerceMode}
+                      data-price-visibility={product.priceVisibility}
+                      data-shipping-class={product.shippingClass}
+                    >
+                      <Button
+                        type="submit"
+                        variant="danger"
+                      >
+                        بایگانی محصول
+                      </Button>
+                    </form>
+                  </Card>
+                )
+              }
+
+              <Card
+                as="section"
+                padding="md"
+                tone="soft"
+                class="shadow-none"
+              >
+                <h2
+                  class="text-sm font-black text-ink"
+                >
+                  محتوای ویرایشی
+                </h2>
+
+                <p
+                  class="mt-2 text-xs leading-6 text-muted"
+                >
+                  مشخصات فنی، تصاویر و توضیحات غنی همچنان در محتوای سایت نگهداری می‌شوند و با Content ID به این محصول متصل هستند.
+                </p>
+              </Card>
+            </aside>
+          </div>
+        </>
+      ) : null
+    }
   </div>
 </AdminLayout>
+
+<script>
+  type JsonResult = {
+    ok?: boolean;
+    reason?: string;
+    product?: {
+      id?: string;
+    };
+  };
+
+  const pageError =
+    document.querySelector<HTMLElement>(
+      "#product-page-error",
+    );
+
+  function showError(
+    message: string,
+  ) {
+    if (!pageError) {
+      return;
+    }
+
+    pageError.textContent =
+      message;
+
+    pageError.classList.remove(
+      "hidden",
+    );
+
+    pageError.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+    });
+  }
+
+  function clearError() {
+    if (!pageError) {
+      return;
+    }
+
+    pageError.textContent = "";
+    pageError.classList.add(
+      "hidden",
+    );
+  }
+
+  async function safeReadJson(
+    response: Response,
+  ): Promise<JsonResult | null> {
+    try {
+      const value =
+        await response.json();
+
+      if (
+        typeof value !== "object" ||
+        value === null ||
+        Array.isArray(value)
+      ) {
+        return null;
+      }
+
+      return value as JsonResult;
+    } catch {
+      return null;
+    }
+  }
+
+  function readText(
+    data: FormData,
+    name: string,
+  ): string {
+    const value =
+      data.get(name);
+
+    return typeof value === "string"
+      ? value
+      : "";
+  }
+
+  function setButtonBusy(
+    button: HTMLButtonElement | null,
+    busy: boolean,
+    busyText: string,
+    normalText: string,
+  ) {
+    if (!button) {
+      return;
+    }
+
+    button.disabled = busy;
+
+    if (busy) {
+      button.setAttribute(
+        "aria-busy",
+        "true",
+      );
+      button.textContent =
+        busyText;
+    } else {
+      button.removeAttribute(
+        "aria-busy",
+      );
+      button.textContent =
+        normalText;
+    }
+  }
+
+  function responseMessage(
+    response: Response,
+    result: JsonResult | null,
+  ): string {
+    if (
+      response.status === 401 ||
+      result?.reason ===
+        "invalid_session"
+    ) {
+      return "نشست مدیریت معتبر نیست. دوباره وارد پنل مدیریت شوید.";
+    }
+
+    if (
+      response.status === 404 ||
+      result?.reason ===
+        "not_found"
+    ) {
+      return "محصول پیدا نشد. صفحه را دوباره بارگذاری کنید.";
+    }
+
+    if (
+      result?.reason ===
+        "product_conflict"
+    ) {
+      return "Content ID یا SKU با محصول دیگری تداخل دارد.";
+    }
+
+    if (
+      result?.reason ===
+        "inventory_conflict"
+    ) {
+      return "این تغییر موجودی مجاز نیست؛ موجودی نمی‌تواند منفی یا کمتر از مقدار رزروشده شود.";
+    }
+
+    if (
+      result?.reason ===
+        "invalid_product"
+    ) {
+      return "اطلاعات محصول معتبر نیست. فیلدهای محصول را بررسی کنید.";
+    }
+
+    if (
+      result?.reason ===
+        "invalid_price"
+    ) {
+      return "قیمت واردشده معتبر نیست.";
+    }
+
+    if (
+      result?.reason ===
+        "invalid_inventory_adjustment"
+    ) {
+      return "مقدار اصلاح موجودی یا یادداشت آن معتبر نیست.";
+    }
+
+    if (
+      result?.reason ===
+        "forbidden"
+    ) {
+      return "این درخواست از مبدأ مجاز ارسال نشده است.";
+    }
+
+    if (
+      result?.reason ===
+        "unsupported_media_type"
+    ) {
+      return "نوع داده ارسالی معتبر نیست.";
+    }
+
+    return "عملیات انجام نشد. دوباره تلاش کنید.";
+  }
+
+  const metadataForm =
+    document.querySelector<HTMLFormElement>(
+      "#product-metadata-form",
+    );
+
+  metadataForm?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (
+        !metadataForm.checkValidity()
+      ) {
+        metadataForm.reportValidity();
+        return;
+      }
+
+      const endpoint =
+        metadataForm.dataset.endpoint;
+
+      if (!endpoint) {
+        showError(
+          "نشانی API محصول در دسترس نیست.",
+        );
+        return;
+      }
+
+      const data =
+        new FormData(
+          metadataForm,
+        );
+
+      const payload = {
+        contentId:
+          readText(
+            data,
+            "contentId",
+          ),
+        sku:
+          readText(
+            data,
+            "sku",
+          ),
+        partNumber:
+          readText(
+            data,
+            "partNumber",
+          ),
+        name:
+          readText(
+            data,
+            "name",
+          ),
+        brand:
+          readText(
+            data,
+            "brand",
+          ),
+        manufacturer:
+          readText(
+            data,
+            "manufacturer",
+          ),
+        condition:
+          readText(
+            data,
+            "condition",
+          ),
+        commerceMode:
+          readText(
+            data,
+            "commerceMode",
+          ),
+        priceVisibility:
+          readText(
+            data,
+            "priceVisibility",
+          ),
+        shippingClass:
+          readText(
+            data,
+            "shippingClass",
+          ),
+        status:
+          readText(
+            data,
+            "status",
+          ),
+      };
+
+      const button =
+        metadataForm.querySelector<HTMLButtonElement>(
+          'button[type="submit"]',
+        );
+
+      setButtonBusy(
+        button,
+        true,
+        "در حال ذخیره...",
+        "ذخیره تغییرات",
+      );
+
+      try {
+        const response =
+          await fetch(
+            endpoint,
+            {
+              method: "PATCH",
+              credentials:
+                "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify(
+                  payload,
+                ),
+            },
+          );
+
+        const result =
+          await safeReadJson(
+            response,
+          );
+
+        if (
+          response.ok &&
+          result?.ok === true
+        ) {
+          window.location.reload();
+          return;
+        }
+
+        showError(
+          responseMessage(
+            response,
+            result,
+          ),
+        );
+      } catch {
+        showError(
+          "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+        );
+      } finally {
+        setButtonBusy(
+          button,
+          false,
+          "",
+          "ذخیره تغییرات",
+        );
+      }
+    },
+  );
+
+  const priceForm =
+    document.querySelector<HTMLFormElement>(
+      "#product-price-form",
+    );
+
+  priceForm?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (
+        !priceForm.checkValidity()
+      ) {
+        priceForm.reportValidity();
+        return;
+      }
+
+      const endpoint =
+        priceForm.dataset.endpoint;
+
+      if (!endpoint) {
+        showError(
+          "نشانی API قیمت در دسترس نیست.",
+        );
+        return;
+      }
+
+      const data =
+        new FormData(
+          priceForm,
+        );
+
+      const rawAmount =
+        readText(
+          data,
+          "amountRial",
+        ).trim();
+
+      const amountRial =
+        Number(rawAmount);
+
+      if (
+        rawAmount === "" ||
+        !Number.isSafeInteger(
+          amountRial,
+        ) ||
+        amountRial < 0
+      ) {
+        showError(
+          "قیمت باید یک عدد صحیح نامنفی و معتبر بر حسب ریال باشد.",
+        );
+        return;
+      }
+
+      const button =
+        priceForm.querySelector<HTMLButtonElement>(
+          'button[type="submit"]',
+        );
+
+      setButtonBusy(
+        button,
+        true,
+        "در حال ثبت...",
+        "ثبت قیمت",
+      );
+
+      try {
+        const response =
+          await fetch(
+            endpoint,
+            {
+              method: "POST",
+              credentials:
+                "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify({
+                  amountRial,
+                }),
+            },
+          );
+
+        const result =
+          await safeReadJson(
+            response,
+          );
+
+        if (
+          response.ok &&
+          result?.ok === true
+        ) {
+          window.location.reload();
+          return;
+        }
+
+        showError(
+          responseMessage(
+            response,
+            result,
+          ),
+        );
+      } catch {
+        showError(
+          "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+        );
+      } finally {
+        setButtonBusy(
+          button,
+          false,
+          "",
+          "ثبت قیمت",
+        );
+      }
+    },
+  );
+
+  const inventoryForm =
+    document.querySelector<HTMLFormElement>(
+      "#product-inventory-form",
+    );
+
+  inventoryForm?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (
+        !inventoryForm.checkValidity()
+      ) {
+        inventoryForm.reportValidity();
+        return;
+      }
+
+      const endpoint =
+        inventoryForm.dataset.endpoint;
+
+      if (!endpoint) {
+        showError(
+          "نشانی API موجودی در دسترس نیست.",
+        );
+        return;
+      }
+
+      const data =
+        new FormData(
+          inventoryForm,
+        );
+
+      const rawDelta =
+        readText(
+          data,
+          "quantityDelta",
+        ).trim();
+
+      const quantityDelta =
+        Number(rawDelta);
+
+      if (
+        rawDelta === "" ||
+        !Number.isSafeInteger(
+          quantityDelta,
+        ) ||
+        quantityDelta === 0
+      ) {
+        showError(
+          "مقدار تغییر موجودی باید یک عدد صحیح غیرصفر باشد.",
+        );
+        return;
+      }
+
+      const note =
+        readText(
+          data,
+          "note",
+        );
+
+      if (
+        note.trim().length > 500
+      ) {
+        showError(
+          "یادداشت موجودی نباید بیشتر از ۵۰۰ نویسه باشد.",
+        );
+        return;
+      }
+
+      const button =
+        inventoryForm.querySelector<HTMLButtonElement>(
+          'button[type="submit"]',
+        );
+
+      setButtonBusy(
+        button,
+        true,
+        "در حال ثبت...",
+        "ثبت اصلاح موجودی",
+      );
+
+      try {
+        const response =
+          await fetch(
+            endpoint,
+            {
+              method: "POST",
+              credentials:
+                "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify({
+                  quantityDelta,
+                  note,
+                }),
+            },
+          );
+
+        const result =
+          await safeReadJson(
+            response,
+          );
+
+        if (
+          response.ok &&
+          result?.ok === true
+        ) {
+          window.location.reload();
+          return;
+        }
+
+        showError(
+          responseMessage(
+            response,
+            result,
+          ),
+        );
+      } catch {
+        showError(
+          "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+        );
+      } finally {
+        setButtonBusy(
+          button,
+          false,
+          "",
+          "ثبت اصلاح موجودی",
+        );
+      }
+    },
+  );
+
+  const archiveForm =
+    document.querySelector<HTMLFormElement>(
+      "#product-archive-form",
+    );
+
+  archiveForm?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (
+        !window.confirm(
+          "این محصول بایگانی شود؟ محصول حذف نخواهد شد.",
+        )
+      ) {
+        return;
+      }
+
+      const endpoint =
+        archiveForm.dataset.endpoint;
+
+      if (!endpoint) {
+        showError(
+          "نشانی API محصول در دسترس نیست.",
+        );
+        return;
+      }
+
+      const payload = {
+        contentId:
+          archiveForm.dataset.contentId ??
+          "",
+        sku:
+          archiveForm.dataset.sku ??
+          "",
+        partNumber:
+          archiveForm.dataset.partNumber ??
+          "",
+        name:
+          archiveForm.dataset.name ??
+          "",
+        brand:
+          archiveForm.dataset.brand ??
+          "",
+        manufacturer:
+          archiveForm.dataset.manufacturer ??
+          "",
+        condition:
+          archiveForm.dataset.condition ??
+          "",
+        commerceMode:
+          archiveForm.dataset.commerceMode ??
+          "",
+        priceVisibility:
+          archiveForm.dataset.priceVisibility ??
+          "",
+        shippingClass:
+          archiveForm.dataset.shippingClass ??
+          "",
+        status: "archived",
+      };
+
+      const button =
+        archiveForm.querySelector<HTMLButtonElement>(
+          'button[type="submit"]',
+        );
+
+      setButtonBusy(
+        button,
+        true,
+        "در حال بایگانی...",
+        "بایگانی محصول",
+      );
+
+      try {
+        const response =
+          await fetch(
+            endpoint,
+            {
+              method: "PATCH",
+              credentials:
+                "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify(
+                  payload,
+                ),
+            },
+          );
+
+        const result =
+          await safeReadJson(
+            response,
+          );
+
+        if (
+          response.ok &&
+          result?.ok === true
+        ) {
+          window.location.reload();
+          return;
+        }
+
+        showError(
+          responseMessage(
+            response,
+            result,
+          ),
+        );
+      } catch {
+        showError(
+          "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+        );
+      } finally {
+        setButtonBusy(
+          button,
+          false,
+          "",
+          "بایگانی محصول",
+        );
+      }
+    },
+  );
+</script>

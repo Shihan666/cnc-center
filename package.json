@@ -20,7 +20,8 @@
                     "test":  "npm run test:auth",
                     "test:orders":  "node --env-file=.env.local --test --test-reporter=spec --test-concurrency=1 tests/orders/*.test.mjs",
                     "test:admin":  "node --env-file=.env.local --test --test-reporter=spec --test-concurrency=1 tests/admin/*.test.mjs",
-                    "test:all":  "npm run test:auth \u0026\u0026 npm run test:admin \u0026\u0026 npm run test:orders",
+                    "test:products":  "node --env-file=.env.local --test --test-reporter=spec --test-concurrency=1 tests/products/*.test.mjs",
+                    "test:all":  "npm run test:auth \u0026\u0026 npm run test:admin \u0026\u0026 npm run test:orders \u0026\u0026 npm run test:products",
                     "test:ci":  "npm run db:migrate \u0026\u0026 npm run test:all",
                     "verify":  "npm run check \u0026\u0026 npm run test:ci \u0026\u0026 npm run build"
                 },

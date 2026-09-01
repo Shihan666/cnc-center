@@ -4,91 +4,122 @@ import Badge from "../../../components/common/Badge.astro";
 import Button from "../../../components/common/Button.astro";
 import Card from "../../../components/common/Card.astro";
 import EmptyState from "../../../components/common/EmptyState.astro";
+import { formatRialAmount } from "../../../lib/cart";
 
-const statusFilters = [
-  {
-    value: "all",
-    label: "همه",
-  },
-  {
-    value: "active",
-    label: "فعال",
-  },
-  {
-    value: "draft",
-    label: "پیش‌نویس",
-  },
-  {
-    value: "archived",
-    label: "بایگانی‌شده",
-  },
-] as const;
+type ProductStatus =
+  | "draft"
+  | "active"
+  | "archived";
 
-const inventoryFilters = [
-  {
-    value: "all",
-    label: "همه موجودی‌ها",
-  },
-  {
-    value: "in-stock",
-    label: "موجود",
-  },
-  {
-    value: "out-of-stock",
-    label: "ناموجود",
-  },
-] as const;
+type AdminProduct = {
+  id: string;
+  contentId: string;
+  sku: string | null;
+  partNumber: string;
+  name: string;
+  brand: string;
+  manufacturer: string | null;
+  condition:
+    | "new"
+    | "used"
+    | "refurbished"
+    | "tested";
+  commerceMode:
+    | "direct-purchase"
+    | "price-inquiry"
+    | "sourcing-request";
+  priceVisibility:
+    | "visible"
+    | "hidden";
+  shippingClass: string;
+  status: ProductStatus;
+  currentPriceRial: number | null;
+  onHand: number;
+  reserved: number;
+  available: number;
+  createdAt: string;
+  updatedAt: string;
+};
 
-const categories = [
-  {
-    value: "",
-    label: "همه دسته‌بندی‌ها",
-  },
-  {
-    value: "motors",
-    label: "موتورها",
-  },
-  {
-    value: "drives",
-    label: "درایوها",
-  },
-  {
-    value: "inverter-vfd",
-    label: "اینورتر و VFD",
-  },
-  {
-    value: "cnc-controllers",
-    label: "کنترلرهای CNC",
-  },
-  {
-    value: "plc-hmi",
-    label: "PLC و HMI",
-  },
-  {
-    value: "encoders-feedback",
-    label: "انکودر و فیدبک",
-  },
-  {
-    value: "electronic-parts",
-    label: "قطعات الکترونیکی",
-  },
-  {
-    value: "mechanical-parts",
-    label: "قطعات مکانیکی",
-  },
-  {
-    value: "sensors",
-    label: "سنسورها",
-  },
-  {
-    value: "industrial-electrical",
-    label: "برق صنعتی",
-  },
-  {
-    value: "cnc-accessories",
-    label: "متعلقات CNC",
-  },
-] as const;
+type AdminProductsResponse = {
+  ok: boolean;
+  products?: AdminProduct[];
+};
+
+const apiUrl =
+  new URL(
+    "/api/admin/products",
+    Astro.request.url,
+  );
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        cookie:
+          Astro.request.headers.get(
+            "cookie",
+          ) ?? "",
+      },
+    },
+  );
+
+let data: AdminProductsResponse | null =
+  null;
+
+try {
+  data =
+    await response.json();
+} catch {
+  data = null;
+}
+
+const hasProductsError =
+  !response.ok ||
+  data?.ok !== true;
+
+const products: AdminProduct[] =
+  !hasProductsError
+    ? data?.products ?? []
+    : [];
+
+const statusLabels: Record<
+  ProductStatus,
+  string
+> = {
+  draft: "پیش‌نویس",
+  active: "فعال",
+  archived: "بایگانی‌شده",
+};
+
+const statusVariants: Record<
+  ProductStatus,
+  "neutral" | "success" | "warning"
+> = {
+  draft: "neutral",
+  active: "success",
+  archived: "warning",
+};
+
+const conditionLabels: Record<
+  AdminProduct["condition"],
+  string
+> = {
+  new: "نو",
+  used: "کارکرده",
+  refurbished: "بازسازی‌شده",
+  tested: "تست‌شده",
+};
+
+const commerceModeLabels: Record<
+  AdminProduct["commerceMode"],
+  string
+> = {
+  "direct-purchase": "خرید مستقیم",
+  "price-inquiry": "استعلام قیمت",
+  "sourcing-request": "درخواست تأمین",
+};
 ---
 
 <AdminLayout title="محصولات">
@@ -97,182 +128,293 @@ const categories = [
       class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
       aria-labelledby="products-heading"
     >
-      <div class="max-w-xl">
+      <div class="max-w-2xl">
         <h2
           id="products-heading"
-          class="text-lg font-black text-ink"
+          class="text-2xl font-black text-ink"
         >
           مدیریت محصولات
         </h2>
 
-        <p class="mt-1 text-sm leading-6 text-muted">
-          محصول را پیدا کنید، وضعیت آن را بررسی کنید یا برای افزودن محصول جدید آماده شوید.
+        <p class="mt-2 text-sm leading-6 text-muted">
+          اطلاعات اصلی، وضعیت فروش، قیمت و موجودی محصولات را از یک نقطه مدیریت کنید.
         </p>
       </div>
 
       <Button
         href="/admin/products/new"
         variant="primary"
-        disabled
-        ariaLabel="افزودن محصول — پس از آماده‌شدن فرم محصول فعال می‌شود"
       >
         افزودن محصول
       </Button>
     </section>
 
-    <section
-      class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_17rem]"
-      aria-labelledby="products-search-title"
-    >
-      <div>
-        <label
-          id="products-search-title"
-          for="products-search"
-          class="mb-2 block text-sm font-semibold text-ink"
+    {
+      hasProductsError ? (
+        <Card
+          as="section"
+          padding="md"
+          class="shadow-none"
         >
-          جستجو
-        </label>
-
-        <input
-          id="products-search"
-          name="q"
-          type="search"
-          placeholder="جستجوی محصولات پس از اتصال داده فعال می‌شود"
-          disabled
-          aria-disabled="true"
-          title="جستجوی محصولات پس از اتصال داده‌های واقعی فعال می‌شود."
-          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
-        />
-      </div>
-
-      <div>
-        <label
-          for="products-category"
-          class="mb-2 block text-sm font-semibold text-ink"
-        >
-          دسته‌بندی
-        </label>
-
-        <select
-          id="products-category"
-          name="category"
-          disabled
-          aria-disabled="true"
-          title="فیلتر دسته‌بندی پس از اتصال داده‌های واقعی فعال می‌شود."
-          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
-        >
-          {
-            categories.map((category) => (
-              <option value={category.value}>
-                {category.label}
-              </option>
-            ))
-          }
-        </select>
-      </div>
-    </section>
-
-    <section aria-labelledby="product-status-filter-title">
-      <div class="mb-3 flex items-center justify-between gap-4">
-        <h2
-          id="product-status-filter-title"
-          class="text-sm font-bold text-ink"
-        >
-          وضعیت محصول
-        </h2>
-
-        <Badge variant="neutral" size="sm">
-          در انتظار اتصال داده
-        </Badge>
-      </div>
-
-      <div
-        class="flex flex-wrap gap-2"
-        aria-label="فیلتر وضعیت محصول"
-      >
-        {
-          statusFilters.map((filter) => (
-            <span
-              class="inline-flex min-h-9 items-center rounded-full border border-line bg-surface-raised px-3 text-sm font-semibold text-ink-soft"
-            >
-              {filter.label}
-            </span>
-          ))
-        }
-      </div>
-    </section>
-
-    <section aria-labelledby="product-inventory-filter-title">
-      <div class="mb-3">
-        <h2
-          id="product-inventory-filter-title"
-          class="text-sm font-bold text-ink"
-        >
-          موجودی
-        </h2>
-      </div>
-
-      <div
-        class="flex flex-wrap gap-2"
-        aria-label="فیلتر موجودی محصول"
-      >
-        {
-          inventoryFilters.map((filter) => (
-            <span
-              class="inline-flex min-h-9 items-center rounded-full border border-line bg-surface-raised px-3 text-sm font-semibold text-ink-soft"
-            >
-              {filter.label}
-            </span>
-          ))
-        }
-      </div>
-
-
-    </section>
-
-    <section aria-labelledby="products-table-title">
-      <div class="mb-4">
-        <h2
-          id="products-table-title"
-          class="text-lg font-black text-ink"
-        >
-          همه محصولات
-        </h2>
-
-        <p class="mt-1 text-sm leading-6 text-muted">
-          پس از اتصال بخش مدیریت محصول، اطلاعات واقعی در این جدول نمایش داده می‌شوند.
-        </p>
-      </div>
-
-      <Card
-        as="div"
-        padding="none"
-        class="overflow-hidden shadow-none"
-      >
-        <div
-          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
-        >
-          <div
-            class="grid grid-cols-[minmax(10rem,1fr)_6rem_7rem_7rem_6rem_6rem_4rem] gap-3 text-xs font-bold text-muted"
-          >
-            <span>محصول</span>
-            <span>برند</span>
-            <span>کد / مدل</span>
-            <span>قیمت</span>
-            <span>موجودی</span>
-            <span>وضعیت</span>
-            <span>عملیات</span>
-          </div>
-        </div>
-
-        <div class="p-4 md:p-5">
           <EmptyState
-            title="هنوز محصولی برای نمایش نداریم"
-            description="بعد از اتصال Admin Products به منبع داده واقعی، محصولات در این جدول نمایش داده می‌شوند."
+            title="دریافت محصولات ناموفق بود"
+            description="اطلاعات محصولات از سرور دریافت نشد. صفحه را دوباره بارگذاری کنید."
             compact
           />
-        </div>
-      </Card>
-    </section>
+        </Card>
+      ) : (
+        <section
+          aria-labelledby="products-table-title"
+        >
+          <div
+            class="mb-4 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between"
+          >
+            <div>
+              <h2
+                id="products-table-title"
+                class="text-lg font-black text-ink"
+              >
+                همه محصولات
+              </h2>
+
+              <p
+                class="mt-1 text-sm leading-6 text-muted"
+              >
+                {
+                  products.length === 0
+                    ? "هنوز محصولی ثبت نشده است."
+                    : `${products.length.toLocaleString("fa-IR")} محصول`
+                }
+              </p>
+            </div>
+          </div>
+
+          <Card
+            as="div"
+            padding="none"
+            class="overflow-hidden shadow-none"
+          >
+            {
+              products.length === 0 ? (
+                <div class="p-4 md:p-5">
+                  <EmptyState
+                    title="هنوز محصولی ثبت نشده"
+                    description="برای شروع، اولین محصول را از بخش افزودن محصول ثبت کنید."
+                    compact
+                  />
+
+                  <div class="mt-4 flex justify-center">
+                    <Button
+                      href="/admin/products/new"
+                      variant="primary"
+                    >
+                      افزودن اولین محصول
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div
+                    class="hidden border-b border-line bg-surface-soft px-5 py-3 lg:block"
+                  >
+                    <div
+                      class="grid grid-cols-[minmax(13rem,1.5fr)_8rem_9rem_10rem_7rem_7rem_5rem] gap-4 text-xs font-bold text-muted"
+                    >
+                      <span>محصول</span>
+                      <span>برند</span>
+                      <span>کد فنی</span>
+                      <span>قیمت / فروش</span>
+                      <span>موجودی</span>
+                      <span>وضعیت</span>
+                      <span>عملیات</span>
+                    </div>
+                  </div>
+
+                  <div class="divide-y divide-line">
+                    {
+                      products.map(
+                        (product) => (
+                          <article
+                            class="px-4 py-5 md:px-5"
+                          >
+                            <div
+                              class="grid gap-4 lg:grid-cols-[minmax(13rem,1.5fr)_8rem_9rem_10rem_7rem_7rem_5rem] lg:items-center"
+                            >
+                              <div class="min-w-0">
+                                <a
+                                  href={`/admin/products/${encodeURIComponent(product.id)}`}
+                                  class="font-bold text-ink transition hover:text-brand-700"
+                                >
+                                  {product.name}
+                                </a>
+
+                                <div
+                                  class="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted"
+                                >
+                                  <span>
+                                    {conditionLabels[product.condition]}
+                                  </span>
+
+                                  {
+                                    product.sku && (
+                                      <span dir="ltr">
+                                        SKU: {product.sku}
+                                      </span>
+                                    )
+                                  }
+                                </div>
+                              </div>
+
+                              <div>
+                                <span
+                                  class="mb-1 block text-xs font-bold text-muted lg:hidden"
+                                >
+                                  برند
+                                </span>
+
+                                <span class="text-sm text-ink">
+                                  {product.brand}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span
+                                  class="mb-1 block text-xs font-bold text-muted lg:hidden"
+                                >
+                                  کد فنی
+                                </span>
+
+                                <span
+                                  dir="ltr"
+                                  class="block truncate text-sm text-ink"
+                                  title={product.partNumber}
+                                >
+                                  {product.partNumber}
+                                </span>
+                              </div>
+
+                              <div>
+                                <span
+                                  class="mb-1 block text-xs font-bold text-muted lg:hidden"
+                                >
+                                  قیمت / فروش
+                                </span>
+
+                                {
+                                  product.priceVisibility ===
+                                    "hidden" ? (
+                                    <span class="text-sm text-muted">
+                                      قیمت مخفی
+                                    </span>
+                                  ) : product.currentPriceRial !==
+                                    null ? (
+                                    <span class="text-sm font-bold text-ink">
+                                      {
+                                        formatRialAmount(
+                                          product.currentPriceRial,
+                                        )
+                                      }
+                                    </span>
+                                  ) : (
+                                    <span class="text-sm text-muted">
+                                      بدون قیمت
+                                    </span>
+                                  )
+                                }
+
+                                <span
+                                  class="mt-1 block text-xs text-muted"
+                                >
+                                  {
+                                    commerceModeLabels[
+                                      product.commerceMode
+                                    ]
+                                  }
+                                </span>
+                              </div>
+
+                              <div>
+                                <span
+                                  class="mb-1 block text-xs font-bold text-muted lg:hidden"
+                                >
+                                  موجودی
+                                </span>
+
+                                <span
+                                  class:list={[
+                                    "text-sm font-bold",
+                                    product.available > 0
+                                      ? "text-ink"
+                                      : "text-danger-700",
+                                  ]}
+                                >
+                                  {
+                                    product.available.toLocaleString(
+                                      "fa-IR",
+                                    )
+                                  }
+                                </span>
+
+                                {
+                                  product.reserved > 0 && (
+                                    <span
+                                      class="mt-1 block text-xs text-muted"
+                                    >
+                                      رزرو:{" "}
+                                      {
+                                        product.reserved.toLocaleString(
+                                          "fa-IR",
+                                        )
+                                      }
+                                    </span>
+                                  )
+                                }
+                              </div>
+
+                              <div>
+                                <span
+                                  class="mb-1 block text-xs font-bold text-muted lg:hidden"
+                                >
+                                  وضعیت
+                                </span>
+
+                                <Badge
+                                  variant={
+                                    statusVariants[
+                                      product.status
+                                    ]
+                                  }
+                                  size="sm"
+                                >
+                                  {
+                                    statusLabels[
+                                      product.status
+                                    ]
+                                  }
+                                </Badge>
+                              </div>
+
+                              <div>
+                                <Button
+                                  href={`/admin/products/${encodeURIComponent(product.id)}`}
+                                  variant="secondary"
+                                  size="sm"
+                                >
+                                  ویرایش
+                                </Button>
+                              </div>
+                            </div>
+                          </article>
+                        ),
+                      )
+                    }
+                  </div>
+                </>
+              )
+            }
+          </Card>
+        </section>
+      )
+    }
   </div>
 </AdminLayout>

@@ -1,524 +1,634 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
-import Badge from "../../../components/common/Badge.astro";
 import Button from "../../../components/common/Button.astro";
 import Card from "../../../components/common/Card.astro";
 
-const steps = [
-  {
-    number: 1,
-    label: "اطلاعات اصلی",
-    description: "نام، برند، کد فنی و دسته‌بندی",
-    active: true,
-  },
-  {
-    number: 2,
-    label: "قیمت و موجودی",
-    description: "حالت فروش، قیمت و موجودی",
-    active: false,
-  },
-  {
-    number: 3,
-    label: "مشخصات فنی",
-    description: "مشخصات و سازگاری‌ها",
-    active: false,
-  },
-  {
-    number: 4,
-    label: "تصاویر",
-    description: "تصاویر محصول",
-    active: false,
-  },
-  {
-    number: 5,
-    label: "توضیحات و انتشار",
-    description: "توضیحات نهایی و وضعیت انتشار",
-    active: false,
-  },
-] as const;
+const inputClass =
+  "min-h-11 w-full rounded-control border border-line-strong bg-surface-raised px-3.5 text-sm text-ink outline-none transition focus:border-brand-500 focus:ring-2 focus:ring-brand-100";
 
-const categories = [
-  {
-    value: "",
-    label: "انتخاب دسته‌بندی",
-  },
-  {
-    value: "motors",
-    label: "موتورها",
-  },
-  {
-    value: "drives",
-    label: "درایوها",
-  },
-  {
-    value: "inverter-vfd",
-    label: "اینورتر و VFD",
-  },
-  {
-    value: "cnc-controllers",
-    label: "کنترلرهای CNC",
-  },
-  {
-    value: "plc-hmi",
-    label: "PLC و HMI",
-  },
-  {
-    value: "encoders-feedback",
-    label: "انکودر و فیدبک",
-  },
-  {
-    value: "electronic-parts",
-    label: "قطعات الکترونیکی",
-  },
-  {
-    value: "mechanical-parts",
-    label: "قطعات مکانیکی",
-  },
-  {
-    value: "sensors",
-    label: "سنسورها",
-  },
-  {
-    value: "industrial-electrical",
-    label: "برق صنعتی",
-  },
-  {
-    value: "cnc-accessories",
-    label: "متعلقات CNC",
-  },
-] as const;
-
-const conditions = [
-  {
-    value: "",
-    label: "انتخاب وضعیت کالا",
-  },
-  {
-    value: "new",
-    label: "نو",
-  },
-  {
-    value: "used",
-    label: "کارکرده",
-  },
-  {
-    value: "refurbished",
-    label: "بازسازی‌شده",
-  },
-  {
-    value: "tested",
-    label: "تست‌شده",
-  },
-] as const;
+const labelClass =
+  "mb-2 block text-sm font-semibold text-ink";
 ---
 
 <AdminLayout title="افزودن محصول">
   <div class="space-y-6">
-    <nav
-      aria-label="مسیر صفحه"
-      class="flex flex-wrap items-center gap-2 text-sm text-muted"
-    >
-      <a
-        href="/admin/products"
-        class="font-semibold text-brand-700 transition hover:text-brand-800"
-      >
-        محصولات
-      </a>
-
-      <span aria-hidden="true">
-        /
-      </span>
-
-      <span aria-current="page">
-        افزودن محصول
-      </span>
-    </nav>
-
     <section
-      class="flex flex-col gap-4 border-b border-line pb-6 lg:flex-row lg:items-end lg:justify-between"
-      aria-labelledby="new-product-title"
+      class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between"
+      aria-labelledby="new-product-heading"
     >
-      <div>
-        <div class="flex flex-wrap items-center gap-3">
-          <h2
-            id="new-product-title"
-            class="text-2xl font-black text-ink"
-          >
-            افزودن محصول
-          </h2>
+      <div class="max-w-2xl">
+        <a
+          href="/admin/products"
+          class="text-sm font-bold text-brand-700 transition hover:text-brand-800"
+        >
+          بازگشت به محصولات
+        </a>
 
-          <Badge
-            variant="neutral"
-            size="sm"
-          >
-            در انتظار اتصال داده
-          </Badge>
-        </div>
+        <h2
+          id="new-product-heading"
+          class="mt-3 text-2xl font-black text-ink"
+        >
+          افزودن محصول
+        </h2>
 
-        <p class="mt-2 max-w-2xl text-sm leading-6 text-muted">
-          ساختار افزودن محصول مرحله‌به‌مرحله آماده شده است. ورود و ثبت واقعی اطلاعات پس از اتصال بخش مدیریت محصول فعال می‌شود.
+        <p class="mt-2 text-sm leading-6 text-muted">
+          اطلاعات پایه و وضعیت تجاری محصول را ثبت کنید. موجودی اولیه صفر است و بعداً از صفحه محصول قابل تنظیم خواهد بود.
         </p>
       </div>
-
-      <Button
-        href="/admin/products"
-        variant="secondary"
-      >
-        بازگشت به محصولات
-      </Button>
     </section>
 
-    <section aria-labelledby="product-wizard-steps-title">
-      <h2
-        id="product-wizard-steps-title"
-        class="sr-only"
+    <form
+      id="create-product-form"
+      class="space-y-6"
+      novalidate
+    >
+      <Card
+        as="section"
+        padding="md"
+        class="shadow-none"
       >
-        مراحل افزودن محصول
-      </h2>
+        <div>
+          <h3 class="text-lg font-black text-ink">
+            اطلاعات اصلی
+          </h3>
 
-      <ol class="grid gap-3 md:grid-cols-5">
-        {
-          steps.map((step) => (
-            <li>
-              <div
-                class:list={[
-                  "h-full rounded-card border p-4",
-                  step.active
-                    ? "border-brand-300 bg-brand-50"
-                    : "border-line bg-surface-raised",
-                ]}
-              >
-                <div class="flex items-center gap-3">
-                  <span
-                    class:list={[
-                      "grid size-8 shrink-0 place-items-center rounded-full text-xs font-black",
-                      step.active
-                        ? "bg-brand-600 text-white"
-                        : "bg-surface-soft text-muted",
-                    ]}
-                  >
-                    {step.number}
-                  </span>
+          <p class="mt-1 text-sm leading-6 text-muted">
+            شناسه محتوا باید با محتوای عمومی محصول هماهنگ باشد.
+          </p>
+        </div>
 
-                  <span class="font-bold text-ink">
-                    {step.label}
-                  </span>
-                </div>
-
-                <p class="mt-2 text-xs leading-5 text-muted">
-                  {step.description}
-                </p>
-              </div>
-            </li>
-          ))
-        }
-      </ol>
-    </section>
-
-    <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
-      <section aria-labelledby="product-main-info-title">
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
-        >
-          <div class="mb-6">
-            <h2
-              id="product-main-info-title"
-              class="text-lg font-black text-ink"
+        <div class="mt-5 grid gap-5 md:grid-cols-2">
+          <div>
+            <label
+              for="product-name"
+              class={labelClass}
             >
-              اطلاعات اصلی
-            </h2>
+              نام محصول
+            </label>
 
-            <p class="mt-1 text-sm leading-6 text-muted">
-              فیلدهای اطلاعات پایه پس از اتصال داده و ذخیره‌سازی واقعی قابل ورود می‌شوند.
+            <input
+              id="product-name"
+              name="name"
+              type="text"
+              maxlength="500"
+              required
+              autocomplete="off"
+              class={inputClass}
+            />
+          </div>
+
+          <div>
+            <label
+              for="product-brand"
+              class={labelClass}
+            >
+              برند
+            </label>
+
+            <input
+              id="product-brand"
+              name="brand"
+              type="text"
+              maxlength="500"
+              required
+              autocomplete="off"
+              class={inputClass}
+            />
+          </div>
+
+          <div>
+            <label
+              for="product-part-number"
+              class={labelClass}
+            >
+              کد فنی / Part Number
+            </label>
+
+            <input
+              id="product-part-number"
+              name="partNumber"
+              type="text"
+              maxlength="500"
+              required
+              autocomplete="off"
+              dir="ltr"
+              class={inputClass}
+            />
+          </div>
+
+          <div>
+            <label
+              for="product-sku"
+              class={labelClass}
+            >
+              SKU
+              <span class="font-normal text-muted">
+                (اختیاری)
+              </span>
+            </label>
+
+            <input
+              id="product-sku"
+              name="sku"
+              type="text"
+              maxlength="200"
+              autocomplete="off"
+              dir="ltr"
+              class={inputClass}
+            />
+          </div>
+
+          <div>
+            <label
+              for="product-manufacturer"
+              class={labelClass}
+            >
+              سازنده
+              <span class="font-normal text-muted">
+                (اختیاری)
+              </span>
+            </label>
+
+            <input
+              id="product-manufacturer"
+              name="manufacturer"
+              type="text"
+              maxlength="500"
+              autocomplete="off"
+              class={inputClass}
+            />
+          </div>
+
+          <div>
+            <label
+              for="product-content-id"
+              class={labelClass}
+            >
+              Content ID
+            </label>
+
+            <input
+              id="product-content-id"
+              name="contentId"
+              type="text"
+              maxlength="500"
+              required
+              autocomplete="off"
+              dir="ltr"
+              class={inputClass}
+            />
+
+            <p class="mt-1.5 text-xs leading-5 text-muted">
+              این مقدار کلید اتصال محصول دیتابیس به محتوای سایت است.
             </p>
           </div>
+        </div>
+      </Card>
 
-          <div
-            class="space-y-6"
-            aria-describedby="product-form-status"
-          >
-            <fieldset
-              disabled
-              aria-disabled="true"
-              class="grid gap-5 md:grid-cols-2"
+      <Card
+        as="section"
+        padding="md"
+        class="shadow-none"
+      >
+        <div>
+          <h3 class="text-lg font-black text-ink">
+            وضعیت و فروش
+          </h3>
+
+          <p class="mt-1 text-sm leading-6 text-muted">
+            روش فروش، نمایش قیمت، ارسال و وضعیت انتشار محصول را تعیین کنید.
+          </p>
+        </div>
+
+        <div class="mt-5 grid gap-5 md:grid-cols-2">
+          <div>
+            <label
+              for="product-condition"
+              class={labelClass}
             >
-              <legend class="sr-only">
-                اطلاعات شناسایی محصول
-              </legend>
+              وضعیت کالا
+            </label>
 
-              <div class="md:col-span-2">
-                <label
-                  for="product-name"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  نام محصول
-                </label>
-
-                <input
-                  id="product-name"
-                  name="name"
-                  type="text"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="product-brand"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  برند
-                </label>
-
-                <input
-                  id="product-brand"
-                  name="brand"
-                  type="text"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="product-manufacturer"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  سازنده
-                  <span class="font-normal text-muted">
-                    (اختیاری)
-                  </span>
-                </label>
-
-                <input
-                  id="product-manufacturer"
-                  name="manufacturer"
-                  type="text"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="product-part-number"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  Part Number
-                </label>
-
-                <input
-                  id="product-part-number"
-                  name="partNumber"
-                  type="text"
-                  dir="ltr"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-left text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-
-                <p class="mt-1.5 text-xs leading-5 text-muted">
-                  کد فنی اصلی محصول و فیلد اجباری.
-                </p>
-              </div>
-
-              <div>
-                <label
-                  for="product-sku"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  SKU
-                  <span class="font-normal text-muted">
-                    (اختیاری)
-                  </span>
-                </label>
-
-                <input
-                  id="product-sku"
-                  name="sku"
-                  type="text"
-                  dir="ltr"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-left text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-
-                <p class="mt-1.5 text-xs leading-5 text-muted">
-                  شناسه داخلی فروشگاه؛ در صورت ثبت باید یکتا باشد.
-                </p>
-              </div>
-
-              <div>
-                <label
-                  for="product-category"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  دسته‌بندی
-                </label>
-
-                <select
-                  id="product-category"
-                  name="category"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                >
-                  {
-                    categories.map((category) => (
-                      <option value={category.value}>
-                        {category.label}
-                      </option>
-                    ))
-                  }
-                </select>
-              </div>
-
-              <div>
-                <label
-                  for="product-subcategory"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  زیر‌دسته
-                  <span class="font-normal text-muted">
-                    (اختیاری)
-                  </span>
-                </label>
-
-                <input
-                  id="product-subcategory"
-                  name="subcategory"
-                  type="text"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="product-series"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  سری / مدل
-                  <span class="font-normal text-muted">
-                    (اختیاری)
-                  </span>
-                </label>
-
-                <input
-                  id="product-series"
-                  name="series"
-                  type="text"
-                  dir="ltr"
-                  autocomplete="off"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-left text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                />
-              </div>
-
-              <div>
-                <label
-                  for="product-condition"
-                  class="mb-2 block text-sm font-semibold text-ink"
-                >
-                  وضعیت کالا
-                </label>
-
-                <select
-                  id="product-condition"
-                  name="condition"
-                  class="min-h-11 w-full rounded-control border border-line-strong bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand-600 focus:ring-4 focus:ring-brand-100"
-                >
-                  {
-                    conditions.map((condition) => (
-                      <option value={condition.value}>
-                        {condition.label}
-                      </option>
-                    ))
-                  }
-                </select>
-              </div>
-            </fieldset>
-
-            <p
-              id="product-form-status"
-              class="rounded-control border border-line bg-surface-soft px-4 py-3 text-xs leading-6 text-muted"
+            <select
+              id="product-condition"
+              name="condition"
+              required
+              class={inputClass}
             >
-              این بخش در این مرحله فقط ساختار رابط کاربری است؛ همه فیلدها غیرفعال‌اند و اطلاعاتی ذخیره نمی‌شود.
+              <option value="new">نو</option>
+              <option value="used">کارکرده</option>
+              <option value="refurbished">
+                بازسازی‌شده
+              </option>
+              <option value="tested">تست‌شده</option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="product-commerce-mode"
+              class={labelClass}
+            >
+              روش فروش
+            </label>
+
+            <select
+              id="product-commerce-mode"
+              name="commerceMode"
+              required
+              class={inputClass}
+            >
+              <option value="direct-purchase">
+                خرید مستقیم
+              </option>
+              <option value="price-inquiry">
+                استعلام قیمت
+              </option>
+              <option value="sourcing-request">
+                درخواست تأمین
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="product-price-visibility"
+              class={labelClass}
+            >
+              نمایش قیمت
+            </label>
+
+            <select
+              id="product-price-visibility"
+              name="priceVisibility"
+              required
+              class={inputClass}
+            >
+              <option value="visible">
+                قابل نمایش
+              </option>
+              <option value="hidden">
+                مخفی
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="product-shipping-class"
+              class={labelClass}
+            >
+              روش / کلاس ارسال
+            </label>
+
+            <select
+              id="product-shipping-class"
+              name="shippingClass"
+              required
+              class={inputClass}
+            >
+              <option value="standard">
+                استاندارد
+              </option>
+              <option value="fragile">
+                شکستنی
+              </option>
+              <option value="heavy">
+                سنگین
+              </option>
+              <option value="pickup-only">
+                فقط تحویل حضوری
+              </option>
+              <option value="custom">
+                سفارشی
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="product-status"
+              class={labelClass}
+            >
+              وضعیت محصول
+            </label>
+
+            <select
+              id="product-status"
+              name="status"
+              required
+              class={inputClass}
+            >
+              <option value="draft">
+                پیش‌نویس
+              </option>
+              <option value="active">
+                فعال
+              </option>
+              <option value="archived">
+                بایگانی‌شده
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label
+              for="product-price"
+              class={labelClass}
+            >
+              قیمت اولیه
+              <span class="font-normal text-muted">
+                (ریال، اختیاری)
+              </span>
+            </label>
+
+            <input
+              id="product-price"
+              name="priceRial"
+              type="number"
+              min="0"
+              step="1"
+              inputmode="numeric"
+              dir="ltr"
+              class={inputClass}
+            />
+
+            <p class="mt-1.5 text-xs leading-5 text-muted">
+              اگر خالی بماند، محصول بدون قیمت اولیه ساخته می‌شود.
             </p>
-
-            <div
-              class="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <Button
-                type="button"
-                variant="secondary"
-                disabled
-              >
-                ذخیره پیش‌نویس
-              </Button>
-
-              <Button
-                type="button"
-                variant="primary"
-                disabled
-              >
-                ادامه: قیمت و موجودی
-              </Button>
-            </div>
           </div>
-        </Card>
-      </section>
+        </div>
+      </Card>
 
-      <aside class="space-y-4">
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
+      <div
+        id="product-form-error"
+        class="hidden rounded-control border border-danger-200 bg-danger-50 px-4 py-3 text-sm font-semibold text-danger-700"
+        role="alert"
+        aria-live="polite"
+      ></div>
+
+      <div
+        class="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end"
+      >
+        <Button
+          href="/admin/products"
+          variant="secondary"
         >
-          <h2 class="text-sm font-black text-ink">
-            نکات این مرحله
-          </h2>
+          انصراف
+        </Button>
 
-          <ul class="mt-4 space-y-3 text-sm leading-6 text-muted">
-            <li>
-              Part Number برای همه محصولات الزامی است.
-            </li>
-
-            <li>
-              SKU اختیاری است، اما در صورت ثبت باید یکتا باشد.
-            </li>
-
-            <li>
-              قیمت و موجودی در مرحله بعد وارد می‌شوند.
-            </li>
-
-            <li>
-              توضیحات فنی را در مرحله مشخصات فنی وارد کنید.
-            </li>
-          </ul>
-        </Card>
-
-        <Card
-          as="div"
-          padding="md"
-          class="shadow-none"
+        <Button
+          type="submit"
+          variant="primary"
         >
-          <h2 class="text-sm font-black text-ink">
-            وضعیت
-          </h2>
-
-          <div class="mt-4 flex items-center justify-between gap-3">
-            <span class="text-sm text-muted">
-              مرحله فعلی
-            </span>
-
-            <Badge
-              variant="brand"
-              size="sm"
-            >
-              ۱ از ۵
-            </Badge>
-          </div>
-        </Card>
-      </aside>
-    </div>
+          ذخیره محصول
+        </Button>
+      </div>
+    </form>
   </div>
 </AdminLayout>
+
+<script>
+  const form =
+    document.querySelector<HTMLFormElement>(
+      "#create-product-form",
+    );
+
+  const submitButton =
+    form?.querySelector<HTMLButtonElement>(
+      'button[type="submit"]',
+    ) ?? null;
+
+  const errorBox =
+    document.querySelector<HTMLElement>(
+      "#product-form-error",
+    );
+
+  function showError(message: string) {
+    if (!errorBox) {
+      return;
+    }
+
+    errorBox.textContent = message;
+    errorBox.classList.remove("hidden");
+  }
+
+  function clearError() {
+    if (!errorBox) {
+      return;
+    }
+
+    errorBox.textContent = "";
+    errorBox.classList.add("hidden");
+  }
+
+  function readText(
+    data: FormData,
+    name: string,
+  ): string {
+    const value = data.get(name);
+
+    return typeof value === "string"
+      ? value
+      : "";
+  }
+
+  form?.addEventListener(
+    "submit",
+    async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const formData =
+        new FormData(form);
+
+      const rawPrice =
+        readText(
+          formData,
+          "priceRial",
+        ).trim();
+
+      let priceRial: number | null =
+        null;
+
+      if (rawPrice) {
+        const parsedPrice =
+          Number(rawPrice);
+
+        if (
+          !Number.isSafeInteger(parsedPrice) ||
+          parsedPrice < 0
+        ) {
+          showError(
+            "قیمت باید یک عدد صحیح نامنفی و معتبر بر حسب ریال باشد.",
+          );
+          return;
+        }
+
+        priceRial = parsedPrice;
+      }
+
+      const payload = {
+        contentId:
+          readText(
+            formData,
+            "contentId",
+          ),
+        sku:
+          readText(
+            formData,
+            "sku",
+          ),
+        partNumber:
+          readText(
+            formData,
+            "partNumber",
+          ),
+        name:
+          readText(
+            formData,
+            "name",
+          ),
+        brand:
+          readText(
+            formData,
+            "brand",
+          ),
+        manufacturer:
+          readText(
+            formData,
+            "manufacturer",
+          ),
+        condition:
+          readText(
+            formData,
+            "condition",
+          ),
+        commerceMode:
+          readText(
+            formData,
+            "commerceMode",
+          ),
+        priceVisibility:
+          readText(
+            formData,
+            "priceVisibility",
+          ),
+        shippingClass:
+          readText(
+            formData,
+            "shippingClass",
+          ),
+        status:
+          readText(
+            formData,
+            "status",
+          ),
+        priceRial,
+      };
+
+      if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.setAttribute(
+          "aria-busy",
+          "true",
+        );
+        submitButton.textContent =
+          "در حال ذخیره...";
+      }
+
+      try {
+        const response =
+          await fetch(
+            "/api/admin/products",
+            {
+              method: "POST",
+              credentials: "same-origin",
+              headers: {
+                "Content-Type":
+                  "application/json",
+              },
+              body:
+                JSON.stringify(
+                  payload,
+                ),
+            },
+          );
+
+        const result =
+          await response
+            .json()
+            .catch(() => null);
+
+        if (
+          response.ok &&
+          result?.ok === true &&
+          typeof result.product?.id ===
+            "string"
+        ) {
+          window.location.replace(
+            `/admin/products/${encodeURIComponent(
+              result.product.id,
+            )}`,
+          );
+
+          return;
+        }
+
+        if (
+          response.status === 409 &&
+          result?.reason ===
+            "product_conflict"
+        ) {
+          showError(
+            "محصولی با این Content ID یا SKU از قبل وجود دارد.",
+          );
+
+          return;
+        }
+
+        if (
+          response.status === 400 &&
+          result?.reason ===
+            "invalid_product"
+        ) {
+          showError(
+            "اطلاعات محصول معتبر نیست. فیلدهای الزامی و مقادیر انتخاب‌شده را بررسی کنید.",
+          );
+
+          return;
+        }
+
+        if (response.status === 401) {
+          showError(
+            "نشست مدیریت معتبر نیست. دوباره وارد پنل مدیریت شوید.",
+          );
+
+          return;
+        }
+
+        showError(
+          "ذخیره محصول انجام نشد. دوباره تلاش کنید.",
+        );
+      } catch {
+        showError(
+          "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.",
+        );
+      } finally {
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.removeAttribute(
+            "aria-busy",
+          );
+          submitButton.textContent =
+            "ذخیره محصول";
+        }
+      }
+    },
+  );
+</script>
