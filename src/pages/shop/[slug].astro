@@ -18,6 +18,10 @@ import {
   getProductHref,
 } from "../../lib/products";
 
+import {
+  getCommerceProductsByContentIds,
+} from "../../server/products/commerce-repository";
+
 export const prerender = true;
 
 export function getStaticPaths() {
@@ -43,6 +47,24 @@ const allProducts = await getCollection("products");
 const categoryProducts = getActiveProducts(allProducts).filter(
   (product) => product.data.category === category.slug,
 );
+
+const commerceStates =
+  await getCommerceProductsByContentIds(
+    categoryProducts.map(
+      (product) =>
+        product.id,
+    ),
+  );
+
+const commerceByContentId =
+  new Map(
+    commerceStates.map(
+      (state) => [
+        state.contentId,
+        state,
+      ],
+    ),
+  );
 
 const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
 
@@ -284,7 +306,10 @@ const structuredData = {
               <div class="mt-7 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {
                   categoryProducts.map((product) => (
-                    <ProductCard product={product} />
+                    <ProductCard
+  product={product}
+  commerce={commerceByContentId.get(product.id)!}
+/>
                   ))
                 }
               </div>

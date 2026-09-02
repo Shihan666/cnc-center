@@ -15,7 +15,6 @@ import { siteConfig } from "../../config/site";
 import {
   canPurchaseDirectly,
   formatProductPrice,
-  getActiveProducts,
   getProductCategoryHref,
   getProductCategoryTitle,
   getProductCommerceModeDescription,
@@ -31,28 +30,24 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
-export const prerender = true;
+const productId =
+  Astro.params.id?.trim() ?? "";
 
-export async function getStaticPaths() {
-  const allProducts = await getCollection("products");
-  const products = getActiveProducts(allProducts);
+const allProducts =
+  await getCollection("products");
 
-  return products.map((product) => ({
-    params: {
-      id: product.id,
-    },
+const product =
+  allProducts.find(
+    (entry) =>
+      entry.id === productId &&
+      entry.data.status === "active",
+  ) as ProductEntry | undefined;
 
-    props: {
-      product,
-    },
-  }));
+if (!product) {
+  return new Response(null, {
+    status: 404,
+  });
 }
-
-interface Props {
-  product: ProductEntry;
-}
-
-const { product } = Astro.props;
 
 const { Content } = await render(product);
 

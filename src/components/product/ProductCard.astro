@@ -1,29 +1,49 @@
 ---
 import Badge from "../common/Badge.astro";
 import Button from "../common/Button.astro";
-import type { ProductEntry } from "../../lib/products";
+
+import type {
+  ProductEntry,
+} from "../../lib/products";
+
 import {
-  formatProductPrice,
   getProductCategoryTitle,
-  getProductCommerceModeLabel,
   getProductConditionLabel,
   getProductHref,
-  getProductInventoryLabel,
 } from "../../lib/products";
+
+import {
+  createCommercePresentation,
+} from "../../server/products/commerce-presentation";
+
+import type {
+  CommerceProductState,
+} from "../../server/products/commerce-repository";
 
 interface Props {
   product: ProductEntry;
+  commerce: CommerceProductState;
 }
 
-const { product } = Astro.props;
+const {
+  product,
+  commerce,
+} = Astro.props;
 
-const price = formatProductPrice(product);
-const href = getProductHref(product);
+const href =
+  getProductHref(product);
+
+const presentation =
+  createCommercePresentation(
+    commerce,
+  );
 
 const commerceVariant =
-  product.data.commerceMode === "direct-purchase"
+  commerce.commerceMode ===
+  "direct-purchase"
     ? "success"
-    : product.data.commerceMode === "price-inquiry"
+    : commerce.commerceMode ===
+        "price-inquiry"
       ? "brand"
       : "warning";
 ---
@@ -62,7 +82,7 @@ const commerceVariant =
   <div class="flex flex-1 flex-col p-5">
     <div class="flex flex-wrap gap-2">
       <Badge variant={commerceVariant} size="sm">
-        {getProductCommerceModeLabel(product)}
+        {presentation.commerceModeLabel}
       </Badge>
 
       <Badge variant="neutral" size="sm">
@@ -105,19 +125,19 @@ const commerceVariant =
 
     <div class="mt-5 border-t border-line pt-4">
       {
-        price ? (
+        presentation.formattedPrice ? (
           <p class="text-lg font-black text-ink">
-            {price}
+            {presentation.formattedPrice}
           </p>
         ) : (
           <p class="text-sm font-black text-brand-700">
-            {getProductCommerceModeLabel(product)}
+            {presentation.commerceModeLabel}
           </p>
         )
       }
 
       <p class="mt-1 text-xs font-bold text-muted">
-        {getProductInventoryLabel(product)}
+        {presentation.inventoryLabel}
       </p>
     </div>
 

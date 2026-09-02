@@ -12,16 +12,17 @@ import {
 } from "../../config/site";
 
 import {
-  toRialAmount,
-} from "../../lib/commerce";
+  formatRialAmount,
+} from "../../lib/cart";
 
 import {
-  canPurchaseDirectly,
-  formatProductPrice,
   getActiveProducts,
   getProductHref,
-  getVisibleProductPrice,
 } from "../../lib/products";
+
+import {
+  getCommerceProductsByContentIds,
+} from "../../server/products/commerce-repository";
 
 import type {
   CartCatalogItem,
@@ -37,23 +38,43 @@ const activeProducts =
     allProducts,
   );
 
+const commerceStates =
+  await getCommerceProductsByContentIds(
+    activeProducts.map(
+      (product) =>
+        product.id,
+    ),
+  );
+
+const commerceByContentId =
+  new Map(
+    commerceStates.map(
+      (state) => [
+        state.contentId,
+        state,
+      ],
+    ),
+  );
+
 const catalog:
   CartCatalogItem[] = [];
 
 for (const product of activeProducts) {
-  if (!canPurchaseDirectly(product)) {
-    continue;
-  }
-
-  const visiblePrice =
-    getVisibleProductPrice(product);
-
-  const displayPrice =
-    formatProductPrice(product);
+  const commerce =
+    commerceByContentId.get(
+      product.id,
+    );
 
   if (
-    visiblePrice === null ||
-    displayPrice === null
+    !commerce ||
+    commerce.status !== "active" ||
+    commerce.commerceMode !==
+      "direct-purchase" ||
+    commerce.priceVisibility !==
+      "visible" ||
+    commerce.currentPriceRial ===
+      null ||
+    commerce.available < 1
   ) {
     continue;
   }
@@ -79,18 +100,18 @@ for (const product of activeProducts) {
       null,
 
     stockQuantity:
-      product.data.stockQuantity,
+      commerce.available,
 
     unitPriceRial:
-      toRialAmount(
-        visiblePrice,
-        product.data.priceUnit,
+      commerce.currentPriceRial,
+
+    displayPrice:
+      formatRialAmount(
+        commerce.currentPriceRial,
       ),
 
-    displayPrice,
-
     shippingClass:
-      product.data.shippingClass,
+      commerce.shippingClass,
   });
 }
 

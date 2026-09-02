@@ -14,8 +14,40 @@ import {
   getProductHref,
 } from "../../lib/products";
 
+import {
+  getCommerceProductsByContentIds,
+} from "../../server/products/commerce-repository";
+
 const allProducts = await getCollection("products");
-const products = getActiveProducts(allProducts);
+
+const contentProducts =
+  getActiveProducts(allProducts);
+
+const commerceStates =
+  await getCommerceProductsByContentIds(
+    contentProducts.map(
+      (product) =>
+        product.id,
+    ),
+  );
+
+const commerceByContentId =
+  new Map(
+    commerceStates.map(
+      (state) => [
+        state.contentId,
+        state,
+      ],
+    ),
+  );
+
+const products =
+  contentProducts.filter(
+    (product) =>
+      commerceByContentId.get(
+        product.id,
+      )?.status === "active",
+  );
 
 const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
 const canonical = `${siteUrl}/products/`;
@@ -224,7 +256,10 @@ const structuredData =
               <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {
                   products.map((product) => (
-                    <ProductCard product={product} />
+                    <ProductCard
+                      product={product}
+                      commerce={commerceByContentId.get(product.id)!}
+                    />
                   ))
                 }
               </div>

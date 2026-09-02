@@ -25,6 +25,10 @@ import {
 } from "../../lib/products";
 
 import {
+  getCommerceProductsByContentIds,
+} from "../../server/products/commerce-repository";
+
+import {
   formatRepairDate,
   getActiveRepairs,
   type RepairEntry,
@@ -87,6 +91,24 @@ const activeBrands = getActiveBrands(allBrands);
 
 const allProducts = await getCollection("products");
 const activeProducts = getActiveProducts(allProducts);
+
+const commerceStates =
+  await getCommerceProductsByContentIds(
+    activeProducts.map(
+      (product) =>
+        product.id,
+    ),
+  );
+
+const commerceByContentId =
+  new Map(
+    commerceStates.map(
+      (state) => [
+        state.contentId,
+        state,
+      ],
+    ),
+  );
 
 const relatedBrandIds = new Set(
   repair.data.relatedBrands,
@@ -760,7 +782,10 @@ const breadcrumbStructuredData = {
             <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {
                 relatedProducts.map((product) => (
-                  <ProductCard product={product} />
+                  <ProductCard
+  product={product}
+  commerce={commerceByContentId.get(product.id)!}
+/>
                 ))
               }
             </div>
