@@ -17,6 +17,7 @@ import {
 
 import type {
   AdminProductCommerceMode,
+  AdminProductCondition,
   AdminProductPriceVisibility,
   AdminProductShippingClass,
   AdminProductStatus,
@@ -25,6 +26,7 @@ import type {
 export interface CommerceProductState {
   id: string;
   contentId: string;
+  condition: AdminProductCondition;
   commerceMode: AdminProductCommerceMode;
   priceVisibility: AdminProductPriceVisibility;
   shippingClass: AdminProductShippingClass;
@@ -68,6 +70,9 @@ export async function getCommerceProductsByContentIds(
 
         contentId:
           products.contentId,
+
+        condition:
+          products.condition,
 
         commerceMode:
           products.commerceMode,

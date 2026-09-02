@@ -153,3 +153,32 @@ test(
     );
   },
 );
+
+test(
+  "commerce presentation uses authoritative database condition",
+  () => {
+    const cases = [
+      ["new", "نو"],
+      ["used", "کارکرده"],
+      ["refurbished", "بازسازی‌شده"],
+      ["tested", "تست‌شده"],
+    ];
+
+    for (const [
+      condition,
+      expectedLabel,
+    ] of cases) {
+      const presentation =
+        createCommercePresentation(
+          createState({
+            condition,
+          }),
+        );
+
+      assert.equal(
+        presentation.conditionLabel,
+        expectedLabel,
+      );
+    }
+  },
+);

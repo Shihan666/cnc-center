@@ -16,7 +16,6 @@ import { shopCategories } from "../../data/shopCategories";
 
 import {
   getActiveBrands,
-  type BrandEntry,
 } from "../../lib/brands";
 
 import {
@@ -32,27 +31,27 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
-export const prerender = true;
+export const prerender = false;
 
-export async function getStaticPaths() {
-  const allBrands = await getCollection("brands");
-  const brands = getActiveBrands(allBrands);
+const brandId =
+  Astro.params.id?.trim() ?? "";
 
-  return brands.map((brand) => ({
-    params: {
-      id: brand.id,
-    },
-    props: {
-      brand,
-    },
-  }));
+const allBrands =
+  await getCollection("brands");
+
+const brand =
+  getActiveBrands(
+    allBrands,
+  ).find(
+    (entry) =>
+      entry.id === brandId,
+  );
+
+if (!brand) {
+  return new Response(null, {
+    status: 404,
+  });
 }
-
-interface Props {
-  brand: BrandEntry;
-}
-
-const { brand } = Astro.props;
 
 const { Content } = await render(brand);
 
@@ -106,11 +105,20 @@ const normalizedBrandNames = new Set(
   ].map((name) => name.trim().toLocaleLowerCase("en-US")),
 );
 
-const relatedProducts = activeProducts.filter((product) =>
-  normalizedBrandNames.has(
-    product.data.brand.trim().toLocaleLowerCase("en-US"),
-  ),
-);
+const relatedProducts =
+  activeProducts.filter(
+    (product) =>
+      normalizedBrandNames.has(
+        product.data.brand
+          .trim()
+          .toLocaleLowerCase(
+            "en-US",
+          ),
+      ) &&
+      commerceByContentId.get(
+        product.id,
+      )?.status === "active",
+  );
 
 const relatedCategories = brand.data.productCategories
   .map((slug) =>
@@ -465,12 +473,19 @@ const productListStructuredData =
 
             <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {
-                relatedProducts.map((product) => (
-                  <ProductCard
-  product={product}
-  commerce={commerceByContentId.get(product.id)!}
-/>
-                ))
+                relatedProducts.map((product) => {
+                  const commerce =
+                    commerceByContentId.get(
+                      product.id,
+                    );
+
+                  return commerce ? (
+                    <ProductCard
+                      product={product}
+                      commerce={commerce}
+                    />
+                  ) : null;
+                })
               }
             </div>
           </div>

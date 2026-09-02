@@ -263,6 +263,9 @@ test(
           created.id,
         contentId:
           'b12-public-motor',
+
+        condition:
+          'new',
         commerceMode:
           'direct-purchase',
         priceVisibility:

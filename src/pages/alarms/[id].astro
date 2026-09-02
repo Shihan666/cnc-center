@@ -18,7 +18,6 @@ import {
   formatAlarmDate,
   getActiveAlarms,
   getAlarmCategoryLabel,
-  type AlarmEntry,
 } from "../../lib/alarms";
 
 import {
@@ -45,28 +44,27 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
-export const prerender = true;
+export const prerender = false;
 
-export async function getStaticPaths() {
-  const allAlarms = await getCollection("alarms");
-  const alarms = getActiveAlarms(allAlarms);
+const alarmId =
+  Astro.params.id?.trim() ?? "";
 
-  return alarms.map((alarm) => ({
-    params: {
-      id: alarm.id,
-    },
+const allAlarms =
+  await getCollection("alarms");
 
-    props: {
-      alarm,
-    },
-  }));
+const alarm =
+  getActiveAlarms(
+    allAlarms,
+  ).find(
+    (entry) =>
+      entry.id === alarmId,
+  );
+
+if (!alarm) {
+  return new Response(null, {
+    status: 404,
+  });
 }
-
-interface Props {
-  alarm: AlarmEntry;
-}
-
-const { alarm } = Astro.props;
 
 const { Content } = await render(alarm);
 
@@ -131,9 +129,16 @@ const relatedProductIds = new Set(
   alarm.data.relatedProducts,
 );
 
-const relatedProducts = activeProducts.filter((product) =>
-  relatedProductIds.has(product.id),
-);
+const relatedProducts =
+  activeProducts.filter(
+    (product) =>
+      relatedProductIds.has(
+        product.id,
+      ) &&
+      commerceByContentId.get(
+        product.id,
+      )?.status === "active",
+  );
 
 const relatedRepairIds = new Set(
   alarm.data.relatedRepairs,
@@ -834,12 +839,19 @@ const breadcrumbStructuredData = {
 
             <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {
-                relatedProducts.map((product) => (
-                  <ProductCard
-  product={product}
-  commerce={commerceByContentId.get(product.id)!}
-/>
-                ))
+                relatedProducts.map((product) => {
+                  const commerce =
+                    commerceByContentId.get(
+                      product.id,
+                    );
+
+                  return commerce ? (
+                    <ProductCard
+                      product={product}
+                      commerce={commerce}
+                    />
+                  ) : null;
+                })
               }
             </div>
           </div>

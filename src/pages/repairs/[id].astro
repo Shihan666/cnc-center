@@ -31,7 +31,6 @@ import {
 import {
   formatRepairDate,
   getActiveRepairs,
-  type RepairEntry,
 } from "../../lib/repairs";
 
 import {
@@ -39,28 +38,27 @@ import {
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
 
-export const prerender = true;
+export const prerender = false;
 
-export async function getStaticPaths() {
-  const allRepairs = await getCollection("repairs");
-  const repairs = getActiveRepairs(allRepairs);
+const repairId =
+  Astro.params.id?.trim() ?? "";
 
-  return repairs.map((repair) => ({
-    params: {
-      id: repair.id,
-    },
+const allRepairs =
+  await getCollection("repairs");
 
-    props: {
-      repair,
-    },
-  }));
+const repair =
+  getActiveRepairs(
+    allRepairs,
+  ).find(
+    (entry) =>
+      entry.id === repairId,
+  );
+
+if (!repair) {
+  return new Response(null, {
+    status: 404,
+  });
 }
-
-interface Props {
-  repair: RepairEntry;
-}
-
-const { repair } = Astro.props;
 
 const { Content } = await render(repair);
 
@@ -122,9 +120,16 @@ const relatedProductIds = new Set(
   repair.data.relatedProducts,
 );
 
-const relatedProducts = activeProducts.filter((product) =>
-  relatedProductIds.has(product.id),
-);
+const relatedProducts =
+  activeProducts.filter(
+    (product) =>
+      relatedProductIds.has(
+        product.id,
+      ) &&
+      commerceByContentId.get(
+        product.id,
+      )?.status === "active",
+  );
 
 const relatedServices = repair.data.relatedServices
   .map((serviceId) =>
@@ -781,12 +786,19 @@ const breadcrumbStructuredData = {
 
             <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
               {
-                relatedProducts.map((product) => (
-                  <ProductCard
-  product={product}
-  commerce={commerceByContentId.get(product.id)!}
-/>
-                ))
+                relatedProducts.map((product) => {
+                  const commerce =
+                    commerceByContentId.get(
+                      product.id,
+                    );
+
+                  return commerce ? (
+                    <ProductCard
+                      product={product}
+                      commerce={commerce}
+                    />
+                  ) : null;
+                })
               }
             </div>
           </div>

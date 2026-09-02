@@ -3,12 +3,23 @@ import type {
 } from "./commerce-repository";
 
 export interface CommercePresentation {
+  conditionLabel: string;
   commerceModeLabel: string;
   commerceModeDescription: string;
   formattedPrice: string | null;
   inventoryLabel: string;
   directPurchaseEligible: boolean;
 }
+
+const conditionLabels: Record<
+  CommerceProductState["condition"],
+  string
+> = {
+  new: "نو",
+  used: "کارکرده",
+  refurbished: "بازسازی‌شده",
+  tested: "تست‌شده",
+};
 
 const commerceModeLabels: Record<
   CommerceProductState["commerceMode"],
@@ -90,6 +101,11 @@ export function createCommercePresentation(
     state.available > 0;
 
   return {
+    conditionLabel:
+      conditionLabels[
+        state.condition
+      ],
+
     commerceModeLabel:
       commerceModeLabels[
         state.commerceMode

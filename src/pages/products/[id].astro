@@ -13,14 +13,8 @@ import Card from "../../components/common/Card.astro";
 import { siteConfig } from "../../config/site";
 
 import {
-  canPurchaseDirectly,
-  formatProductPrice,
   getProductCategoryHref,
   getProductCategoryTitle,
-  getProductCommerceModeDescription,
-  getProductCommerceModeLabel,
-  getProductConditionLabel,
-  getProductInventoryLabel,
   getRelatedServiceTitle,
   type ProductEntry,
 } from "../../lib/products";
@@ -29,6 +23,14 @@ import {
   getRelatedActiveArticlesForEntity,
   getRelatedActiveFaqsForEntity,
 } from "../../lib/knowledgeGraph";
+
+import {
+  createCommercePresentation,
+} from "../../server/products/commerce-presentation";
+
+import {
+  getCommerceProductByContentId,
+} from "../../server/products/commerce-repository";
 
 const productId =
   Astro.params.id?.trim() ?? "";
@@ -48,6 +50,25 @@ if (!product) {
     status: 404,
   });
 }
+
+const commerce =
+  await getCommerceProductByContentId(
+    product.id,
+  );
+
+if (
+  !commerce ||
+  commerce.status !== "active"
+) {
+  return new Response(null, {
+    status: 404,
+  });
+}
+
+const presentation =
+  createCommercePresentation(
+    commerce,
+  );
 
 const { Content } = await render(product);
 
@@ -96,46 +117,39 @@ const categoryHref =
   getProductCategoryHref(product);
 
 const conditionLabel =
-  getProductConditionLabel(product);
+  presentation.conditionLabel;
 
 const commerceModeLabel =
-  getProductCommerceModeLabel(product);
+  presentation.commerceModeLabel;
 
 const commerceModeDescription =
-  getProductCommerceModeDescription(product);
+  presentation.commerceModeDescription;
 
 const inventoryLabel =
-  getProductInventoryLabel(product);
+  presentation.inventoryLabel;
 
 const formattedPrice =
-  formatProductPrice(product);
+  presentation.formattedPrice;
 
 const directPurchaseEligible =
-  canPurchaseDirectly(product);
+  presentation.directPurchaseEligible;
 
-/*
- * Schema.org Offer uses ISO 4217 currency codes.
- * IRR represents Iranian Rial, so Toman content prices
- * must be multiplied by 10 only for structured data.
- */
 const structuredPrice =
-  product.data.price === undefined
-    ? null
-    : product.data.priceUnit === "toman"
-      ? product.data.price * 10
-      : product.data.price;
+  commerce.priceVisibility === "visible"
+    ? commerce.currentPriceRial
+    : null;
 
 const ctaLabel =
-  product.data.commerceMode === "direct-purchase"
+  commerce.commerceMode === "direct-purchase"
     ? "درخواست خرید این محصول"
-    : product.data.commerceMode === "price-inquiry"
+    : commerce.commerceMode === "price-inquiry"
       ? "استعلام قیمت این محصول"
       : "درخواست تأمین این قطعه";
 
 const commerceVariant =
-  product.data.commerceMode === "direct-purchase"
+  commerce.commerceMode === "direct-purchase"
     ? "success"
-    : product.data.commerceMode === "price-inquiry"
+    : commerce.commerceMode === "price-inquiry"
       ? "brand"
       : "warning";
 
@@ -173,13 +187,15 @@ const structuredProduct = {
           price: structuredPrice,
           priceCurrency: "IRR",
           availability:
-            product.data.stockQuantity > 0
+            commerce.available > 0
               ? "https://schema.org/InStock"
               : "https://schema.org/OutOfStock",
           itemCondition:
-            product.data.condition === "new"
+            commerce.condition === "new"
               ? "https://schema.org/NewCondition"
-              : "https://schema.org/UsedCondition",
+              : commerce.condition === "refurbished"
+                ? "https://schema.org/RefurbishedCondition"
+                : "https://schema.org/UsedCondition",
         },
       }
     : {}),
@@ -409,7 +425,7 @@ const breadcrumbStructuredData = {
                   directPurchaseEligible ? (
                     <AddToCartButton
                       productId={product.id}
-                      stockQuantity={product.data.stockQuantity}
+                      stockQuantity={commerce.available}
                       client:load
                     />
                   ) : (

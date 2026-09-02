@@ -8,7 +8,6 @@ import type {
 
 import {
   getProductCategoryTitle,
-  getProductConditionLabel,
   getProductHref,
 } from "../../lib/products";
 
@@ -86,7 +85,7 @@ const commerceVariant =
       </Badge>
 
       <Badge variant="neutral" size="sm">
-        {getProductConditionLabel(product)}
+        {presentation.conditionLabel}
       </Badge>
     </div>
 

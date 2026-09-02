@@ -201,12 +201,19 @@ const structuredData =
 
               <div class="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {
-                  products.map((product) => (
-                    <ProductCard
-                      product={product}
-                      commerce={commerceByContentId.get(product.id)!}
-                    />
-                  ))
+                  products.map((product) => {
+                    const commerce =
+                      commerceByContentId.get(
+                        product.id,
+                      );
+
+                    return commerce ? (
+                      <ProductCard
+                        product={product}
+                        commerce={commerce}
+                      />
+                    ) : null;
+                  })
                 }
               </div>
             </>

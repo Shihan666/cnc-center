@@ -10,7 +10,6 @@ import ProductCard from "../../components/product/ProductCard.astro";
 import { siteConfig } from "../../config/site";
 import {
   shopCategories,
-  type ShopCategory,
 } from "../../data/shopCategories";
 
 import {
@@ -22,35 +21,37 @@ import {
   getCommerceProductsByContentIds,
 } from "../../server/products/commerce-repository";
 
-export const prerender = true;
+export const prerender = false;
 
-export function getStaticPaths() {
-  return shopCategories.map((category) => ({
-    params: {
-      slug: category.slug,
-    },
+const categorySlug =
+  Astro.params.slug?.trim() ?? "";
 
-    props: {
-      category,
-    },
-  }));
+const category =
+  shopCategories.find(
+    (item) =>
+      item.slug === categorySlug,
+  );
+
+if (!category) {
+  return new Response(null, {
+    status: 404,
+  });
 }
-
-interface Props {
-  category: ShopCategory;
-}
-
-const { category } = Astro.props;
 
 const allProducts = await getCollection("products");
 
-const categoryProducts = getActiveProducts(allProducts).filter(
-  (product) => product.data.category === category.slug,
-);
+const contentCategoryProducts =
+  getActiveProducts(
+    allProducts,
+  ).filter(
+    (product) =>
+      product.data.category ===
+      category.slug,
+  );
 
 const commerceStates =
   await getCommerceProductsByContentIds(
-    categoryProducts.map(
+    contentCategoryProducts.map(
       (product) =>
         product.id,
     ),
@@ -64,6 +65,14 @@ const commerceByContentId =
         state,
       ],
     ),
+  );
+
+const categoryProducts =
+  contentCategoryProducts.filter(
+    (product) =>
+      commerceByContentId.get(
+        product.id,
+      )?.status === "active",
   );
 
 const siteUrl = siteConfig.seo.siteUrl.replace(/\/$/, "");
@@ -305,12 +314,19 @@ const structuredData = {
             categoryProducts.length > 0 ? (
               <div class="mt-7 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
                 {
-                  categoryProducts.map((product) => (
-                    <ProductCard
-  product={product}
-  commerce={commerceByContentId.get(product.id)!}
-/>
-                  ))
+                  categoryProducts.map((product) => {
+                    const commerce =
+                      commerceByContentId.get(
+                        product.id,
+                      );
+
+                    return commerce ? (
+                      <ProductCard
+                        product={product}
+                        commerce={commerce}
+                      />
+                    ) : null;
+                  })
                 }
               </div>
             ) : (
