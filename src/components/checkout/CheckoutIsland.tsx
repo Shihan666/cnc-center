@@ -666,10 +666,21 @@ export default function CheckoutIsland({
           در این مرحله هیچ پرداخت آنلاین انجام نشده است.
         </p>
 
-        <div className="mt-6">
+        <p className="mt-3 text-sm leading-7 text-muted">
+          برای پیگیری بعدی، شماره سفارش و شماره تماس ثبت‌شده را نگه دارید.
+        </p>
+
+        <div className="mt-6 flex flex-wrap gap-3">
+          <a
+            href="/orders/track/"
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+          >
+            پیگیری سفارش
+          </a>
+
           <a
             href="/products/buy/"
-            className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+            className="inline-flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-surface-raised px-5 py-3 text-sm font-semibold text-ink transition hover:bg-surface-soft"
           >
             ادامه خرید
           </a>
@@ -1000,7 +1011,7 @@ export default function CheckoutIsland({
           </button>
 
           <p className="mt-3 text-xs leading-6 text-muted">
-            این دکمه سفارش واقعی ثبت نمی‌کند و وارد درگاه پرداخت نمی‌شود.
+            این دکمه سفارش واقعی را ثبت می‌کند، اما وارد درگاه پرداخت نمی‌شود.
           </p>
         </div>
       </form>

@@ -1,0 +1,80 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import Badge from "../../../components/common/Badge.astro";
+import PublicOrderTrackingIsland from "../../../components/orders/PublicOrderTrackingIsland";
+
+import {
+  siteConfig,
+} from "../../../config/site";
+
+const siteUrl =
+  siteConfig.seo.siteUrl
+    .replace(/\/$/, "");
+
+const canonical =
+  `${siteUrl}/orders/track/`;
+---
+
+<BaseLayout
+  title={`پیگیری سفارش | ${siteConfig.brand.name}`}
+  description="پیگیری وضعیت سفارش CNC Center با شماره سفارش و شماره تماس ثبت‌شده."
+  canonical={canonical}
+  noindex={true}
+>
+  <main>
+    <section class="border-b border-line bg-surface-raised py-10 md:py-14">
+      <div class="site-container">
+        <nav
+          aria-label="مسیر صفحه"
+          class="mb-7 flex flex-wrap items-center gap-2 text-xs text-muted"
+        >
+          <a
+            href="/"
+            class="font-bold transition hover:text-brand-700"
+          >
+            خانه
+          </a>
+
+          <span aria-hidden="true">
+            /
+          </span>
+
+          <span>
+            پیگیری سفارش
+          </span>
+        </nav>
+
+        <div class="max-w-3xl">
+          <Badge
+            variant="brand"
+            size="sm"
+          >
+            پیگیری سفارش
+          </Badge>
+
+          <h1 class="mt-4 text-3xl font-black leading-tight text-ink md:text-4xl">
+            وضعیت سفارش خود را بررسی کنید
+          </h1>
+
+          <p class="mt-4 text-base leading-8 text-muted">
+            شماره سفارش و شماره تماس ثبت‌شده هنگام خرید را وارد کنید تا آخرین وضعیت سفارش نمایش داده شود.
+          </p>
+
+          <div class="mt-5 rounded-control border border-line bg-surface-soft px-4 py-3">
+            <p class="text-sm font-bold leading-7 text-muted">
+              برای حفظ حریم خصوصی مشتری، امکان پیگیری سفارش فقط با شماره سفارش وجود ندارد و شماره تماس ثبت‌شده نیز بررسی می‌شود.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-space bg-surface">
+      <div class="site-container">
+        <PublicOrderTrackingIsland
+          client:load
+        />
+      </div>
+    </section>
+  </main>
+</BaseLayout>
