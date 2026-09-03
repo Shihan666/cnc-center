@@ -1,12 +1,12 @@
 import {
   calculateLineTotalRial,
   isValidCartQuantity,
-} from "./commerce";
+} from "./commerce.ts";
 
 import {
   commerceConfig,
   type CommerceShippingClass,
-} from "../config/commerce";
+} from "../config/commerce.ts";
 
 export interface CartStorageItem {
   productId: string;

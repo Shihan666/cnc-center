@@ -1,4 +1,4 @@
-import type { ProductEntry } from "./products";
+import type { ProductEntry } from "./products.ts";
 
 import {
   commerceConfig,
@@ -7,7 +7,7 @@ import {
   type CommerceShippingClass,
   type ShippingMethodDefinition,
   type ShippingMethodId,
-} from "../config/commerce";
+} from "../config/commerce.ts";
 
 export type ProductShippingClass =
   ProductEntry["data"]["shippingClass"];

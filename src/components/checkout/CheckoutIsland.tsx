@@ -36,6 +36,23 @@ interface Props {
   catalog: readonly CartCatalogItem[];
 }
 
+interface CreatedOrderSummary {
+  orderNumber: string;
+  status: string;
+  createdAt: string;
+  reservationExpiresAt: string;
+}
+
+function isRecord(
+  value: unknown,
+): value is Record<string, unknown> {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    !Array.isArray(value)
+  );
+}
+
 function normalizeIranianDigits(
   value: string,
 ): string {
@@ -116,6 +133,14 @@ export default function CheckoutIsland({
 
   const [reviewReady, setReviewReady] =
     useState(false);
+
+  const [submitting, setSubmitting] =
+    useState(false);
+
+  const [createdOrder, setCreatedOrder] =
+    useState<CreatedOrderSummary | null>(
+      null,
+    );
 
   const markDirty =
     useCallback(() => {
@@ -319,6 +344,171 @@ export default function CheckoutIsland({
       : subtotalRial +
         shippingFeeRial;
 
+  async function createOrder() {
+    if (
+      submitting ||
+      !reviewReady ||
+      !shippingMethodId ||
+      !selectedShippingMethod
+    ) {
+      return;
+    }
+
+    setSubmitting(true);
+    setErrors([]);
+
+    try {
+      const response =
+        await fetch(
+          "/api/orders",
+          {
+            method:
+              "POST",
+
+            headers: {
+              "content-type":
+                "application/json",
+            },
+
+            credentials:
+              "same-origin",
+
+            body:
+              JSON.stringify({
+                items:
+                  lines.map(
+                    (line) => ({
+                      productId:
+                        line.id,
+
+                      quantity:
+                        line.quantity,
+                    }),
+                  ),
+
+                name:
+                  name.trim(),
+
+                phone:
+                  normalizeIranPhone(
+                    phone,
+                  ),
+
+                city:
+                  city.trim(),
+
+                address:
+                  selectedShippingMethod
+                    .requiresAddress
+                      ? address.trim()
+                      : "",
+
+                shippingMethodId,
+
+                notes:
+                  notes.trim(),
+              }),
+          },
+        );
+
+      const body: unknown =
+        await response.json();
+
+      if (
+        response.ok &&
+        isRecord(body) &&
+        body.ok === true &&
+        isRecord(body.order) &&
+        typeof body.order
+          .orderNumber === "string" &&
+        typeof body.order.status ===
+          "string" &&
+        typeof body.order.createdAt ===
+          "string" &&
+        typeof body.order
+          .reservationExpiresAt ===
+          "string"
+      ) {
+        const nextOrder:
+          CreatedOrderSummary = {
+            orderNumber:
+              body.order.orderNumber,
+
+            status:
+              body.order.status,
+
+            createdAt:
+              body.order.createdAt,
+
+            reservationExpiresAt:
+              body.order
+                .reservationExpiresAt,
+          };
+
+        window.localStorage.removeItem(
+          commerceConfig.cart.storageKey,
+        );
+
+        dispatchCartUpdatedEvent();
+
+        setCreatedOrder(
+          nextOrder,
+        );
+
+        setLines([]);
+        setReviewReady(false);
+
+        return;
+      }
+
+      if (
+        isRecord(body) &&
+        body.reason ===
+          "stock_unavailable"
+      ) {
+        setErrors([
+          "موجودی یکی از کالاها تغییر کرده است. سبد خرید را دوباره بررسی کنید.",
+        ]);
+        setReviewReady(false);
+        return;
+      }
+
+      if (
+        isRecord(body) &&
+        body.reason ===
+          "commerce_changed"
+      ) {
+        setErrors([
+          "قیمت یا شرایط فروش یکی از کالاها تغییر کرده است. سبد خرید را دوباره بررسی کنید.",
+        ]);
+        setReviewReady(false);
+        return;
+      }
+
+      if (
+        isRecord(body) &&
+        body.reason ===
+          "invalid_order"
+      ) {
+        setErrors([
+          "اطلاعات سفارش معتبر نیست. اطلاعات و سبد خرید را دوباره بررسی کنید.",
+        ]);
+        setReviewReady(false);
+        return;
+      }
+
+      setErrors([
+        "ثبت سفارش انجام نشد. لطفاً دوباره تلاش کنید.",
+      ]);
+    } catch {
+      setErrors([
+        "ارتباط با سرور برای ثبت سفارش برقرار نشد. لطفاً دوباره تلاش کنید.",
+      ]);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
   function handleSubmit(
     event:
       SyntheticEvent<HTMLFormElement>,
@@ -449,6 +639,42 @@ export default function CheckoutIsland({
           در حال خواندن و اعتبارسنجی سبد خرید...
         </p>
       </div>
+    );
+  }
+
+  if (createdOrder) {
+    return (
+      <section
+        id="checkout-order-success"
+        className="rounded-panel border border-green-200 bg-green-50 p-6 shadow-card md:p-10"
+        aria-live="polite"
+      >
+        <p className="text-sm font-bold text-signal">
+          سفارش با موفقیت ثبت شد
+        </p>
+
+        <h2 className="mt-3 text-2xl font-black text-ink">
+          شماره سفارش:
+          {" "}
+          <span dir="ltr">
+            {createdOrder.orderNumber}
+          </span>
+        </h2>
+
+        <p className="mt-4 text-sm leading-8 text-muted">
+          سفارش ثبت شده و موجودی کالا به‌صورت موقت رزرو شده است.
+          در این مرحله هیچ پرداخت آنلاین انجام نشده است.
+        </p>
+
+        <div className="mt-6">
+          <a
+            href="/products/buy/"
+            className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+          >
+            ادامه خرید
+          </a>
+        </div>
+      </section>
     );
   }
 
@@ -1021,13 +1247,33 @@ export default function CheckoutIsland({
 
             <div className="mt-6 rounded-control border border-warning-200 bg-warning-50 p-4">
               <p className="text-sm font-black text-warning-800">
-                هنوز سفارش یا پرداختی ثبت نشده است
+                اطلاعات را قبل از ثبت نهایی بررسی کنید
               </p>
 
               <p className="mt-2 text-xs leading-6 text-warning-800">
-                این بخش فقط پیش‌نمایش اطلاعات است. ایجاد سفارش واقعی،
-                شناسه سفارش و اتصال امن به درگاه پرداخت در مرحله سروری
-                بعدی انجام می‌شود.
+                با ثبت نهایی، سفارش واقعی ایجاد و موجودی کالا موقتاً رزرو می‌شود.
+                پرداخت آنلاین هنوز فعال نیست.
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <button
+                type="button"
+                onClick={() => {
+                  void createOrder();
+                }}
+                disabled={submitting}
+                className="inline-flex min-h-12 items-center justify-center rounded-control bg-brand-600 px-6 py-3.5 text-base font-semibold text-white shadow-sm transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {
+                  submitting
+                    ? "در حال ثبت سفارش..."
+                    : "ثبت نهایی سفارش"
+                }
+              </button>
+
+              <p className="mt-3 text-xs leading-6 text-muted">
+                ثبت سفارش به معنی پرداخت نیست.
               </p>
             </div>
           </section>

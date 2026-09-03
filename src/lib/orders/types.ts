@@ -2,7 +2,7 @@ import type {
   CanonicalCommerceCurrency,
   CommerceShippingClass,
   ShippingMethodId,
-} from "../../config/commerce";
+} from "../../config/commerce.ts";
 
 export interface CheckoutSubmissionItem {
   productId: string;

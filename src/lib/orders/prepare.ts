@@ -1,6 +1,6 @@
 import {
   commerceConfig,
-} from "../../config/commerce";
+} from "../../config/commerce.ts";
 
 import {
   calculateLineTotalRial,
@@ -8,11 +8,11 @@ import {
   getShippingFeeRial,
   getShippingMethod,
   requiresShippingQuote,
-} from "../commerce";
+} from "../commerce.ts";
 
 import type {
   CartCatalogItem,
-} from "../cart";
+} from "../cart.ts";
 
 import type {
   CheckoutSubmissionInput,
@@ -20,7 +20,7 @@ import type {
   PrepareOrderResult,
   PreparedOrderDraft,
   PreparedOrderLine,
-} from "./types";
+} from "./types.ts";
 
 export interface PrepareOrderOptions {
   /*
