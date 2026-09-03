@@ -549,3 +549,173 @@ test(
     );
   },
 );
+test(
+  'public checkout service expires stale reservations before evaluating storefront availability',
+  async () => {
+    const contentId =
+      `b14-service-expiry-${randomUUID()}`;
+
+    const product =
+      await createProductWithStock({
+        contentId,
+
+        stock:
+          1,
+      });
+
+    const firstCreatedAt =
+      new Date(
+        '2026-09-03T18:00:00.000Z',
+      );
+
+    const firstOrder =
+      await createPublicCheckoutOrder({
+        submission:
+          createSubmission(
+            contentId,
+            1,
+          ),
+
+        createdAt:
+          firstCreatedAt,
+      });
+
+    assert.equal(
+      firstOrder.status,
+      'created',
+    );
+
+    ownedOrderIds.add(
+      firstOrder.orderId,
+    );
+
+    const [inventoryAfterFirst] =
+      await migrationSql`
+        select
+          on_hand,
+          reserved
+        from inventory
+        where product_id =
+          ${product.id}
+      `;
+
+    assert.equal(
+      inventoryAfterFirst.on_hand,
+      1,
+    );
+
+    assert.equal(
+      inventoryAfterFirst.reserved,
+      1,
+    );
+
+    const secondCreatedAt =
+      new Date(
+        firstOrder
+          .reservationExpiresAt
+          .getTime() +
+        1_000,
+      );
+
+    const secondOrder =
+      await createPublicCheckoutOrder({
+        submission:
+          createSubmission(
+            contentId,
+            1,
+          ),
+
+        createdAt:
+          secondCreatedAt,
+      });
+
+    assert.equal(
+      secondOrder.status,
+      'created',
+    );
+
+    ownedOrderIds.add(
+      secondOrder.orderId,
+    );
+
+    const [firstOrderRow] =
+      await migrationSql`
+        select status
+        from orders
+        where id =
+          ${firstOrder.orderId}
+      `;
+
+    assert.equal(
+      firstOrderRow.status,
+      'expired',
+    );
+
+    const [firstReservationRow] =
+      await migrationSql`
+        select
+          status,
+          released_at
+        from inventory_reservations
+        where order_id =
+          ${firstOrder.orderId}
+      `;
+
+    assert.equal(
+      firstReservationRow.status,
+      'expired',
+    );
+
+    assert.equal(
+      firstReservationRow.released_at
+        .getTime(),
+      secondCreatedAt.getTime(),
+    );
+
+    const [secondOrderRow] =
+      await migrationSql`
+        select status
+        from orders
+        where id =
+          ${secondOrder.orderId}
+      `;
+
+    assert.equal(
+      secondOrderRow.status,
+      'pending',
+    );
+
+    const [secondReservationRow] =
+      await migrationSql`
+        select status
+        from inventory_reservations
+        where order_id =
+          ${secondOrder.orderId}
+      `;
+
+    assert.equal(
+      secondReservationRow.status,
+      'active',
+    );
+
+    const [inventoryAfterSecond] =
+      await migrationSql`
+        select
+          on_hand,
+          reserved
+        from inventory
+        where product_id =
+          ${product.id}
+      `;
+
+    assert.equal(
+      inventoryAfterSecond.on_hand,
+      1,
+    );
+
+    assert.equal(
+      inventoryAfterSecond.reserved,
+      1,
+    );
+  },
+);

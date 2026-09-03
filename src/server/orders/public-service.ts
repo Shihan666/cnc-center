@@ -33,6 +33,10 @@ import {
   createPublicPendingOrder,
 } from './public-repository.ts';
 
+import {
+  expireDueOrderReservations,
+} from './reservation-repository.ts';
+
 export const PUBLIC_ORDER_RESERVATION_TTL_MS =
   30 * 60 * 1000;
 
@@ -152,6 +156,14 @@ export async function createPublicCheckoutOrder(
       'Public checkout creation time must be a valid Date.',
     );
   }
+
+  await expireDueOrderReservations({
+    expiredAt:
+      input.createdAt,
+
+    limit:
+      500,
+  });
 
   const requestedContentIds =
     getRequestedContentIds(
