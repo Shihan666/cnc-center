@@ -4,23 +4,170 @@ import Badge from "../../../components/common/Badge.astro";
 import Card from "../../../components/common/Card.astro";
 import EmptyState from "../../../components/common/EmptyState.astro";
 
-const customerFilters = [
-  {
-    key: "all",
-    label: "همه",
-    enabled: false,
-  },
-  {
-    key: "has-orders",
-    label: "دارای سفارش",
-    enabled: false,
-  },
-  {
-    key: "new",
-    label: "مشتری جدید",
-    enabled: false,
-  },
-] as const;
+type AdminCustomer = {
+  customerPhone: string;
+  customerName: string;
+  customerCity: string;
+  orderCount: number;
+  latestOrderId: string;
+  latestOrderNumber: string;
+  latestOrderAt: string;
+};
+
+type AdminCustomersResponse = {
+  ok: boolean;
+
+  query?: {
+    q: string;
+    page: number;
+    pageSize: number;
+  };
+
+  customers?: AdminCustomer[];
+
+  pagination?: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+};
+
+const apiUrl =
+  new URL(
+    "/api/admin/customers",
+    Astro.request.url,
+  );
+
+for (
+  const key of [
+    "q",
+    "page",
+    "pageSize",
+  ] as const
+) {
+  const value =
+    Astro.url.searchParams.get(
+      key,
+    );
+
+  if (value !== null) {
+    apiUrl.searchParams.set(
+      key,
+      value,
+    );
+  }
+}
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        cookie:
+          Astro.request.headers.get(
+            "cookie",
+          ) ?? "",
+      },
+    },
+  );
+
+let data:
+  AdminCustomersResponse |
+  null =
+  null;
+
+try {
+  data =
+    await response.json();
+} catch {
+  data =
+    null;
+}
+
+const hasCustomersError =
+  !response.ok ||
+  data?.ok !== true;
+
+const customers:
+  AdminCustomer[] =
+  !hasCustomersError
+    ? data?.customers ?? []
+    : [];
+
+const query =
+  !hasCustomersError
+    ? data?.query ?? null
+    : null;
+
+const pagination =
+  !hasCustomersError
+    ? data?.pagination ?? null
+    : null;
+
+function createPageUrl(
+  page: number,
+): string {
+  const params =
+    new URLSearchParams();
+
+  if (query?.q) {
+    params.set(
+      "q",
+      query.q,
+    );
+  }
+
+  if (
+    query?.pageSize !==
+    undefined
+  ) {
+    params.set(
+      "pageSize",
+      String(
+        query.pageSize,
+      ),
+    );
+  }
+
+  params.set(
+    "page",
+    String(page),
+  );
+
+  return `/admin/customers?${params.toString()}`;
+}
+
+if (
+  pagination &&
+  pagination.totalPages > 0 &&
+  pagination.page >
+    pagination.totalPages
+) {
+  return Astro.redirect(
+    createPageUrl(
+      pagination.totalPages,
+    ),
+  );
+}
+
+const previousPageUrl =
+  pagination &&
+  pagination.page > 1
+    ? createPageUrl(
+        pagination.page - 1,
+      )
+    : null;
+
+const nextPageUrl =
+  pagination &&
+  pagination.totalPages > 0 &&
+  pagination.page <
+    pagination.totalPages
+    ? createPageUrl(
+        pagination.page + 1,
+      )
+    : null;
 ---
 
 <AdminLayout title="مشتریان">
@@ -38,72 +185,67 @@ const customerFilters = [
             مشتریان
           </h2>
 
-          <Badge
-            variant="neutral"
-            size="sm"
-          >
-            در انتظار اتصال داده
-          </Badge>
+          {
+            !hasCustomersError &&
+              pagination && (
+                <Badge
+                  variant="neutral"
+                  size="sm"
+                >
+                  {pagination.total.toLocaleString("fa-IR")} مشتری
+                </Badge>
+              )
+          }
         </div>
 
         <p class="mt-1 text-sm leading-6 text-muted">
-          این فهرست بعداً از سفارش‌های واقعی و با تجمیع شماره تماس مشتریان ساخته می‌شود.
+          فهرست مشتریان بر اساس سفارش‌های ثبت‌شده و با تجمیع شماره تماس ساخته می‌شود.
         </p>
       </div>
     </section>
 
-    <section
-      class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]"
-      aria-labelledby="customers-search-title"
-    >
-      <div>
-        <label
-          id="customers-search-title"
-          for="customers-search"
-          class="mb-2 block text-sm font-semibold text-ink"
+    <section>
+      <Card
+        as="div"
+        padding="md"
+        class="shadow-none"
+      >
+        <form
+          method="get"
+          action="/admin/customers"
+          class="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto]"
         >
-          جستجو
-        </label>
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-ink">
+              جستجو
+            </span>
 
-        <input
-          id="customers-search"
-          name="q"
-          type="search"
-          placeholder="جستجوی مشتریان پس از اتصال داده فعال می‌شود"
-          disabled
-          aria-disabled="true"
-          title="ابتدا read model مشتریان باید به سفارش‌های واقعی متصل شود."
-          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
-        />
-      </div>
+            <input
+              type="search"
+              name="q"
+              value={query?.q ?? ""}
+              placeholder="نام، تلفن، شهر یا شماره آخرین سفارش"
+              class="h-11 w-full rounded-xl border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-brand"
+            />
+          </label>
 
-      <div class="lg:self-end">
-        <p class="mb-2 text-sm font-semibold text-ink">
-          فیلتر
-        </p>
+          <div class="flex items-end gap-2">
+            <button
+              type="submit"
+              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-bold text-white transition hover:opacity-90"
+            >
+              جستجو
+            </button>
 
-        <div
-          class="flex flex-wrap gap-2"
-          aria-label="فیلتر مشتریان"
-        >
-          {
-            customerFilters.map((filter) => (
-              <button
-                type="button"
-                disabled={!filter.enabled}
-                class:list={[
-                  "min-h-11 rounded-control border px-3.5 text-sm font-semibold",
-                  filter.enabled
-                    ? "border-brand-200 bg-brand-50 text-brand-800"
-                    : "cursor-not-allowed border-line bg-surface-soft text-muted opacity-70",
-                ]}
-              >
-                {filter.label}
-              </button>
-            ))
-          }
-        </div>
-      </div>
+            <a
+              href="/admin/customers"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+            >
+              پاک کردن
+            </a>
+          </div>
+        </form>
+      </Card>
     </section>
 
     <section
@@ -118,7 +260,7 @@ const customerFilters = [
       </h2>
 
       <p class="mt-1 text-xs leading-6 text-muted">
-        مشتری فعلاً پروفایل مستقل ندارد؛ اطلاعات این صفحه از سفارش‌ها استخراج می‌شود و شماره تماس مبنای تجمیع خواهد بود.
+        مشتری فعلاً پروفایل مستقل ندارد؛ اطلاعات این صفحه از سفارش‌ها استخراج می‌شود و شماره تماس مبنای تجمیع است.
       </p>
     </section>
 
@@ -132,7 +274,7 @@ const customerFilters = [
         </h2>
 
         <p class="mt-1 text-sm leading-6 text-muted">
-          پس از آماده‌شدن read model مدیریت مشتریان، اطلاعات واقعی در این جدول نمایش داده می‌شوند.
+          نام و شهر از جدیدترین سفارش هر شماره تماس نمایش داده می‌شوند.
         </p>
       </div>
 
@@ -141,28 +283,174 @@ const customerFilters = [
         padding="none"
         class="overflow-hidden shadow-none"
       >
-        <div
-          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
-        >
-          <div
-            class="grid grid-cols-[minmax(12rem,1fr)_11rem_8rem_11rem_6rem] gap-4 text-xs font-bold text-muted"
-          >
-            <span>مشتری</span>
-            <span>شماره تماس</span>
-            <span>تعداد سفارش</span>
-            <span>آخرین سفارش</span>
-            <span>عملیات</span>
-          </div>
-        </div>
+        {
+          hasCustomersError ? (
+            <div
+              class="p-5"
+              role="alert"
+            >
+              <EmptyState
+                title="دریافت مشتریان انجام نشد"
+                description="ارتباط با سرور یا دریافت اطلاعات مشتریان با مشکل روبه‌رو شد. دوباره تلاش کنید."
+                compact
+              />
 
-        <div class="p-4 md:p-5">
-          <EmptyState
-            title="هنوز مشتری‌ای برای نمایش نداریم"
-            description="بعد از اتصال Customers به سفارش‌های واقعی، مشتریان تجمیع‌شده در این بخش نمایش داده می‌شوند."
-            compact
-          />
-        </div>
+              <div class="mt-4 flex justify-center">
+                <a
+                  href={Astro.url.pathname + Astro.url.search}
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+                >
+                  تلاش مجدد
+                </a>
+              </div>
+            </div>
+          ) : customers.length === 0 ? (
+            <div class="p-5">
+              <EmptyState
+                title="مشتری‌ای برای نمایش وجود ندارد"
+                description={
+                  query?.q
+                    ? "مشتری منطبق با عبارت جستجو پیدا نشد."
+                    : "هنوز سفارشی وجود ندارد که از آن مشتری استخراج شود."
+                }
+                compact
+              />
+            </div>
+          ) : (
+            <div>
+              <div class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block">
+                <div class="grid grid-cols-[minmax(12rem,1fr)_11rem_8rem_minmax(12rem,1fr)_6rem] gap-4 text-xs font-bold text-muted">
+                  <span>مشتری</span>
+                  <span>شماره تماس</span>
+                  <span>تعداد سفارش</span>
+                  <span>آخرین سفارش</span>
+                  <span>عملیات</span>
+                </div>
+              </div>
+
+              <div class="divide-y divide-line">
+                {
+                  customers.map(
+                    (
+                      customer:
+                        AdminCustomer,
+                    ) => (
+                      <div class="grid gap-3 px-5 py-4 md:grid-cols-[minmax(12rem,1fr)_11rem_8rem_minmax(12rem,1fr)_6rem] md:items-center">
+                        <span class="min-w-0 text-sm text-muted">
+                          <span class="block truncate font-bold text-ink">
+                            {customer.customerName}
+                          </span>
+
+                          <span class="block truncate">
+                            {customer.customerCity}
+                          </span>
+                        </span>
+
+                        <span
+                          class="text-sm text-ink"
+                          dir="ltr"
+                        >
+                          {customer.customerPhone}
+                        </span>
+
+                        <span class="text-sm font-bold text-ink">
+                          {
+                            customer.orderCount.toLocaleString(
+                              "fa-IR",
+                            )
+                          }
+                        </span>
+
+                        <span class="min-w-0 text-sm text-muted">
+                          <span class="block truncate font-bold text-ink">
+                            {customer.latestOrderNumber}
+                          </span>
+
+                          <time
+                            datetime={customer.latestOrderAt}
+                            class="mt-1 block"
+                          >
+                            {
+                              new Date(
+                                customer.latestOrderAt,
+                              ).toLocaleDateString(
+                                "fa-IR",
+                              )
+                            }
+                          </time>
+                        </span>
+
+                        <a
+                          href={`/admin/orders/${customer.latestOrderId}`}
+                          class="text-sm font-bold text-brand"
+                        >
+                          مشاهده
+                        </a>
+                      </div>
+                    ),
+                  )
+                }
+              </div>
+            </div>
+          )
+        }
       </Card>
     </section>
+
+    {
+      pagination &&
+      pagination.total > 0 && (
+        <section class="flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            صفحه {pagination.page} از {pagination.totalPages}
+            {" — "}
+            مجموع {pagination.total.toLocaleString("fa-IR")} مشتری
+          </p>
+
+          <nav
+            aria-label="صفحه‌بندی مشتریان"
+            class="flex items-center gap-2"
+          >
+            {
+              previousPageUrl ? (
+                <a
+                  href={previousPageUrl}
+                  rel="prev"
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 font-bold text-ink transition hover:bg-surface"
+                >
+                  صفحه قبل
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  class="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-line px-4 font-bold text-muted opacity-50"
+                >
+                  صفحه قبل
+                </span>
+              )
+            }
+
+            {
+              nextPageUrl ? (
+                <a
+                  href={nextPageUrl}
+                  rel="next"
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 font-bold text-ink transition hover:bg-surface"
+                >
+                  صفحه بعد
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  class="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-line px-4 font-bold text-muted opacity-50"
+                >
+                  صفحه بعد
+                </span>
+              )
+            }
+          </nav>
+        </section>
+      )
+    }
   </div>
 </AdminLayout>
