@@ -8,6 +8,10 @@ import {
   verifyZarinPalPayment,
 } from "./providers/zarinpal.ts";
 
+import {
+  consumePaidOrderReservations,
+} from "../orders/reservation-repository.ts";
+
 export interface VerifyPaymentInput {
   orderId: string;
   authority: string;
@@ -41,10 +45,21 @@ export async function verifyPayment(
     result.success &&
     result.refId
   ) {
-    return markPaymentPaid(
-      payment.id,
-      result.refId,
-    );
+    const paidPayment =
+      await markPaymentPaid(
+        payment.id,
+        result.refId,
+      );
+
+    await consumePaidOrderReservations({
+      orderId:
+        input.orderId,
+
+      consumedAt:
+        new Date(),
+    });
+
+    return paidPayment;
   }
 
   return markPaymentFailed(
@@ -52,3 +67,4 @@ export async function verifyPayment(
     "Payment verification failed.",
   );
 }
+
