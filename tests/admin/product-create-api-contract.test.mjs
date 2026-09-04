@@ -48,11 +48,6 @@ test(
 
     assert.match(
       api,
-      /status:\s*201/,
-    );
-
-    assert.match(
-      api,
       /ok:\s*true/,
     );
 
@@ -68,17 +63,22 @@ test(
 
     assert.match(
       api,
-      /status:\s*409/,
+      /,\s*201,\s*\)/,
     );
 
     assert.match(
       api,
-      /status:\s*400/,
+      /,\s*409,\s*\)/,
     );
 
     assert.match(
       api,
-      /status:\s*401/,
+      /,\s*400,\s*\)/,
+    );
+
+    assert.match(
+      api,
+      /,\s*401,\s*\)/,
     );
   },
 );
