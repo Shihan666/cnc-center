@@ -329,6 +329,64 @@ const nextStatus =
           ) : null
         }
 
+        {
+          order && order.refunds.length > 0 ? (
+            <div
+              class="flex flex-wrap gap-2"
+              data-refund-actions-root
+            >
+              {
+                order.refunds
+                  .filter(
+                    (refund) =>
+                      refund.status === "requested" ||
+                      refund.status === "processing",
+                  )
+                  .map((refund) => (
+                    <div
+                      class="flex flex-wrap gap-2"
+                      data-refund-id={refund.id}
+                    >
+                      {
+                        refund.status === "requested" && (
+                          <button
+                            type="button"
+                            data-refund-process
+                            class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90"
+                          >
+                            شروع بازپرداخت
+                          </button>
+                        )
+                      }
+
+                      {
+                        refund.status === "processing" && (
+                          <>
+                            <button
+                              type="button"
+                              data-refund-complete
+                              class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90"
+                            >
+                              تکمیل بازپرداخت
+                            </button>
+
+                            <button
+                              type="button"
+                              data-refund-fail
+                              class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+                            >
+                              شکست بازپرداخت
+                            </button>
+                          </>
+                        )
+                      }
+                    </div>
+                  ))
+              }
+            </div>
+          ) : null
+        }
+
         <Button
           href="/admin/orders"
           variant="secondary"
@@ -1083,7 +1141,139 @@ const nextStatus =
       },
     );
   }
+
+  const refundRoots =
+    document.querySelectorAll(
+      "[data-refund-actions-root]",
+    );
+
+  for (const root of refundRoots) {
+    if (!(root instanceof HTMLElement)) {
+      continue;
+    }
+
+    const refundIdRoot =
+      root.querySelector(
+        "[data-refund-id]",
+      );
+
+    if (!(refundIdRoot instanceof HTMLElement)) {
+      continue;
+    }
+
+    const refundId =
+      refundIdRoot.dataset.refundId ?? "";
+
+    if (!refundId) {
+      continue;
+    }
+
+    const actions =
+      [
+        {
+          selector:
+            "[data-refund-process]",
+          endpoint:
+            "process",
+        },
+        {
+          selector:
+            "[data-refund-complete]",
+          endpoint:
+            "complete",
+        },
+        {
+          selector:
+            "[data-refund-fail]",
+          endpoint:
+            "fail",
+        },
+      ];
+
+    for (const action of actions) {
+      const button =
+        root.querySelector(
+          action.selector,
+        );
+
+      if (!(button instanceof HTMLButtonElement)) {
+        continue;
+      }
+
+      button.addEventListener(
+        "click",
+        async () => {
+          if (button.disabled) {
+            return;
+          }
+
+          button.disabled = true;
+
+          try {
+            const response =
+              await fetch(
+                `/api/admin/refunds/${encodeURIComponent(refundId)}/${action.endpoint}`,
+                {
+                  method:
+                    "POST",
+
+                  credentials:
+                    "same-origin",
+                },
+              );
+
+            let body:
+              Record<string, unknown> | null =
+              null;
+
+            try {
+              const value: unknown =
+                await response.json();
+
+              if (
+                typeof value === "object" &&
+                value !== null &&
+                !Array.isArray(value)
+              ) {
+                body =
+                  value as Record<string, unknown>;
+              }
+            } catch {
+              body = null;
+            }
+
+            if (
+              !response.ok ||
+              body?.ok !== true
+            ) {
+              if (
+                response.status === 401 ||
+                body?.reason === "invalid_session"
+              ) {
+                window.location.replace(
+                  "/admin/auth/login",
+                );
+
+                return;
+              }
+
+              button.disabled = false;
+
+              return;
+            }
+
+            window.location.reload();
+
+          } catch {
+            button.disabled = false;
+          }
+        },
+      );
+    }
+  }
 </script>
+
+
 
 
 
