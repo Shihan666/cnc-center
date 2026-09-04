@@ -38,24 +38,32 @@ export const GET: APIRoute =
         ),
       );
 
+    const resultUrl =
+      new URL(
+        "/payment/result",
+        url.origin,
+      );
+
     if (
       !authority ||
       !orderId ||
       status !== "OK"
     ) {
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          reason:
-            "payment_cancelled",
-        }),
-        {
-          status: 400,
-          headers: {
-            "content-type":
-              "application/json",
-          },
-        },
+      resultUrl.searchParams.set(
+        "verified",
+        "false",
+      );
+
+      if (orderId) {
+        resultUrl.searchParams.set(
+          "orderId",
+          orderId,
+        );
+      }
+
+      return Response.redirect(
+        resultUrl,
+        302,
       );
     }
 
@@ -69,35 +77,45 @@ export const GET: APIRoute =
           amountRial,
         });
 
-      return new Response(
-        JSON.stringify({
-          ok: true,
+      resultUrl.searchParams.set(
+        "verified",
+        "true",
+      );
 
-          payment,
-        }),
-        {
-          status: 200,
-          headers: {
-            "content-type":
-              "application/json",
-          },
-        },
+      resultUrl.searchParams.set(
+        "orderId",
+        orderId,
+      );
+
+      if (
+        payment?.refId
+      ) {
+        resultUrl.searchParams.set(
+          "refId",
+          payment.refId,
+        );
+      }
+
+      return Response.redirect(
+        resultUrl,
+        302,
       );
 
     } catch {
-      return new Response(
-        JSON.stringify({
-          ok: false,
-          reason:
-            "verification_failed",
-        }),
-        {
-          status: 500,
-          headers: {
-            "content-type":
-              "application/json",
-          },
-        },
+      resultUrl.searchParams.set(
+        "verified",
+        "false",
+      );
+
+      resultUrl.searchParams.set(
+        "orderId",
+        orderId,
+      );
+
+      return Response.redirect(
+        resultUrl,
+        302,
       );
     }
   };
+

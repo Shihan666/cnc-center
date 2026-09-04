@@ -3,7 +3,7 @@ import { test } from "node:test";
 import fs from "node:fs/promises";
 
 test(
-  "zarinpal verify route redirects to payment result",
+  "zarinpal verify route redirects with verified result",
   async () => {
 
     const route =
@@ -39,17 +39,17 @@ test(
 
     assert.match(
       route,
-      /status/,
+      /verified/,
     );
 
     assert.match(
       route,
-      /success/,
+      /"true"/,
     );
 
     assert.match(
       route,
-      /failed/,
+      /"false"/,
     );
 
   },
