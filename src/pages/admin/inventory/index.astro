@@ -1,9 +1,73 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import Badge from "../../../components/common/Badge.astro";
-import Button from "../../../components/common/Button.astro";
 import Card from "../../../components/common/Card.astro";
 import EmptyState from "../../../components/common/EmptyState.astro";
+
+type InventoryStatus =
+  | "all"
+  | "in-stock"
+  | "out-of-stock";
+
+type AdminInventoryItem = {
+  productId: string;
+  productName: string;
+  brand: string;
+  partNumber: string;
+  sku: string | null;
+  onHand: number;
+  reserved: number;
+  available: number;
+  inventoryUpdatedAt: string | null;
+};
+
+type InventoryMovementType =
+  | "initial"
+  | "adjustment"
+  | "purchase"
+  | "sale"
+  | "return"
+  | "damage"
+  | "reservation_release";
+
+type AdminInventoryMovement = {
+  id: string;
+  productId: string;
+  productName: string;
+  partNumber: string;
+  type: InventoryMovementType;
+  quantityDelta: number;
+  referenceType: string | null;
+  referenceId: string | null;
+  note: string | null;
+  createdAt: string;
+};
+
+type AdminInventoryResponse = {
+  ok: boolean;
+
+  query?: {
+    q: string;
+    inventoryStatus: InventoryStatus;
+    page: number;
+    pageSize: number;
+  };
+
+  inventory?: AdminInventoryItem[];
+
+  movements?: AdminInventoryMovement[];
+
+  summary?: {
+    outOfStock: number;
+  };
+
+  pagination?: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
+};
 
 const inventoryFilters = [
   {
@@ -20,16 +84,198 @@ const inventoryFilters = [
   },
 ] as const;
 
-const movementTypes = [
-  {
-    value: "in",
-    label: "ورود",
-  },
-  {
-    value: "out",
-    label: "خروج",
-  },
-] as const;
+const movementLabels:
+  Record<
+    InventoryMovementType,
+    string
+  > = {
+    initial: "موجودی اولیه",
+    adjustment: "اصلاح موجودی",
+    purchase: "خرید",
+    sale: "فروش",
+    return: "مرجوعی",
+    damage: "آسیب",
+    reservation_release: "آزادسازی رزرو",
+  };
+
+const apiUrl =
+  new URL(
+    "/api/admin/inventory",
+    Astro.request.url,
+  );
+
+for (
+  const key of [
+    "q",
+    "inventoryStatus",
+    "page",
+    "pageSize",
+  ] as const
+) {
+  const value =
+    Astro.url.searchParams.get(
+      key,
+    );
+
+  if (value !== null) {
+    apiUrl.searchParams.set(
+      key,
+      value,
+    );
+  }
+}
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        cookie:
+          Astro.request.headers.get(
+            "cookie",
+          ) ?? "",
+      },
+    },
+  );
+
+let data:
+  AdminInventoryResponse |
+  null =
+  null;
+
+try {
+  data =
+    await response.json();
+} catch {
+  data =
+    null;
+}
+
+const hasInventoryError =
+  !response.ok ||
+  data?.ok !== true;
+
+const inventory:
+  AdminInventoryItem[] =
+  !hasInventoryError
+    ? data?.inventory ?? []
+    : [];
+
+const movements:
+  AdminInventoryMovement[] =
+  !hasInventoryError
+    ? data?.movements ?? []
+    : [];
+
+const summary =
+  !hasInventoryError
+    ? data?.summary ?? null
+    : null;
+
+const query =
+  !hasInventoryError
+    ? data?.query ?? null
+    : null;
+
+const pagination =
+  !hasInventoryError
+    ? data?.pagination ?? null
+    : null;
+
+function createPageUrl(
+  page: number,
+): string {
+  const params =
+    new URLSearchParams();
+
+  if (query?.q) {
+    params.set(
+      "q",
+      query.q,
+    );
+  }
+
+  if (
+    query?.inventoryStatus &&
+    query.inventoryStatus !== "all"
+  ) {
+    params.set(
+      "inventoryStatus",
+      query.inventoryStatus,
+    );
+  }
+
+  if (
+    query?.pageSize !==
+    undefined
+  ) {
+    params.set(
+      "pageSize",
+      String(
+        query.pageSize,
+      ),
+    );
+  }
+
+  params.set(
+    "page",
+    String(page),
+  );
+
+  return `/admin/inventory?${params.toString()}`;
+}
+
+if (
+  pagination &&
+  pagination.totalPages > 0 &&
+  pagination.page >
+    pagination.totalPages
+) {
+  return Astro.redirect(
+    createPageUrl(
+      pagination.totalPages,
+    ),
+  );
+}
+
+const previousPageUrl =
+  pagination &&
+  pagination.page > 1
+    ? createPageUrl(
+        pagination.page - 1,
+      )
+    : null;
+
+const nextPageUrl =
+  pagination &&
+  pagination.totalPages > 0 &&
+  pagination.page <
+    pagination.totalPages
+    ? createPageUrl(
+        pagination.page + 1,
+      )
+    : null;
+
+function movementDescription(
+  movement: AdminInventoryMovement,
+): string {
+  if (movement.note) {
+    return movement.note;
+  }
+
+  if (
+    movement.referenceType &&
+    movement.referenceId
+  ) {
+    return `${movement.referenceType}: ${movement.referenceId}`;
+  }
+
+  if (movement.referenceType) {
+    return movement.referenceType;
+  }
+
+  return "—";
+}
 ---
 
 <AdminLayout title="موجودی">
@@ -38,78 +284,111 @@ const movementTypes = [
       class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between"
       aria-labelledby="inventory-heading"
     >
-      <div class="max-w-xl">
-        <h2
-          id="inventory-heading"
-          class="text-lg font-black text-ink"
-        >
-          مدیریت موجودی
-        </h2>
+      <div class="max-w-2xl">
+        <div class="flex flex-wrap items-center gap-3">
+          <h2
+            id="inventory-heading"
+            class="text-lg font-black text-ink"
+          >
+            مدیریت موجودی
+          </h2>
+
+          {
+            !hasInventoryError &&
+              pagination && (
+                <Badge
+                  variant="neutral"
+                  size="sm"
+                >
+                  {pagination.total.toLocaleString("fa-IR")} نتیجه
+                </Badge>
+              )
+          }
+        </div>
 
         <p class="mt-1 text-sm leading-6 text-muted">
           موجودی فیزیکی، مقدار رزروشده و سابقه تغییرات کالاها را بررسی کنید.
         </p>
       </div>
 
-      <Button
-        type="button"
-        variant="primary"
-        disabled
+      <a
+        href="/admin/products"
+        class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-bold text-white transition hover:opacity-90"
       >
-        تغییر موجودی
-      </Button>
+        انتخاب محصول برای تغییر موجودی
+      </a>
     </section>
 
-    <section
-      class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem]"
-      aria-labelledby="inventory-search-title"
-    >
-      <div>
-        <label
-          id="inventory-search-title"
-          for="inventory-search"
-          class="mb-2 block text-sm font-semibold text-ink"
+    <section>
+      <Card
+        as="div"
+        padding="md"
+        class="shadow-none"
+      >
+        <form
+          method="get"
+          action="/admin/inventory"
+          class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_16rem_auto]"
         >
-          جستجو
-        </label>
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-ink">
+              جستجو
+            </span>
 
-        <input
-          id="inventory-search"
-          name="q"
-          type="search"
-          placeholder="جستجوی موجودی پس از اتصال داده فعال می‌شود"
-          disabled
-          aria-disabled="true"
-          title="جستجوی موجودی پس از اتصال داده‌های واقعی فعال می‌شود."
-          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
-        />
-      </div>
+            <input
+              type="search"
+              name="q"
+              value={query?.q ?? ""}
+              placeholder="نام محصول، برند، کد یا SKU"
+              class="h-11 w-full rounded-xl border border-line bg-white px-4 text-sm text-ink outline-none transition focus:border-brand"
+            />
+          </label>
 
-      <div>
-        <label
-          for="inventory-status"
-          class="mb-2 block text-sm font-semibold text-ink"
-        >
-          وضعیت موجودی
-        </label>
+          <label class="grid gap-2">
+            <span class="text-sm font-bold text-ink">
+              وضعیت موجودی
+            </span>
 
-        <select
-          id="inventory-status"
-          name="inventoryStatus"
-          disabled
-          aria-disabled="true"
-          title="فیلتر موجودی پس از اتصال داده‌های واقعی فعال می‌شود."
-          class="min-h-11 w-full cursor-not-allowed rounded-control border border-line-strong bg-surface-soft px-3.5 text-sm text-muted opacity-70"
-        >
-          {
-            inventoryFilters.map((filter) => (
-              <option value={filter.value}>
-                {filter.label}
-              </option>
-            ))
-          }
-        </select>
-      </div>
+            <select
+              name="inventoryStatus"
+              class="h-11 w-full rounded-xl border border-line bg-white px-3.5 text-sm text-ink outline-none transition focus:border-brand"
+            >
+              {
+                inventoryFilters.map(
+                  (filter) => (
+                    <option
+                      value={filter.value}
+                      selected={
+                        (query?.inventoryStatus ??
+                          "all") ===
+                        filter.value
+                      }
+                    >
+                      {filter.label}
+                    </option>
+                  ),
+                )
+              }
+            </select>
+          </label>
+
+          <div class="flex items-end gap-2">
+            <button
+              type="submit"
+              class="inline-flex h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-bold text-white transition hover:opacity-90"
+            >
+              اعمال
+            </button>
+
+            <a
+              href="/admin/inventory"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+            >
+              پاک کردن
+            </a>
+          </div>
+        </form>
+      </Card>
     </section>
 
     <section aria-labelledby="inventory-summary-title">
@@ -121,12 +400,17 @@ const movementTypes = [
           وضعیت سریع
         </h2>
 
-        <Badge
-          variant="neutral"
-          size="sm"
-        >
-          در انتظار اتصال داده
-        </Badge>
+        {
+          !hasInventoryError &&
+            summary && (
+              <Badge
+                variant="neutral"
+                size="sm"
+              >
+                داده زنده
+              </Badge>
+            )
+        }
       </div>
 
       <div class="grid gap-3 xl:max-w-md">
@@ -150,12 +434,16 @@ const movementTypes = [
               variant="danger"
               size="sm"
             >
-              —
+              {
+                summary
+                  ? summary.outOfStock.toLocaleString(
+                      "fa-IR",
+                    )
+                  : "—"
+              }
             </Badge>
           </div>
         </Card>
-
-
       </div>
     </section>
 
@@ -169,7 +457,7 @@ const movementTypes = [
         </h2>
 
         <p class="mt-1 text-sm leading-6 text-muted">
-          اطلاعات واقعی Inventory پس از اتصال backend در این جدول نمایش داده می‌شوند.
+          موجودی فیزیکی و رزروشده مستقیماً از داده‌های authoritative انبار نمایش داده می‌شوند.
         </p>
       </div>
 
@@ -178,31 +466,188 @@ const movementTypes = [
         padding="none"
         class="overflow-hidden shadow-none"
       >
-        <div
-          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
-        >
-          <div
-            class="grid grid-cols-[minmax(10rem,1fr)_6rem_7rem_6rem_6rem_6rem_4rem] gap-3 text-xs font-bold text-muted"
-          >
-            <span>محصول</span>
-            <span>برند</span>
-            <span>کد / مدل</span>
-            <span>موجودی فیزیکی</span>
-            <span>رزروشده</span>
-            <span>وضعیت</span>
-            <span>عملیات</span>
-          </div>
-        </div>
+        {
+          hasInventoryError ? (
+            <div
+              class="p-5"
+              role="alert"
+            >
+              <EmptyState
+                title="دریافت موجودی انجام نشد"
+                description="ارتباط با سرور یا دریافت اطلاعات موجودی با مشکل روبه‌رو شد. دوباره تلاش کنید."
+                compact
+              />
 
-        <div class="p-4 md:p-5">
-          <EmptyState
-            title="هنوز اطلاعات موجودی برای نمایش نداریم"
-            description="پس از اتصال بخش مدیریت موجودی به داده واقعی، وضعیت هر محصول در این جدول نمایش داده می‌شود."
-            compact
-          />
-        </div>
+              <div class="mt-4 flex justify-center">
+                <a
+                  href={Astro.url.pathname + Astro.url.search}
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+                >
+                  تلاش مجدد
+                </a>
+              </div>
+            </div>
+          ) : inventory.length === 0 ? (
+            <div class="p-5">
+              <EmptyState
+                title="محصولی برای نمایش وجود ندارد"
+                description={
+                  query?.q ||
+                  query?.inventoryStatus !==
+                    "all"
+                    ? "محصولی مطابق جستجو یا فیلتر موجودی پیدا نشد."
+                    : "هنوز محصولی برای نمایش در موجودی ثبت نشده است."
+                }
+                compact
+              />
+            </div>
+          ) : (
+            <div>
+              <div class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block">
+                <div class="grid grid-cols-[minmax(12rem,1fr)_7rem_8rem_7rem_7rem_7rem_6rem] gap-3 text-xs font-bold text-muted">
+                  <span>محصول</span>
+                  <span>برند</span>
+                  <span>کد / مدل</span>
+                  <span>فیزیکی</span>
+                  <span>رزروشده</span>
+                  <span>وضعیت</span>
+                  <span>عملیات</span>
+                </div>
+              </div>
+
+              <div class="divide-y divide-line">
+                {
+                  inventory.map(
+                    (
+                      item:
+                        AdminInventoryItem,
+                    ) => (
+                      <div class="grid gap-3 px-5 py-4 md:grid-cols-[minmax(12rem,1fr)_7rem_8rem_7rem_7rem_7rem_6rem] md:items-center">
+                        <span class="min-w-0 text-sm text-muted">
+                          <span class="block truncate font-bold text-ink">
+                            {item.productName}
+                          </span>
+
+                          {
+                            item.sku && (
+                              <span
+                                class="block truncate"
+                                dir="ltr"
+                              >
+                                {item.sku}
+                              </span>
+                            )
+                          }
+                        </span>
+
+                        <span class="truncate text-sm text-ink">
+                          {item.brand}
+                        </span>
+
+                        <span
+                          class="truncate text-sm text-ink"
+                          dir="ltr"
+                        >
+                          {item.partNumber}
+                        </span>
+
+                        <span class="text-sm font-bold text-ink">
+                          {item.onHand.toLocaleString("fa-IR")}
+                        </span>
+
+                        <span class="text-sm text-ink">
+                          {item.reserved.toLocaleString("fa-IR")}
+                        </span>
+
+                        <span>
+                          <Badge
+                            variant={
+                              item.onHand > 0
+                                ? "success"
+                                : "danger"
+                            }
+                            size="sm"
+                          >
+                            {
+                              item.onHand > 0
+                                ? `موجود · ${item.available.toLocaleString("fa-IR")} آزاد`
+                                : "ناموجود"
+                            }
+                          </Badge>
+                        </span>
+
+                        <a
+                          href={`/admin/products/${item.productId}`}
+                          class="text-sm font-bold text-brand"
+                        >
+                          مدیریت
+                        </a>
+                      </div>
+                    ),
+                  )
+                }
+              </div>
+            </div>
+          )
+        }
       </Card>
     </section>
+
+    {
+      pagination &&
+      pagination.total > 0 && (
+        <section class="flex flex-col gap-3 text-sm text-muted sm:flex-row sm:items-center sm:justify-between">
+          <p>
+            صفحه {pagination.page} از {pagination.totalPages}
+            {" — "}
+            مجموع {pagination.total.toLocaleString("fa-IR")} نتیجه
+          </p>
+
+          <nav
+            aria-label="صفحه‌بندی موجودی"
+            class="flex items-center gap-2"
+          >
+            {
+              previousPageUrl ? (
+                <a
+                  href={previousPageUrl}
+                  rel="prev"
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 font-bold text-ink transition hover:bg-surface"
+                >
+                  صفحه قبل
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  class="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-line px-4 font-bold text-muted opacity-50"
+                >
+                  صفحه قبل
+                </span>
+              )
+            }
+
+            {
+              nextPageUrl ? (
+                <a
+                  href={nextPageUrl}
+                  rel="next"
+                  class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 font-bold text-ink transition hover:bg-surface"
+                >
+                  صفحه بعد
+                </a>
+              ) : (
+                <span
+                  aria-disabled="true"
+                  class="inline-flex h-10 cursor-not-allowed items-center justify-center rounded-xl border border-line px-4 font-bold text-muted opacity-50"
+                >
+                  صفحه بعد
+                </span>
+              )
+            }
+          </nav>
+        </section>
+      )
+    }
 
     <section aria-labelledby="inventory-history-title">
       <div class="mb-4">
@@ -214,7 +659,7 @@ const movementTypes = [
         </h2>
 
         <p class="mt-1 text-sm leading-6 text-muted">
-          تاریخچه واقعی تغییر موجودی بر اساس Inventory Movements نمایش داده خواهد شد.
+          ۲۵ تغییر اخیر موجودی از Inventory Movements نمایش داده می‌شود.
         </p>
       </div>
 
@@ -223,38 +668,106 @@ const movementTypes = [
         padding="none"
         class="overflow-hidden shadow-none"
       >
-        <div
-          class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block"
-        >
-          <div
-            class="grid grid-cols-[8rem_minmax(12rem,1fr)_8rem_10rem_8rem] gap-4 text-xs font-bold text-muted"
-          >
-            <span>زمان</span>
-            <span>محصول</span>
-            <span>تغییر</span>
-            <span>نوع عملیات</span>
-            <span>توضیح</span>
-          </div>
-        </div>
-
-        <div class="p-4 md:p-5">
-          <EmptyState
-            title="سابقه‌ای برای نمایش نداریم"
-            description="پس از اتصال backend، تغییرات واقعی موجودی در این بخش ثبت و نمایش داده می‌شوند."
-            compact
-          />
-        </div>
-      </Card>
-
-      <div class="sr-only" aria-hidden="true">
         {
-          movementTypes.map((movement) => (
-            <span data-movement-type={movement.value}>
-              {movement.label}
-            </span>
-          ))
+          hasInventoryError ? (
+            <div class="p-5">
+              <EmptyState
+                title="دریافت سابقه تغییرات انجام نشد"
+                description="سابقه موجودی همراه با اطلاعات صفحه دریافت نشد."
+                compact
+              />
+            </div>
+          ) : movements.length === 0 ? (
+            <div class="p-5">
+              <EmptyState
+                title="سابقه‌ای برای نمایش نداریم"
+                description="هنوز تغییری در موجودی محصولات ثبت نشده است."
+                compact
+              />
+            </div>
+          ) : (
+            <div>
+              <div class="hidden border-b border-line bg-surface-soft px-5 py-3 md:block">
+                <div class="grid grid-cols-[9rem_minmax(12rem,1fr)_7rem_10rem_minmax(10rem,1fr)] gap-4 text-xs font-bold text-muted">
+                  <span>زمان</span>
+                  <span>محصول</span>
+                  <span>تغییر</span>
+                  <span>نوع عملیات</span>
+                  <span>توضیح</span>
+                </div>
+              </div>
+
+              <div class="divide-y divide-line">
+                {
+                  movements.map(
+                    (
+                      movement:
+                        AdminInventoryMovement,
+                    ) => (
+                      <div class="grid gap-3 px-5 py-4 md:grid-cols-[9rem_minmax(12rem,1fr)_7rem_10rem_minmax(10rem,1fr)] md:items-center">
+                        <time
+                          datetime={movement.createdAt}
+                          class="text-sm text-muted"
+                        >
+                          {
+                            new Date(
+                              movement.createdAt,
+                            ).toLocaleString(
+                              "fa-IR",
+                            )
+                          }
+                        </time>
+
+                        <span class="min-w-0 text-sm text-muted">
+                          <a
+                            href={`/admin/products/${movement.productId}`}
+                            class="block truncate font-bold text-brand"
+                          >
+                            {movement.productName}
+                          </a>
+
+                          <span
+                            class="block truncate"
+                            dir="ltr"
+                          >
+                            {movement.partNumber}
+                          </span>
+                        </span>
+
+                        <span
+                          class:list={[
+                            "text-sm font-black",
+                            movement.quantityDelta > 0
+                              ? "text-success"
+                              : movement.quantityDelta < 0
+                                ? "text-danger"
+                                : "text-muted",
+                          ]}
+                          dir="ltr"
+                        >
+                          {
+                            movement.quantityDelta > 0
+                              ? `+${movement.quantityDelta}`
+                              : movement.quantityDelta
+                          }
+                        </span>
+
+                        <span class="text-sm font-bold text-ink">
+                          {movementLabels[movement.type]}
+                        </span>
+
+                        <span class="truncate text-sm text-muted">
+                          {movementDescription(movement)}
+                        </span>
+                      </div>
+                    ),
+                  )
+                }
+              </div>
+            </div>
+          )
         }
-      </div>
+      </Card>
     </section>
   </div>
 </AdminLayout>
