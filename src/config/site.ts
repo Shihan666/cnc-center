@@ -3,7 +3,7 @@ const developmentSiteUrl =
 
 function resolveSiteUrl() {
   const configuredSiteUrl =
-    import.meta.env.PUBLIC_SITE_URL?.trim();
+    import.meta.env?.PUBLIC_SITE_URL?.trim();
 
   if (!configuredSiteUrl) {
     return developmentSiteUrl;
