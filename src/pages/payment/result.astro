@@ -3,14 +3,14 @@ const params =
   new URL(Astro.request.url)
     .searchParams;
 
-const status =
-  params.get("status");
-
 const orderId =
   params.get("orderId");
 
 const refId =
   params.get("refId");
+
+const verified =
+  params.get("verified") === "true";
 ---
 
 <html lang="fa" dir="rtl">
@@ -20,37 +20,49 @@ const refId =
 
   <body>
     <main>
-      {status === "success" ? (
-        <>
-          <h1>پرداخت موفق بود</h1>
 
-          <p>
-            سفارش شما ثبت شد.
-          </p>
+      {
+        verified ? (
+          <>
+            <h1>
+              پرداخت موفق بود
+            </h1>
 
-          {orderId && (
             <p>
-              شماره سفارش:
-              {orderId}
+              سفارش شما ثبت شد.
             </p>
-          )}
 
-          {refId && (
+            {
+              orderId && (
+                <p>
+                  شماره سفارش:
+                  {orderId}
+                </p>
+              )
+            }
+
+            {
+              refId && (
+                <p>
+                  کد پیگیری:
+                  {refId}
+                </p>
+              )
+            }
+          </>
+        ) : (
+          <>
+            <h1>
+              پرداخت ناموفق بود
+            </h1>
+
             <p>
-              کد پیگیری:
-              {refId}
+              پرداخت تایید نشد.
             </p>
-          )}
-        </>
-      ) : (
-        <>
-          <h1>پرداخت ناموفق بود</h1>
+          </>
+        )
+      }
 
-          <p>
-            پرداخت تکمیل نشد.
-          </p>
-        </>
-      )}
     </main>
   </body>
 </html>
