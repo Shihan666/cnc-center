@@ -13,6 +13,10 @@ import {
   createOrderStatusHistory,
 } from "../orders/status-history-repository.ts";
 
+import {
+  withDatabaseTransaction,
+} from "../db/client.ts";
+
 
 export async function requestRefund(
   input: {
@@ -104,43 +108,49 @@ export async function completeRefund(
   refundId: string,
 ) {
 
-  const refund =
-    await updateRefundStatus(
-      refundId,
-      "completed",
-    );
+  return withDatabaseTransaction(
+    async () => {
+
+      const refund =
+        await updateRefundStatus(
+          refundId,
+          "completed",
+        );
 
 
-  if (refund?.paymentId) {
-    await markPaymentRefunded(
-      refund.paymentId,
-    );
-  }
+      if (refund?.paymentId) {
+        await markPaymentRefunded(
+          refund.paymentId,
+        );
+      }
 
 
-  if (refund?.orderId) {
-    await createOrderStatusHistory(
-      {
-        orderId:
-          refund.orderId,
+      if (refund?.orderId) {
+        await createOrderStatusHistory(
+          {
+            orderId:
+              refund.orderId,
 
-        status:
-          "cancelled",
+            status:
+              "cancelled",
 
-        referenceType:
-          "refund",
+            referenceType:
+              "refund",
 
-        referenceId:
-          refund.id,
+            referenceId:
+              refund.id,
 
-        note:
-          "refund_completed",
-      },
-    );
-  }
+            note:
+              "refund_completed",
+          },
+        );
+      }
 
 
-  return refund;
+      return refund;
+
+    },
+  );
 
 }
 
@@ -155,6 +165,7 @@ export async function failRefund(
   );
 
 }
+
 
 
 

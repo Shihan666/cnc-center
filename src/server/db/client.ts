@@ -1,4 +1,4 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
+﻿import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
 import * as schema from './schema.ts';
@@ -58,4 +58,24 @@ export async function closeDatabase() {
     undefined;
 
   await currentState.client.end();
+}
+
+
+export async function withDatabaseTransaction<T>(
+  callback: (
+    transaction: Parameters<
+      Parameters<
+        ReturnType<
+          typeof getDatabase
+        >["transaction"]
+      >[0]
+    >[0],
+  ) => Promise<T>,
+) {
+  const database =
+    getDatabase();
+
+  return database.transaction(
+    callback,
+  );
 }
