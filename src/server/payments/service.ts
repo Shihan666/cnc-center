@@ -1,21 +1,56 @@
-﻿import type {
-  CreatePaymentRequestInput,
-  PaymentRequestResult,
-  VerifyPaymentResult,
-} from "./types.ts";
+﻿import {
+  createPaymentRecord,
+  updatePaymentAuthority,
+} from "./repository.ts";
 
-export async function createPaymentRequest(
-  input: CreatePaymentRequestInput,
-): Promise<PaymentRequestResult> {
-  throw new Error(
-    "Payment provider is not configured.",
-  );
+import {
+  createZarinPalRequest,
+} from "./providers/zarinpal.ts";
+
+export interface StartPaymentInput {
+  orderId: string;
+  amountRial: number;
+  callbackUrl: string;
+  description: string;
 }
 
-export async function verifyPayment(
-  paymentId: string,
-): Promise<VerifyPaymentResult> {
-  throw new Error(
-    "Payment provider is not configured.",
+export async function startPayment(
+  input: StartPaymentInput,
+) {
+  const payment =
+    await createPaymentRecord({
+      orderId:
+        input.orderId,
+
+      provider:
+        "zarinpal",
+
+      environment:
+        process.env.ZARINPAL_SANDBOX === "true"
+          ? "sandbox"
+          : "production",
+
+      amountRial:
+        input.amountRial,
+    });
+
+  const request =
+    await createZarinPalRequest({
+      amountRial:
+        input.amountRial,
+
+      callbackUrl:
+        input.callbackUrl,
+
+      description:
+        input.description,
+
+      orderId:
+        input.orderId,
+    });
+
+  return updatePaymentAuthority(
+    payment.id,
+    request.authority,
   );
 }
