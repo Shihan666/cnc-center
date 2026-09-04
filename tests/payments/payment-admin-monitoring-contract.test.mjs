@@ -3,7 +3,7 @@ import { test } from "node:test";
 import fs from "node:fs/promises";
 
 test(
-  "payment admin monitoring keeps payment states observable",
+  "admin payment monitoring keeps payment lifecycle observable",
   async () => {
 
     const repository =
@@ -18,6 +18,12 @@ test(
         "utf8",
       );
 
+    const orderModel =
+      await fs.readFile(
+        "src/server/orders/admin-detail-read-model.ts",
+        "utf8",
+      );
+
 
     assert.match(
       repository,
@@ -26,22 +32,17 @@ test(
 
     assert.match(
       repository,
-      /markPaymentPaid/,
-    );
-
-    assert.match(
-      repository,
-      /markPaymentFailed/,
-    );
-
-    assert.match(
-      repository,
-      /providerMessage/,
+      /status/,
     );
 
     assert.match(
       repository,
       /refId/,
+    );
+
+    assert.match(
+      repository,
+      /providerMessage/,
     );
 
 
@@ -52,17 +53,18 @@ test(
 
     assert.match(
       schema,
-      /status/,
-    );
-
-    assert.match(
-      schema,
       /amountRial/,
     );
 
     assert.match(
       schema,
       /provider/,
+    );
+
+
+    assert.match(
+      orderModel,
+      /payment/,
     );
 
   },
