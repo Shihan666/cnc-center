@@ -11,8 +11,8 @@ import {
 } from '../../../../server/auth/http.ts';
 
 import {
-  getAdminOrderById,
-} from '../../../../server/orders/repository.ts';
+  getAdminOrderDetailSnapshot,
+} from '../../../../server/orders/admin-detail-read-model.ts';
 
 async function handleOrderDetail(
   context: Parameters<APIRoute>[0],
@@ -37,7 +37,7 @@ async function handleOrderDetail(
     context.params.id ?? '';
 
   const order =
-    await getAdminOrderById(
+    await getAdminOrderDetailSnapshot(
       orderId,
     );
 
