@@ -12,6 +12,10 @@ import {
   consumePaidOrderReservations,
 } from "../orders/reservation-repository.ts";
 
+import {
+  markOrderPaidAfterPayment,
+} from "../orders/repository.ts";
+
 export interface VerifyPaymentInput {
   orderId: string;
   authority: string;
@@ -51,6 +55,10 @@ export async function verifyPayment(
         result.refId,
       );
 
+    await markOrderPaidAfterPayment(
+      input.orderId,
+    );
+
     await consumePaidOrderReservations({
       orderId:
         input.orderId,
@@ -67,4 +75,5 @@ export async function verifyPayment(
     "Payment verification failed.",
   );
 }
+
 
