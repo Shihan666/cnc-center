@@ -1,4 +1,4 @@
-import {
+﻿import {
   relations,
   sql,
 } from 'drizzle-orm';
@@ -131,6 +131,18 @@ export const paymentEnvironmentEnum =
     [
       'sandbox',
       'production',
+    ],
+  );
+
+
+export const refundStatusEnum =
+  pgEnum(
+    'refund_status',
+    [
+      'requested',
+      'processing',
+      'completed',
+      'failed',
     ],
   );
 
@@ -2042,6 +2054,83 @@ export const adminAuthThrottles =
 
 /*
 |--------------------------------------------------------------------------
+
+/* 
+| Refunds
+*/
+
+export const refunds =
+  pgTable(
+    'refunds',
+    {
+      id:
+        uuid('id')
+          .defaultRandom()
+          .primaryKey(),
+
+      orderId:
+        uuid('order_id')
+          .notNull()
+          .references(
+            () => orders.id,
+          ),
+
+      paymentId:
+        uuid('payment_id')
+          .notNull()
+          .references(
+            () => payments.id,
+          ),
+
+      amountRial:
+        bigint(
+          'amount_rial',
+          {
+            mode: 'number',
+          },
+        )
+          .notNull(),
+
+      status:
+        refundStatusEnum(
+          'status',
+        )
+          .notNull()
+          .default(
+            'requested',
+          ),
+
+      reason:
+        text('reason'),
+
+      provider:
+        text('provider'),
+
+      providerRefId:
+        text('provider_ref_id'),
+
+      createdAt:
+        timestamp(
+          'created_at',
+          {
+            withTimezone: true,
+          },
+        )
+          .notNull()
+          .defaultNow(),
+
+      completedAt:
+        timestamp(
+          'completed_at',
+          {
+            withTimezone: true,
+          },
+        ),
+    },
+  );
+
+
+/*
 | Relations
 |--------------------------------------------------------------------------
 */
@@ -2269,6 +2358,44 @@ export const orderStatusHistoryRelations =
         ),
     }),
   );
+
+export const refundsRelations =
+  relations(
+    refunds,
+    ({
+      one,
+    }) => ({
+      order:
+        one(
+          orders,
+          {
+            fields: [
+              refunds.orderId,
+            ],
+
+            references: [
+              orders.id,
+            ],
+          },
+        ),
+
+      payment:
+        one(
+          payments,
+          {
+            fields: [
+              refunds.paymentId,
+            ],
+
+            references: [
+              payments.id,
+            ],
+          },
+        ),
+    }),
+  );
+
+
 export const adminsRelations =
   relations(
     admins,
@@ -2370,3 +2497,7 @@ export const adminRecoveryCodesRelations =
         ),
     }),
   );
+
+
+
+
