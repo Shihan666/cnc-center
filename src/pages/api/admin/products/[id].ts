@@ -19,9 +19,12 @@ import {
 } from '../../../../server/products/admin-model.ts';
 
 import {
-  getAdminProductById,
   updateAdminProduct,
 } from '../../../../server/products/repository.ts';
+
+import {
+  getAdminProductDetailSnapshot,
+} from '../../../../server/products/admin-detail-read-model.ts';
 
 async function handleProductDetail(
   context: Parameters<APIRoute>[0],
@@ -46,7 +49,7 @@ async function handleProductDetail(
     context.params.id ?? '';
 
   const product =
-    await getAdminProductById(
+    await getAdminProductDetailSnapshot(
       productId,
     );
 
