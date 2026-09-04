@@ -15,8 +15,8 @@ import {
 } from '../../../../server/orders/read-model.ts';
 
 import {
-  listAdminOrders,
-} from '../../../../server/orders/repository.ts';
+  getAdminOrdersSnapshot,
+} from '../../../../server/orders/admin-read-model.ts';
 
 async function handleOrdersList(
   context: Parameters<APIRoute>[0],
@@ -43,7 +43,7 @@ async function handleOrdersList(
     );
 
   const result =
-    await listAdminOrders(
+    await getAdminOrdersSnapshot(
       query,
     );
 
