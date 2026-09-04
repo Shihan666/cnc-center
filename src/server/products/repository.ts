@@ -32,6 +32,11 @@ import {
   isAdminProductId,
 } from './admin-model.ts';
 
+import {
+  createAdminProductsSnapshot,
+  type AdminProductSnapshotItem,
+} from './read-model.ts';
+
 export interface AdminProductListItem {
   id: string;
   contentId: string;
@@ -189,6 +194,27 @@ export async function listAdminProducts():
           onHand - reserved,
       } as AdminProductListItem;
     },
+  );
+}
+
+export async function getAdminProductsSnapshot():
+  Promise<AdminProductSnapshotItem[]> {
+  const products =
+    await listAdminProducts();
+
+  return createAdminProductsSnapshot(
+    products.map(
+      (product) => ({
+        ...product,
+
+        createdAt:
+          product.createdAt.toISOString(),
+
+        updatedAt:
+          product.updatedAt.toISOString(),
+
+      }),
+    ),
   );
 }
 

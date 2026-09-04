@@ -20,7 +20,7 @@ import {
 
 import {
   createAdminProduct,
-  listAdminProducts,
+  getAdminProductsSnapshot,
 } from '../../../../server/products/repository.ts';
 
 async function handleProductsList(
@@ -43,7 +43,7 @@ async function handleProductsList(
   }
 
   const products =
-    await listAdminProducts();
+    await getAdminProductsSnapshot();
 
   return createAdminAuthJsonResponse(
     {
