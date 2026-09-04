@@ -1,4 +1,4 @@
-import {
+﻿import {
   type SyntheticEvent,
   useCallback,
   useEffect,
@@ -56,16 +56,16 @@ function isRecord(
 function normalizeIranianDigits(
   value: string,
 ): string {
-  const persianDigits = "۰۱۲۳۴۵۶۷۸۹";
-  const arabicDigits = "٠١٢٣٤٥٦٧٨٩";
+  const persianDigits = "Û°Û±Û²Û³Û´ÛµÛ¶Û·Û¸Û¹";
+  const arabicDigits = "Ù Ù¡Ù¢Ù£Ù¤Ù¥Ù¦Ù§Ù¨Ù©";
 
   return value
-    .replace(/[۰-۹]/g, (digit) =>
+    .replace(/[Û°-Û¹]/g, (digit) =>
       String(
         persianDigits.indexOf(digit),
       ),
     )
-    .replace(/[٠-٩]/g, (digit) =>
+    .replace(/[Ù -Ù©]/g, (digit) =>
       String(
         arabicDigits.indexOf(digit),
       ),
@@ -455,6 +455,57 @@ export default function CheckoutIsland({
           nextOrder,
         );
 
+        const paymentResponse =
+          await fetch(
+            "/api/orders/payment-start",
+            {
+              method:
+                "POST",
+
+              headers: {
+                "content-type":
+                  "application/json",
+              },
+
+              credentials:
+                "same-origin",
+
+              body:
+                JSON.stringify({
+                  orderId:
+                    body.order.id,
+
+                  amountRial:
+                    finalTotalRial,
+
+                  callbackUrl:
+                    `${window.location.origin}/api/payments/zarinpal/`,
+
+                  description:
+                    "CNC Center Order Payment",
+                }),
+            },
+          );
+
+        const paymentBody =
+          await paymentResponse.json();
+
+        if (
+          paymentResponse.ok &&
+          isRecord(paymentBody) &&
+          isRecord(paymentBody.payment) &&
+          typeof paymentBody.payment.paymentUrl === "string"
+        ) {
+          window.location.href =
+            paymentBody.payment.paymentUrl;
+
+          return;
+        }
+
+        setErrors([
+          "شروع پرداخت ناموفق بود.",
+        ]);
+
         setLines([]);
         setReviewReady(false);
 
@@ -467,7 +518,7 @@ export default function CheckoutIsland({
           "stock_unavailable"
       ) {
         setErrors([
-          "موجودی یکی از کالاها تغییر کرده است. سبد خرید را دوباره بررسی کنید.",
+          "Ù…ÙˆØ¬ÙˆØ¯ÛŒ ÛŒÚ©ÛŒ Ø§Ø² Ú©Ø§Ù„Ø§Ù‡Ø§ ØªØºÛŒÛŒØ± Ú©Ø±Ø¯Ù‡ Ø§Ø³Øª. Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯ Ø±Ø§ Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯.",
         ]);
         setReviewReady(false);
         return;
@@ -479,7 +530,7 @@ export default function CheckoutIsland({
           "commerce_changed"
       ) {
         setErrors([
-          "قیمت یا شرایط فروش یکی از کالاها تغییر کرده است. سبد خرید را دوباره بررسی کنید.",
+          "Ù‚ÛŒÙ…Øª ÛŒØ§ Ø´Ø±Ø§ÛŒØ· ÙØ±ÙˆØ´ ÛŒÚ©ÛŒ Ø§Ø² Ú©Ø§Ù„Ø§Ù‡Ø§ ØªØºÛŒÛŒØ± Ú©Ø±Ø¯Ù‡ Ø§Ø³Øª. Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯ Ø±Ø§ Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯.",
         ]);
         setReviewReady(false);
         return;
@@ -491,18 +542,18 @@ export default function CheckoutIsland({
           "invalid_order"
       ) {
         setErrors([
-          "اطلاعات سفارش معتبر نیست. اطلاعات و سبد خرید را دوباره بررسی کنید.",
+          "Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø³ÙØ§Ø±Ø´ Ù…Ø¹ØªØ¨Ø± Ù†ÛŒØ³Øª. Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ùˆ Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯ Ø±Ø§ Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯.",
         ]);
         setReviewReady(false);
         return;
       }
 
       setErrors([
-        "ثبت سفارش انجام نشد. لطفاً دوباره تلاش کنید.",
+        "Ø«Ø¨Øª Ø³ÙØ§Ø±Ø´ Ø§Ù†Ø¬Ø§Ù… Ù†Ø´Ø¯. Ù„Ø·ÙØ§Ù‹ Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯.",
       ]);
     } catch {
       setErrors([
-        "ارتباط با سرور برای ثبت سفارش برقرار نشد. لطفاً دوباره تلاش کنید.",
+        "Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ø³Ø±ÙˆØ± Ø¨Ø±Ø§ÛŒ Ø«Ø¨Øª Ø³ÙØ§Ø±Ø´ Ø¨Ø±Ù‚Ø±Ø§Ø± Ù†Ø´Ø¯. Ù„Ø·ÙØ§Ù‹ Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯.",
       ]);
     } finally {
       setSubmitting(false);
@@ -520,7 +571,7 @@ export default function CheckoutIsland({
 
     if (lines.length === 0) {
       nextErrors.push(
-        "سبد خرید خالی است یا اقلام آن دیگر قابل خرید نیستند.",
+        "Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯ Ø®Ø§Ù„ÛŒ Ø§Ø³Øª ÛŒØ§ Ø§Ù‚Ù„Ø§Ù… Ø¢Ù† Ø¯ÛŒÚ¯Ø± Ù‚Ø§Ø¨Ù„ Ø®Ø±ÛŒØ¯ Ù†ÛŒØ³ØªÙ†Ø¯.",
       );
     }
 
@@ -530,7 +581,7 @@ export default function CheckoutIsland({
       name.trim().length < 2
     ) {
       nextErrors.push(
-        "نام و نام خانوادگی را وارد کنید.",
+        "Ù†Ø§Ù… Ùˆ Ù†Ø§Ù… Ø®Ø§Ù†ÙˆØ§Ø¯Ú¯ÛŒ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯.",
       );
     }
 
@@ -540,7 +591,7 @@ export default function CheckoutIsland({
       !isValidIranPhone(phone)
     ) {
       nextErrors.push(
-        "شماره تماس معتبر وارد کنید؛ مانند 09121234567.",
+        "Ø´Ù…Ø§Ø±Ù‡ ØªÙ…Ø§Ø³ Ù…Ø¹ØªØ¨Ø± ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯Ø› Ù…Ø§Ù†Ù†Ø¯ 09121234567.",
       );
     }
 
@@ -550,7 +601,7 @@ export default function CheckoutIsland({
       city.trim().length < 2
     ) {
       nextErrors.push(
-        "شهر مقصد را وارد کنید.",
+        "Ø´Ù‡Ø± Ù…Ù‚ØµØ¯ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯.",
       );
     }
 
@@ -560,7 +611,7 @@ export default function CheckoutIsland({
       !shippingMethodId
     ) {
       nextErrors.push(
-        "یک روش ارسال انتخاب کنید.",
+        "ÛŒÚ© Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„ Ø§Ù†ØªØ®Ø§Ø¨ Ú©Ù†ÛŒØ¯.",
       );
     }
 
@@ -573,7 +624,7 @@ export default function CheckoutIsland({
       )
     ) {
       nextErrors.push(
-        "روش ارسال انتخاب‌شده برای این سبد یا شهر مقصد قابل استفاده نیست.",
+        "Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„ Ø§Ù†ØªØ®Ø§Ø¨â€ŒØ´Ø¯Ù‡ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø³Ø¨Ø¯ ÛŒØ§ Ø´Ù‡Ø± Ù…Ù‚ØµØ¯ Ù‚Ø§Ø¨Ù„ Ø§Ø³ØªÙØ§Ø¯Ù‡ Ù†ÛŒØ³Øª.",
       );
     }
 
@@ -583,7 +634,7 @@ export default function CheckoutIsland({
       address.trim().length < 8
     ) {
       nextErrors.push(
-        "برای روش ارسال انتخاب‌شده، آدرس کامل‌تری وارد کنید.",
+        "Ø¨Ø±Ø§ÛŒ Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„ Ø§Ù†ØªØ®Ø§Ø¨â€ŒØ´Ø¯Ù‡ØŒ Ø¢Ø¯Ø±Ø³ Ú©Ø§Ù…Ù„â€ŒØªØ±ÛŒ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯.",
       );
     }
 
@@ -591,7 +642,7 @@ export default function CheckoutIsland({
       notes.trim().length > 1000
     ) {
       nextErrors.push(
-        "توضیحات سفارش نباید بیشتر از ۱۰۰۰ کاراکتر باشد.",
+        "ØªÙˆØ¶ÛŒØ­Ø§Øª Ø³ÙØ§Ø±Ø´ Ù†Ø¨Ø§ÛŒØ¯ Ø¨ÛŒØ´ØªØ± Ø§Ø² Û±Û°Û°Û° Ú©Ø§Ø±Ø§Ú©ØªØ± Ø¨Ø§Ø´Ø¯.",
       );
     }
 
@@ -636,7 +687,7 @@ export default function CheckoutIsland({
     return (
       <div className="rounded-panel border border-line bg-surface-raised p-8 text-center shadow-card">
         <p className="text-sm font-bold text-muted">
-          در حال خواندن و اعتبارسنجی سبد خرید...
+          Ø¯Ø± Ø­Ø§Ù„ Ø®ÙˆØ§Ù†Ø¯Ù† Ùˆ Ø§Ø¹ØªØ¨Ø§Ø±Ø³Ù†Ø¬ÛŒ Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯...
         </p>
       </div>
     );
@@ -650,11 +701,11 @@ export default function CheckoutIsland({
         aria-live="polite"
       >
         <p className="text-sm font-bold text-signal">
-          سفارش با موفقیت ثبت شد
+          Ø³ÙØ§Ø±Ø´ Ø¨Ø§ Ù…ÙˆÙÙ‚ÛŒØª Ø«Ø¨Øª Ø´Ø¯
         </p>
 
         <h2 className="mt-3 text-2xl font-black text-ink">
-          شماره سفارش:
+          Ø´Ù…Ø§Ø±Ù‡ Ø³ÙØ§Ø±Ø´:
           {" "}
           <span dir="ltr">
             {createdOrder.orderNumber}
@@ -662,12 +713,12 @@ export default function CheckoutIsland({
         </h2>
 
         <p className="mt-4 text-sm leading-8 text-muted">
-          سفارش ثبت شده و موجودی کالا به‌صورت موقت رزرو شده است.
-          در این مرحله هیچ پرداخت آنلاین انجام نشده است.
+          Ø³ÙØ§Ø±Ø´ Ø«Ø¨Øª Ø´Ø¯Ù‡ Ùˆ Ù…ÙˆØ¬ÙˆØ¯ÛŒ Ú©Ø§Ù„Ø§ Ø¨Ù‡â€ŒØµÙˆØ±Øª Ù…ÙˆÙ‚Øª Ø±Ø²Ø±Ùˆ Ø´Ø¯Ù‡ Ø§Ø³Øª.
+          Ø¯Ø± Ø§ÛŒÙ† Ù…Ø±Ø­Ù„Ù‡ Ù‡ÛŒÚ† Ù¾Ø±Ø¯Ø§Ø®Øª Ø¢Ù†Ù„Ø§ÛŒÙ† Ø§Ù†Ø¬Ø§Ù… Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª.
         </p>
 
         <p className="mt-3 text-sm leading-7 text-muted">
-          برای پیگیری بعدی، شماره سفارش و شماره تماس ثبت‌شده را نگه دارید.
+          Ø¨Ø±Ø§ÛŒ Ù¾ÛŒÚ¯ÛŒØ±ÛŒ Ø¨Ø¹Ø¯ÛŒØŒ Ø´Ù…Ø§Ø±Ù‡ Ø³ÙØ§Ø±Ø´ Ùˆ Ø´Ù…Ø§Ø±Ù‡ ØªÙ…Ø§Ø³ Ø«Ø¨Øªâ€ŒØ´Ø¯Ù‡ Ø±Ø§ Ù†Ú¯Ù‡ Ø¯Ø§Ø±ÛŒØ¯.
         </p>
 
         <div className="mt-6 flex flex-wrap gap-3">
@@ -675,14 +726,14 @@ export default function CheckoutIsland({
             href="/orders/track/"
             className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
           >
-            پیگیری سفارش
+            Ù¾ÛŒÚ¯ÛŒØ±ÛŒ Ø³ÙØ§Ø±Ø´
           </a>
 
           <a
             href="/products/buy/"
             className="inline-flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-surface-raised px-5 py-3 text-sm font-semibold text-ink transition hover:bg-surface-soft"
           >
-            ادامه خرید
+            Ø§Ø¯Ø§Ù…Ù‡ Ø®Ø±ÛŒØ¯
           </a>
         </div>
       </section>
@@ -696,16 +747,16 @@ export default function CheckoutIsland({
           className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-surface-soft text-xl font-black text-brand-700"
           aria-hidden="true"
         >
-          ۰
+          Û°
         </div>
 
         <h2 className="mt-5 text-xl font-black text-ink">
-          کالایی برای Checkout وجود ندارد
+          Ú©Ø§Ù„Ø§ÛŒÛŒ Ø¨Ø±Ø§ÛŒ Checkout ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯
         </h2>
 
         <p className="mx-auto mt-3 max-w-xl text-sm leading-8 text-muted">
-          سبد خرید خالی است یا محصول ذخیره‌شده دیگر خرید مستقیم،
-          قیمت معتبر یا موجودی فعال ندارد.
+          Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯ Ø®Ø§Ù„ÛŒ Ø§Ø³Øª ÛŒØ§ Ù…Ø­ØµÙˆÙ„ Ø°Ø®ÛŒØ±Ù‡â€ŒØ´Ø¯Ù‡ Ø¯ÛŒÚ¯Ø± Ø®Ø±ÛŒØ¯ Ù…Ø³ØªÙ‚ÛŒÙ…ØŒ
+          Ù‚ÛŒÙ…Øª Ù…Ø¹ØªØ¨Ø± ÛŒØ§ Ù…ÙˆØ¬ÙˆØ¯ÛŒ ÙØ¹Ø§Ù„ Ù†Ø¯Ø§Ø±Ø¯.
         </p>
 
         <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -713,14 +764,14 @@ export default function CheckoutIsland({
             href="/cart/"
             className="inline-flex min-h-11 items-center justify-center rounded-control bg-brand-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
           >
-            بازگشت به سبد خرید
+            Ø¨Ø§Ø²Ú¯Ø´Øª Ø¨Ù‡ Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯
           </a>
 
           <a
             href="/products/buy/"
             className="inline-flex min-h-11 items-center justify-center rounded-control border border-line-strong bg-surface-raised px-5 py-3 text-sm font-semibold text-ink transition hover:bg-surface-soft"
           >
-            محصولات خرید مستقیم
+            Ù…Ø­ØµÙˆÙ„Ø§Øª Ø®Ø±ÛŒØ¯ Ù…Ø³ØªÙ‚ÛŒÙ…
           </a>
         </div>
       </div>
@@ -736,23 +787,23 @@ export default function CheckoutIsland({
       >
         <div>
           <p className="text-sm font-bold text-brand-700">
-            اطلاعات خریدار
+            Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø®Ø±ÛŒØ¯Ø§Ø±
           </p>
 
           <h2 className="mt-2 text-2xl font-black text-ink">
-            مشخصات تماس و تحویل
+            Ù…Ø´Ø®ØµØ§Øª ØªÙ…Ø§Ø³ Ùˆ ØªØ­ÙˆÛŒÙ„
           </h2>
 
           <p className="mt-3 text-sm leading-7 text-muted">
-            این اطلاعات فقط برای بررسی همین سفارش استفاده می‌شود و در
-            localStorage سبد خرید ذخیره نمی‌شود.
+            Ø§ÛŒÙ† Ø§Ø·Ù„Ø§Ø¹Ø§Øª ÙÙ‚Ø· Ø¨Ø±Ø§ÛŒ Ø¨Ø±Ø±Ø³ÛŒ Ù‡Ù…ÛŒÙ† Ø³ÙØ§Ø±Ø´ Ø§Ø³ØªÙØ§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯ Ùˆ Ø¯Ø±
+            localStorage Ø³Ø¨Ø¯ Ø®Ø±ÛŒØ¯ Ø°Ø®ÛŒØ±Ù‡ Ù†Ù…ÛŒâ€ŒØ´ÙˆØ¯.
           </p>
         </div>
 
         <div className="mt-7 grid gap-5 md:grid-cols-2">
           <label className="block">
             <span className="text-sm font-bold text-ink">
-              نام و نام خانوادگی
+              Ù†Ø§Ù… Ùˆ Ù†Ø§Ù… Ø®Ø§Ù†ÙˆØ§Ø¯Ú¯ÛŒ
               <span className="mr-1 text-danger">
                 *
               </span>
@@ -769,14 +820,14 @@ export default function CheckoutIsland({
                 );
                 markDirty();
               }}
-              placeholder="مثلاً علی رضایی"
+              placeholder="Ù…Ø«Ù„Ø§Ù‹ Ø¹Ù„ÛŒ Ø±Ø¶Ø§ÛŒÛŒ"
               className="mt-2 min-h-11 w-full rounded-control border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
             />
           </label>
 
           <label className="block">
             <span className="text-sm font-bold text-ink">
-              شماره تماس
+              Ø´Ù…Ø§Ø±Ù‡ ØªÙ…Ø§Ø³
               <span className="mr-1 text-danger">
                 *
               </span>
@@ -802,7 +853,7 @@ export default function CheckoutIsland({
 
           <label className="block">
             <span className="text-sm font-bold text-ink">
-              شهر مقصد
+              Ø´Ù‡Ø± Ù…Ù‚ØµØ¯
               <span className="mr-1 text-danger">
                 *
               </span>
@@ -819,7 +870,7 @@ export default function CheckoutIsland({
                 );
                 markDirty();
               }}
-              placeholder="مثلاً تهران"
+              placeholder="Ù…Ø«Ù„Ø§Ù‹ ØªÙ‡Ø±Ø§Ù†"
               className="mt-2 min-h-11 w-full rounded-control border border-line bg-surface px-4 py-3 text-sm text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
             />
           </label>
@@ -827,16 +878,16 @@ export default function CheckoutIsland({
 
         <div className="mt-8 border-t border-line pt-8">
           <p className="text-sm font-bold text-brand-700">
-            روش ارسال
+            Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„
           </p>
 
           <h2 className="mt-2 text-xl font-black text-ink">
-            روش‌های سازگار با همه اقلام سبد
+            Ø±ÙˆØ´â€ŒÙ‡Ø§ÛŒ Ø³Ø§Ø²Ú¯Ø§Ø± Ø¨Ø§ Ù‡Ù…Ù‡ Ø§Ù‚Ù„Ø§Ù… Ø³Ø¨Ø¯
           </h2>
 
           <p className="mt-3 text-sm leading-7 text-muted">
-            روش‌ها بر اساس شهر مقصد و Shipping Class تمام محصولات
-            داخل سبد فیلتر می‌شوند.
+            Ø±ÙˆØ´â€ŒÙ‡Ø§ Ø¨Ø± Ø§Ø³Ø§Ø³ Ø´Ù‡Ø± Ù…Ù‚ØµØ¯ Ùˆ Shipping Class ØªÙ…Ø§Ù… Ù…Ø­ØµÙˆÙ„Ø§Øª
+            Ø¯Ø§Ø®Ù„ Ø³Ø¨Ø¯ ÙÛŒÙ„ØªØ± Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯.
           </p>
 
           {
@@ -885,8 +936,8 @@ export default function CheckoutIsland({
                             {
                               method.feeMode ===
                               "free"
-                                ? "هزینه ارسال: رایگان"
-                                : "هزینه ارسال: پس از استعلام و هماهنگی"
+                                ? "Ù‡Ø²ÛŒÙ†Ù‡ Ø§Ø±Ø³Ø§Ù„: Ø±Ø§ÛŒÚ¯Ø§Ù†"
+                                : "Ù‡Ø²ÛŒÙ†Ù‡ Ø§Ø±Ø³Ø§Ù„: Ù¾Ø³ Ø§Ø² Ø§Ø³ØªØ¹Ù„Ø§Ù… Ùˆ Ù‡Ù…Ø§Ù‡Ù†Ú¯ÛŒ"
                             }
                           </span>
                         </span>
@@ -900,16 +951,16 @@ export default function CheckoutIsland({
                 <p className="text-sm font-black text-warning-800">
                   {
                     destinationCityReady
-                      ? "روش ارسال سازگار پیدا نشد"
-                      : "ابتدا شهر مقصد را وارد کنید"
+                      ? "Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„ Ø³Ø§Ø²Ú¯Ø§Ø± Ù¾ÛŒØ¯Ø§ Ù†Ø´Ø¯"
+                      : "Ø§Ø¨ØªØ¯Ø§ Ø´Ù‡Ø± Ù…Ù‚ØµØ¯ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯"
                   }
                 </p>
 
                 <p className="mt-2 text-xs leading-6 text-warning-800">
                   {
                     destinationCityReady
-                      ? "ترکیب اقلام این سبد برای شهر مقصد انتخاب‌شده به هماهنگی جداگانه نیاز دارد."
-                      : "برای نمایش روش‌های ارسال سازگار، ابتدا شهر مقصد را وارد کنید."
+                      ? "ØªØ±Ú©ÛŒØ¨ Ø§Ù‚Ù„Ø§Ù… Ø§ÛŒÙ† Ø³Ø¨Ø¯ Ø¨Ø±Ø§ÛŒ Ø´Ù‡Ø± Ù…Ù‚ØµØ¯ Ø§Ù†ØªØ®Ø§Ø¨â€ŒØ´Ø¯Ù‡ Ø¨Ù‡ Ù‡Ù…Ø§Ù‡Ù†Ú¯ÛŒ Ø¬Ø¯Ø§Ú¯Ø§Ù†Ù‡ Ù†ÛŒØ§Ø² Ø¯Ø§Ø±Ø¯."
+                      : "Ø¨Ø±Ø§ÛŒ Ù†Ù…Ø§ÛŒØ´ Ø±ÙˆØ´â€ŒÙ‡Ø§ÛŒ Ø§Ø±Ø³Ø§Ù„ Ø³Ø§Ø²Ú¯Ø§Ø±ØŒ Ø§Ø¨ØªØ¯Ø§ Ø´Ù‡Ø± Ù…Ù‚ØµØ¯ Ø±Ø§ ÙˆØ§Ø±Ø¯ Ú©Ù†ÛŒØ¯."
                   }
                 </p>
               </div>
@@ -923,7 +974,7 @@ export default function CheckoutIsland({
             <div className="mt-8 border-t border-line pt-8">
               <label className="block">
                 <span className="text-sm font-bold text-ink">
-                  آدرس تحویل
+                  Ø¢Ø¯Ø±Ø³ ØªØ­ÙˆÛŒÙ„
                   <span className="mr-1 text-danger">
                     *
                   </span>
@@ -940,7 +991,7 @@ export default function CheckoutIsland({
                     );
                     markDirty();
                   }}
-                  placeholder="خیابان، کوچه، پلاک، واحد و اطلاعات لازم برای تحویل"
+                  placeholder="Ø®ÛŒØ§Ø¨Ø§Ù†ØŒ Ú©ÙˆÚ†Ù‡ØŒ Ù¾Ù„Ø§Ú©ØŒ ÙˆØ§Ø­Ø¯ Ùˆ Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ù„Ø§Ø²Ù… Ø¨Ø±Ø§ÛŒ ØªØ­ÙˆÛŒÙ„"
                   className="mt-2 w-full resize-y rounded-control border border-line bg-surface px-4 py-3 text-sm leading-7 text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
                 />
               </label>
@@ -951,7 +1002,7 @@ export default function CheckoutIsland({
         <div className="mt-8 border-t border-line pt-8">
           <label className="block">
             <span className="text-sm font-bold text-ink">
-              توضیحات سفارش
+              ØªÙˆØ¶ÛŒØ­Ø§Øª Ø³ÙØ§Ø±Ø´
             </span>
 
             <textarea
@@ -965,12 +1016,12 @@ export default function CheckoutIsland({
                 );
                 markDirty();
               }}
-              placeholder="زمان مناسب تماس، توضیح تحویل یا نکته‌ای که باید هنگام بررسی سفارش بدانیم."
+              placeholder="Ø²Ù…Ø§Ù† Ù…Ù†Ø§Ø³Ø¨ ØªÙ…Ø§Ø³ØŒ ØªÙˆØ¶ÛŒØ­ ØªØ­ÙˆÛŒÙ„ ÛŒØ§ Ù†Ú©ØªÙ‡â€ŒØ§ÛŒ Ú©Ù‡ Ø¨Ø§ÛŒØ¯ Ù‡Ù†Ú¯Ø§Ù… Ø¨Ø±Ø±Ø³ÛŒ Ø³ÙØ§Ø±Ø´ Ø¨Ø¯Ø§Ù†ÛŒÙ…."
               className="mt-2 w-full resize-y rounded-control border border-line bg-surface px-4 py-3 text-sm leading-7 text-ink outline-none transition placeholder:text-muted focus:border-brand-400 focus:ring-2 focus:ring-brand-100"
             />
 
             <span className="mt-2 block text-xs text-muted">
-              حداکثر ۱۰۰۰ کاراکتر
+              Ø­Ø¯Ø§Ú©Ø«Ø± Û±Û°Û°Û° Ú©Ø§Ø±Ø§Ú©ØªØ±
             </span>
           </label>
         </div>
@@ -984,7 +1035,7 @@ export default function CheckoutIsland({
               aria-live="polite"
             >
               <p className="font-black text-danger">
-                اطلاعات Checkout نیاز به اصلاح دارد
+                Ø§Ø·Ù„Ø§Ø¹Ø§Øª Checkout Ù†ÛŒØ§Ø² Ø¨Ù‡ Ø§ØµÙ„Ø§Ø­ Ø¯Ø§Ø±Ø¯
               </p>
 
               <ul className="mt-3 list-disc space-y-2 pr-5 text-sm leading-7 text-red-800">
@@ -1007,22 +1058,22 @@ export default function CheckoutIsland({
             type="submit"
             className="inline-flex min-h-12 w-full items-center justify-center rounded-control bg-brand-600 px-6 py-3.5 text-base font-semibold leading-none text-white shadow-sm transition duration-200 ease-standard hover:bg-brand-700 active:bg-brand-800 sm:w-auto"
           >
-            بررسی اطلاعات سفارش
+            Ø¨Ø±Ø±Ø³ÛŒ Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø³ÙØ§Ø±Ø´
           </button>
 
           <p className="mt-3 text-xs leading-6 text-muted">
-            این دکمه سفارش واقعی را ثبت می‌کند، اما وارد درگاه پرداخت نمی‌شود.
+            Ø§ÛŒÙ† Ø¯Ú©Ù…Ù‡ Ø³ÙØ§Ø±Ø´ ÙˆØ§Ù‚Ø¹ÛŒ Ø±Ø§ Ø«Ø¨Øª Ù…ÛŒâ€ŒÚ©Ù†Ø¯ØŒ Ø§Ù…Ø§ ÙˆØ§Ø±Ø¯ Ø¯Ø±Ú¯Ø§Ù‡ Ù¾Ø±Ø¯Ø§Ø®Øª Ù†Ù…ÛŒâ€ŒØ´ÙˆØ¯.
           </p>
         </div>
       </form>
 
       <aside className="rounded-panel border border-line bg-surface-raised p-5 shadow-card sm:p-6 xl:sticky xl:top-24">
         <p className="text-sm font-bold text-brand-700">
-          خلاصه سبد
+          Ø®Ù„Ø§ØµÙ‡ Ø³Ø¨Ø¯
         </p>
 
         <h2 className="mt-2 text-xl font-black text-ink">
-          مبلغ و ارسال
+          Ù…Ø¨Ù„Øº Ùˆ Ø§Ø±Ø³Ø§Ù„
         </h2>
 
         <div className="mt-5 space-y-4">
@@ -1041,7 +1092,7 @@ export default function CheckoutIsland({
 
                 <div className="mt-2 flex items-center justify-between gap-3 text-xs text-muted">
                   <span>
-                    تعداد:
+                    ØªØ¹Ø¯Ø§Ø¯:
                     {" "}
                     {new Intl.NumberFormat(
                       "fa-IR",
@@ -1067,7 +1118,7 @@ export default function CheckoutIsland({
         <div className="mt-6 border-t border-line pt-5">
           <div className="flex items-center justify-between gap-4">
             <span className="text-sm font-bold text-muted">
-              جمع کالاها
+              Ø¬Ù…Ø¹ Ú©Ø§Ù„Ø§Ù‡Ø§
             </span>
 
             <strong
@@ -1092,17 +1143,17 @@ export default function CheckoutIsland({
 
         <div className="mt-5 border-t border-line pt-5">
           <p className="text-sm font-bold text-muted">
-            هزینه ارسال
+            Ù‡Ø²ÛŒÙ†Ù‡ Ø§Ø±Ø³Ø§Ù„
           </p>
 
           {
             !shippingMethodId ? (
               <p className="mt-2 text-sm font-black text-ink">
-                هنوز روش ارسال انتخاب نشده است
+                Ù‡Ù†ÙˆØ² Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„ Ø§Ù†ØªØ®Ø§Ø¨ Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª
               </p>
             ) : shippingQuoteRequired ? (
               <p className="mt-2 text-sm font-black text-warning-800">
-                پس از استعلام و هماهنگی تعیین می‌شود
+                Ù¾Ø³ Ø§Ø² Ø§Ø³ØªØ¹Ù„Ø§Ù… Ùˆ Ù‡Ù…Ø§Ù‡Ù†Ú¯ÛŒ ØªØ¹ÛŒÛŒÙ† Ù…ÛŒâ€ŒØ´ÙˆØ¯
               </p>
             ) : (
               <p
@@ -1119,13 +1170,13 @@ export default function CheckoutIsland({
 
         <div className="mt-5 border-t border-line pt-5">
           <p className="text-sm font-bold text-muted">
-            جمع نهایی قابل پرداخت
+            Ø¬Ù…Ø¹ Ù†Ù‡Ø§ÛŒÛŒ Ù‚Ø§Ø¨Ù„ Ù¾Ø±Ø¯Ø§Ø®Øª
           </p>
 
           {
             finalTotalRial === null ? (
               <p className="mt-2 text-sm font-black leading-7 text-warning-800">
-                تا تعیین قطعی هزینه ارسال، مبلغ نهایی پرداخت محاسبه نمی‌شود.
+                ØªØ§ ØªØ¹ÛŒÛŒÙ† Ù‚Ø·Ø¹ÛŒ Ù‡Ø²ÛŒÙ†Ù‡ Ø§Ø±Ø³Ø§Ù„ØŒ Ù…Ø¨Ù„Øº Ù†Ù‡Ø§ÛŒÛŒ Ù¾Ø±Ø¯Ø§Ø®Øª Ù…Ø­Ø§Ø³Ø¨Ù‡ Ù†Ù…ÛŒâ€ŒØ´ÙˆØ¯.
               </p>
             ) : (
               <>
@@ -1153,13 +1204,13 @@ export default function CheckoutIsland({
 
         <div className="mt-6 rounded-control border border-brand-100 bg-brand-50 p-4">
           <p className="text-sm font-black text-brand-800">
-            قیمت و موجودی قابل اعتماد
+            Ù‚ÛŒÙ…Øª Ùˆ Ù…ÙˆØ¬ÙˆØ¯ÛŒ Ù‚Ø§Ø¨Ù„ Ø§Ø¹ØªÙ…Ø§Ø¯
           </p>
 
           <p className="mt-2 text-xs leading-6 text-brand-800">
-            Checkout اقلام localStorage را دوباره با کاتالوگ فعال سایت
-            تطبیق می‌دهد. قیمت، موجودی و Shipping Class از داده ذخیره‌شده
-            مرورگر پذیرفته نمی‌شوند.
+            Checkout Ø§Ù‚Ù„Ø§Ù… localStorage Ø±Ø§ Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¨Ø§ Ú©Ø§ØªØ§Ù„ÙˆÚ¯ ÙØ¹Ø§Ù„ Ø³Ø§ÛŒØª
+            ØªØ·Ø¨ÛŒÙ‚ Ù…ÛŒâ€ŒØ¯Ù‡Ø¯. Ù‚ÛŒÙ…ØªØŒ Ù…ÙˆØ¬ÙˆØ¯ÛŒ Ùˆ Shipping Class Ø§Ø² Ø¯Ø§Ø¯Ù‡ Ø°Ø®ÛŒØ±Ù‡â€ŒØ´Ø¯Ù‡
+            Ù…Ø±ÙˆØ±Ú¯Ø± Ù¾Ø°ÛŒØ±ÙØªÙ‡ Ù†Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯.
           </p>
         </div>
       </aside>
@@ -1173,17 +1224,17 @@ export default function CheckoutIsland({
             aria-live="polite"
           >
             <p className="text-sm font-bold text-brand-700">
-              پیش‌نمایش Checkout
+              Ù¾ÛŒØ´â€ŒÙ†Ù…Ø§ÛŒØ´ Checkout
             </p>
 
             <h2 className="mt-2 text-2xl font-black text-ink">
-              اطلاعات آماده بررسی نهایی است
+              Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø¢Ù…Ø§Ø¯Ù‡ Ø¨Ø±Ø±Ø³ÛŒ Ù†Ù‡Ø§ÛŒÛŒ Ø§Ø³Øª
             </h2>
 
             <div className="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
               <div>
                 <p className="text-xs font-bold text-muted">
-                  خریدار
+                  Ø®Ø±ÛŒØ¯Ø§Ø±
                 </p>
 
                 <p className="mt-1 text-sm font-black text-ink">
@@ -1193,7 +1244,7 @@ export default function CheckoutIsland({
 
               <div>
                 <p className="text-xs font-bold text-muted">
-                  تماس
+                  ØªÙ…Ø§Ø³
                 </p>
 
                 <p
@@ -1208,7 +1259,7 @@ export default function CheckoutIsland({
 
               <div>
                 <p className="text-xs font-bold text-muted">
-                  شهر
+                  Ø´Ù‡Ø±
                 </p>
 
                 <p className="mt-1 text-sm font-black text-ink">
@@ -1218,7 +1269,7 @@ export default function CheckoutIsland({
 
               <div>
                 <p className="text-xs font-bold text-muted">
-                  روش ارسال
+                  Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„
                 </p>
 
                 <p className="mt-1 text-sm font-black text-ink">
@@ -1232,7 +1283,7 @@ export default function CheckoutIsland({
                 .requiresAddress && (
                 <div className="mt-5">
                   <p className="text-xs font-bold text-muted">
-                    آدرس تحویل
+                    Ø¢Ø¯Ø±Ø³ ØªØ­ÙˆÛŒÙ„
                   </p>
 
                   <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-ink">
@@ -1246,7 +1297,7 @@ export default function CheckoutIsland({
               notes.trim() && (
                 <div className="mt-5">
                   <p className="text-xs font-bold text-muted">
-                    توضیحات
+                    ØªÙˆØ¶ÛŒØ­Ø§Øª
                   </p>
 
                   <p className="mt-1 whitespace-pre-wrap text-sm leading-7 text-ink">
@@ -1258,12 +1309,12 @@ export default function CheckoutIsland({
 
             <div className="mt-6 rounded-control border border-warning-200 bg-warning-50 p-4">
               <p className="text-sm font-black text-warning-800">
-                اطلاعات را قبل از ثبت نهایی بررسی کنید
+                Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø±Ø§ Ù‚Ø¨Ù„ Ø§Ø² Ø«Ø¨Øª Ù†Ù‡Ø§ÛŒÛŒ Ø¨Ø±Ø±Ø³ÛŒ Ú©Ù†ÛŒØ¯
               </p>
 
               <p className="mt-2 text-xs leading-6 text-warning-800">
-                با ثبت نهایی، سفارش واقعی ایجاد و موجودی کالا موقتاً رزرو می‌شود.
-                پرداخت آنلاین هنوز فعال نیست.
+                Ø¨Ø§ Ø«Ø¨Øª Ù†Ù‡Ø§ÛŒÛŒØŒ Ø³ÙØ§Ø±Ø´ ÙˆØ§Ù‚Ø¹ÛŒ Ø§ÛŒØ¬Ø§Ø¯ Ùˆ Ù…ÙˆØ¬ÙˆØ¯ÛŒ Ú©Ø§Ù„Ø§ Ù…ÙˆÙ‚ØªØ§Ù‹ Ø±Ø²Ø±Ùˆ Ù…ÛŒâ€ŒØ´ÙˆØ¯.
+                Ù¾Ø±Ø¯Ø§Ø®Øª Ø¢Ù†Ù„Ø§ÛŒÙ† Ù‡Ù†ÙˆØ² ÙØ¹Ø§Ù„ Ù†ÛŒØ³Øª.
               </p>
             </div>
 
@@ -1278,13 +1329,13 @@ export default function CheckoutIsland({
               >
                 {
                   submitting
-                    ? "در حال ثبت سفارش..."
-                    : "ثبت نهایی سفارش"
+                    ? "Ø¯Ø± Ø­Ø§Ù„ Ø«Ø¨Øª Ø³ÙØ§Ø±Ø´..."
+                    : "Ø«Ø¨Øª Ù†Ù‡Ø§ÛŒÛŒ Ø³ÙØ§Ø±Ø´"
                 }
               </button>
 
               <p className="mt-3 text-xs leading-6 text-muted">
-                ثبت سفارش به معنی پرداخت نیست.
+                Ø«Ø¨Øª Ø³ÙØ§Ø±Ø´ Ø¨Ù‡ Ù…Ø¹Ù†ÛŒ Ù¾Ø±Ø¯Ø§Ø®Øª Ù†ÛŒØ³Øª.
               </p>
             </div>
           </section>
@@ -1293,3 +1344,4 @@ export default function CheckoutIsland({
     </div>
   );
 }
+
