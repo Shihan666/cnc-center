@@ -6,7 +6,12 @@
 
 import {
   markPaymentRefunded,
+  getPaymentById,
 } from "../payments/repository.ts";
+
+import {
+  createOrderStatusHistory,
+} from "../orders/status-history-repository.ts";
 
 
 export async function requestRefund(
@@ -17,6 +22,30 @@ export async function requestRefund(
     reason?: string;
   },
 ) {
+
+  const payment =
+    await getPaymentById(
+      input.paymentId,
+    );
+
+
+  if (!payment) {
+    throw new Error(
+      "payment_not_found",
+    );
+  }
+
+
+  if (
+    payment.status !== "paid"
+    &&
+    payment.status !== "refunded"
+  ) {
+    throw new Error(
+      "payment_not_refundable",
+    );
+  }
+
 
   const refunds =
     await getRefundsByOrderId(
@@ -42,8 +71,10 @@ export async function requestRefund(
 
 
   if (
-    refundedAmount >=
-    input.amountRial
+    refundedAmount +
+      input.amountRial
+      >
+      payment.amountRial
   ) {
     throw new Error(
       "refund_amount_exceeded",
@@ -124,6 +155,9 @@ export async function failRefund(
   );
 
 }
+
+
+
 
 
 

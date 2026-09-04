@@ -189,3 +189,27 @@ export async function markPaymentRefunded(
 
   return payment ?? null;
 }
+
+
+export async function getPaymentById(
+  paymentId: string,
+) {
+  const database =
+    getDatabase();
+
+  const [payment] =
+    await database
+      .select()
+      .from(
+        payments,
+      )
+      .where(
+        eq(
+          payments.id,
+          paymentId,
+        ),
+      )
+      .limit(1);
+
+  return payment ?? null;
+}
