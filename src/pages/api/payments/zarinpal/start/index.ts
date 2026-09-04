@@ -4,7 +4,7 @@
 
 import {
   startPayment,
-} from "../../../../server/payments/service.ts";
+} from "../../../../../server/payments/service.ts";
 
 export const POST: APIRoute =
   async ({
@@ -62,3 +62,4 @@ export const POST: APIRoute =
       );
     }
   };
+
