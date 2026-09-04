@@ -1,0 +1,56 @@
+﻿---
+const params =
+  new URL(Astro.request.url)
+    .searchParams;
+
+const status =
+  params.get("status");
+
+const orderId =
+  params.get("orderId");
+
+const refId =
+  params.get("refId");
+---
+
+<html lang="fa" dir="rtl">
+  <head>
+    <title>نتیجه پرداخت</title>
+  </head>
+
+  <body>
+    <main>
+      {status === "success" ? (
+        <>
+          <h1>پرداخت موفق بود</h1>
+
+          <p>
+            سفارش شما ثبت شد.
+          </p>
+
+          {orderId && (
+            <p>
+              شماره سفارش:
+              {orderId}
+            </p>
+          )}
+
+          {refId && (
+            <p>
+              کد پیگیری:
+              {refId}
+            </p>
+          )}
+        </>
+      ) : (
+        <>
+          <h1>پرداخت ناموفق بود</h1>
+
+          <p>
+            پرداخت تکمیل نشد.
+          </p>
+        </>
+      )}
+    </main>
+  </body>
+</html>
