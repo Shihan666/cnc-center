@@ -4,6 +4,10 @@
   updateRefundStatus,
 } from "./repository.ts";
 
+import {
+  markPaymentRefunded,
+} from "../payments/repository.ts";
+
 
 export async function requestRefund(
   input: {
@@ -69,10 +73,43 @@ export async function completeRefund(
   refundId: string,
 ) {
 
-  return updateRefundStatus(
-    refundId,
-    "completed",
-  );
+  const refund =
+    await updateRefundStatus(
+      refundId,
+      "completed",
+    );
+
+
+  if (refund?.paymentId) {
+    await markPaymentRefunded(
+      refund.paymentId,
+    );
+  }
+
+
+  if (refund?.orderId) {
+    await createOrderStatusHistory(
+      {
+        orderId:
+          refund.orderId,
+
+        status:
+          "cancelled",
+
+        referenceType:
+          "refund",
+
+        referenceId:
+          refund.id,
+
+        note:
+          "refund_completed",
+      },
+    );
+  }
+
+
+  return refund;
 
 }
 
@@ -87,3 +124,8 @@ export async function failRefund(
   );
 
 }
+
+
+
+
+
