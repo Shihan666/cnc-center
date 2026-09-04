@@ -856,3 +856,115 @@ export async function transitionAdminOrderStatus(
     },
   );
 }
+
+export async function markOrderPaidAfterPayment(
+  orderId: string,
+) {
+  const database =
+    getDatabase();
+
+  return database.transaction(
+    async (tx) => {
+      const locked =
+        await tx
+          .select({
+            id:
+              orders.id,
+
+            status:
+              orders.status,
+          })
+          .from(
+            orders,
+          )
+          .where(
+            eq(
+              orders.id,
+              orderId,
+            ),
+          )
+          .for("update")
+          .limit(1);
+
+      const order =
+        locked[0];
+
+      if (!order) {
+        throw new Error(
+          "Order not found.",
+        );
+      }
+
+      if (
+        order.status === "paid"
+      ) {
+        return order;
+      }
+
+      if (
+        order.status !== "pending"
+      ) {
+        throw new Error(
+          "Order cannot be paid from current status.",
+        );
+      }
+
+      const paidAt =
+        new Date();
+
+      const updated =
+        await tx
+          .update(
+            orders,
+          )
+          .set({
+            status:
+              "paid",
+
+            paidAt,
+
+            updatedAt:
+              paidAt,
+          })
+          .where(
+            eq(
+              orders.id,
+              orderId,
+            ),
+          )
+          .returning();
+
+      const updatedOrder =
+        updated[0];
+
+      if (!updatedOrder) {
+        throw new Error(
+          "Order payment update failed.",
+        );
+      }
+
+      await tx
+        .insert(
+          orderStatusHistory,
+        )
+        .values({
+          orderId,
+
+          fromStatus:
+            order.status,
+
+          toStatus:
+            "paid",
+
+          reason:
+            "payment_verified",
+
+          createdAt:
+            paidAt,
+        });
+
+      return updatedOrder;
+    },
+  );
+}
+
