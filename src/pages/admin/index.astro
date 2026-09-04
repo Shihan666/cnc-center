@@ -4,43 +4,168 @@ import Badge from "../../components/common/Badge.astro";
 import Button from "../../components/common/Button.astro";
 import Card from "../../components/common/Card.astro";
 import EmptyState from "../../components/common/EmptyState.astro";
+import { formatRialAmount } from "../../lib/cart";
+
+type OrderStatus =
+  | "pending"
+  | "awaiting_payment"
+  | "paid"
+  | "processing"
+  | "ready_to_ship"
+  | "shipped"
+  | "completed"
+  | "cancelled"
+  | "expired";
+
+type AdminDashboardRecentOrder = {
+  id: string;
+  orderNumber: string;
+  status: OrderStatus;
+  customerName: string;
+  totalRial: number | null;
+  currency: string;
+  createdAt: string;
+};
+
+type AdminDashboardData = {
+  actions: {
+    readyToShip: number;
+    needsProcessing: number;
+    outOfStock: number;
+  };
+  today: {
+    newOrders: number;
+    readyToShip: number;
+    shipped: number;
+  };
+  recentOrders: AdminDashboardRecentOrder[];
+};
+
+type AdminDashboardResponse = {
+  ok: boolean;
+  dashboard?: AdminDashboardData;
+};
+
+const apiUrl =
+  new URL(
+    "/api/admin/dashboard",
+    Astro.request.url,
+  );
+
+const response =
+  await fetch(
+    apiUrl,
+    {
+      headers: {
+        cookie:
+          Astro.request.headers.get(
+            "cookie",
+          ) ?? "",
+      },
+    },
+  );
+
+let data:
+  AdminDashboardResponse |
+  null =
+  null;
+
+try {
+  data =
+    await response.json();
+} catch {
+  data =
+    null;
+}
+
+const hasDashboardError =
+  !response.ok ||
+  data?.ok !== true ||
+  !data.dashboard;
+
+const dashboard =
+  !hasDashboardError
+    ? data?.dashboard ?? null
+    : null;
 
 const actionItems = [
   {
     label: "آماده ارسال",
-    description: "سفارش‌هایی که باید برای ارسال آماده شوند",
+    description: "سفارش‌هایی که اکنون در وضعیت آماده ارسال هستند",
     href: "/admin/orders",
     tone: "brand",
+    count:
+      dashboard?.actions.readyToShip ??
+      null,
   },
   {
-    label: "نیازمند بررسی",
-    description: "سفارش‌هایی که قبل از ادامه نیاز به بررسی دارند",
+    label: "نیازمند پردازش",
+    description: "سفارش‌های پرداخت‌شده‌ای که باید وارد مرحله پردازش شوند",
     href: "/admin/orders",
     tone: "warning",
+    count:
+      dashboard?.actions.needsProcessing ??
+      null,
   },
-
   {
     label: "ناموجود",
-    description: "محصولاتی که موجودی آن‌ها صفر شده است",
+    description: "محصولاتی که موجودی فیزیکی آن‌ها صفر است",
     href: "/admin/inventory",
     tone: "danger",
+    count:
+      dashboard?.actions.outOfStock ??
+      null,
   },
 ] as const;
 
 const todayItems = [
   {
-    label: "سفارش جدید",
-    description: "سفارش‌های ثبت‌شده امروز",
+    label: "سفارش جدید امروز",
+    description: "سفارش‌های ثبت‌شده در روز جاری تهران",
+    count:
+      dashboard?.today.newOrders ??
+      null,
   },
   {
-    label: "نیازمند ارسال",
-    description: "سفارش‌هایی که امروز باید پیگیری شوند",
+    label: "آماده ارسال امروز",
+    description: "سفارش‌هایی که امروز به وضعیت آماده ارسال رسیده‌اند",
+    count:
+      dashboard?.today.readyToShip ??
+      null,
   },
   {
-    label: "پیگیری امروز",
-    description: "مواردی که نیاز به اقدام ادمین دارند",
+    label: "ارسال‌شده امروز",
+    description: "سفارش‌هایی که امروز به وضعیت ارسال‌شده رسیده‌اند",
+    count:
+      dashboard?.today.shipped ??
+      null,
   },
 ] as const;
+
+const recentOrders:
+  AdminDashboardRecentOrder[] =
+  dashboard?.recentOrders ?? [];
+
+const statusLabels:
+  Record<OrderStatus, string> = {
+    pending: "در انتظار بررسی",
+    awaiting_payment: "در انتظار پرداخت",
+    paid: "پرداخت شده",
+    processing: "در حال آماده‌سازی",
+    ready_to_ship: "آماده ارسال",
+    shipped: "ارسال شده",
+    completed: "تکمیل شده",
+    cancelled: "لغو شده",
+    expired: "منقضی شده",
+  };
+
+function formatCount(
+  count: number | null,
+): string {
+  return count === null
+    ? "—"
+    : count.toLocaleString("fa-IR");
+}
 ---
 
 <AdminLayout title="داشبورد">
@@ -58,12 +183,15 @@ const todayItems = [
           </h2>
 
           <p class="mt-1 text-sm leading-6 text-muted">
-            مهم‌ترین مواردی که باید بررسی شوند.
+            مهم‌ترین مواردی که اکنون نیاز به اقدام ادمین دارند.
           </p>
         </div>
 
-        <Badge variant="neutral" size="sm">
-          در انتظار اتصال داده
+        <Badge
+          variant={hasDashboardError ? "danger" : "neutral"}
+          size="sm"
+        >
+          {hasDashboardError ? "خطا در دریافت داده" : "داده زنده"}
         </Badge>
       </div>
 
@@ -96,7 +224,7 @@ const todayItems = [
                     size="sm"
                     class="shrink-0"
                   >
-                    —
+                    {formatCount(item.count)}
                   </Badge>
                 </div>
 
@@ -122,7 +250,7 @@ const todayItems = [
         </h2>
 
         <p class="mt-1 text-sm leading-6 text-muted">
-          نمای سریع کارهای روزانه فروشگاه.
+          نمای سریع رویدادهای روز جاری بر اساس منطقه زمانی تهران.
         </p>
       </div>
 
@@ -139,7 +267,7 @@ const todayItems = [
               </p>
 
               <p class="mt-3 text-2xl font-black text-ink">
-                —
+                {formatCount(item.count)}
               </p>
 
               <p class="mt-2 text-sm leading-6 text-muted">
@@ -167,7 +295,7 @@ const todayItems = [
             </h2>
 
             <p class="mt-1 text-sm leading-6 text-muted">
-              آخرین سفارش‌ها پس از اتصال داده اینجا نمایش داده می‌شوند.
+              پنج سفارش ثبت‌شده اخیر فروشگاه.
             </p>
           </div>
 
@@ -198,13 +326,95 @@ const todayItems = [
             </div>
           </div>
 
-          <div class="p-4 md:p-5">
-            <EmptyState
-              title="هنوز داده‌ای برای نمایش نداریم"
-              description="با اتصال Dashboard به اطلاعات سفارش‌ها، آخرین سفارش‌ها در این بخش نمایش داده می‌شوند."
-              compact
-            />
-          </div>
+          {
+            hasDashboardError ? (
+              <div
+                class="p-5"
+                role="alert"
+              >
+                <EmptyState
+                  title="دریافت داشبورد انجام نشد"
+                  description="ارتباط با سرور یا دریافت اطلاعات داشبورد با مشکل روبه‌رو شد. دوباره تلاش کنید."
+                  compact
+                />
+
+                <div class="mt-4 flex justify-center">
+                  <a
+                    href={Astro.url.pathname}
+                    class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
+                  >
+                    تلاش مجدد
+                  </a>
+                </div>
+              </div>
+            ) : recentOrders.length === 0 ? (
+              <div class="p-5">
+                <EmptyState
+                  title="سفارشی وجود ندارد"
+                  description="در حال حاضر سفارشی برای نمایش وجود ندارد."
+                  compact
+                />
+              </div>
+            ) : (
+              <div class="divide-y divide-line">
+                {
+                  recentOrders.map(
+                    (
+                      order:
+                        AdminDashboardRecentOrder,
+                    ) => (
+                      <div
+                        class="grid gap-3 px-5 py-4 md:grid-cols-[7rem_minmax(10rem,1fr)_9rem_8rem_7rem_5rem] md:items-center"
+                      >
+                        <span class="font-bold text-ink">
+                          {order.orderNumber}
+                        </span>
+
+                        <span class="min-w-0 truncate text-sm text-ink">
+                          {order.customerName}
+                        </span>
+
+                        <span class="text-sm font-bold text-ink">
+                          {
+                            order.totalRial !== null
+                              ? formatRialAmount(
+                                  order.totalRial,
+                                )
+                              : "—"
+                          }
+                        </span>
+
+                        <Badge variant="neutral">
+                          {
+                            statusLabels[
+                              order.status
+                            ]
+                          }
+                        </Badge>
+
+                        <span class="text-sm text-muted">
+                          {
+                            new Date(
+                              order.createdAt,
+                            ).toLocaleDateString(
+                              "fa-IR",
+                            )
+                          }
+                        </span>
+
+                        <a
+                          href={`/admin/orders/${order.id}`}
+                          class="text-sm font-bold text-brand"
+                        >
+                          مشاهده
+                        </a>
+                      </div>
+                    ),
+                  )
+                }
+              </div>
+            )
+          }
         </Card>
       </div>
 
