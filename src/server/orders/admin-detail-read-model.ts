@@ -6,6 +6,10 @@ import type {
   AdminOrderStatus,
 } from "./read-model.ts";
 
+import {
+  getRefundsByOrderId,
+} from "../refunds/repository.ts";
+
 export interface AdminOrderDetailSnapshot {
   id: string;
   orderNumber: string;
@@ -51,6 +55,16 @@ export interface AdminOrderDetailSnapshot {
     createdAt: string;
   }>;
 
+  refunds: Array<{
+    id: string;
+    paymentId: string;
+    amountRial: number;
+    status: string;
+    reason: string | null;
+    createdAt: string;
+    completedAt: string | null;
+  }>;
+
   statusHistory: Array<{
     id: string;
     fromStatus: AdminOrderStatus | null;
@@ -71,6 +85,11 @@ export async function getAdminOrderDetailSnapshot(
   if (!order) {
     return null;
   }
+
+  const refunds =
+    await getRefundsByOrderId(
+      orderId,
+    );
 
   return {
     id:
@@ -158,6 +177,34 @@ export async function getAdminOrderDetailSnapshot(
         }),
       ),
 
+    refunds:
+      refunds.map(
+        (refund) => ({
+          id:
+            refund.id,
+
+          paymentId:
+            refund.paymentId,
+
+          amountRial:
+            refund.amountRial,
+
+          status:
+            refund.status,
+
+          reason:
+            refund.reason,
+
+          createdAt:
+            refund.createdAt.toISOString(),
+
+          completedAt:
+            refund.completedAt
+              ? refund.completedAt.toISOString()
+              : null,
+        }),
+      ),
+
     statusHistory:
       order.statusHistory.map(
         (history) => ({
@@ -168,3 +215,4 @@ export async function getAdminOrderDetailSnapshot(
       ),
   };
 }
+
