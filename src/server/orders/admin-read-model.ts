@@ -6,6 +6,10 @@ import type {
   AdminOrderStatus,
 } from "./read-model.ts";
 
+import {
+  getRefundsByOrderId,
+} from "../refunds/repository.ts";
+
 export interface AdminOrderSnapshotItem {
   id: string;
   status: AdminOrderStatus;
@@ -14,6 +18,10 @@ export interface AdminOrderSnapshotItem {
   totalRial: number | null;
   createdAt: string;
   updatedAt: string;
+
+  refundCount: number;
+  refundedAmountRial: number;
+  latestRefundStatus: string | null;
 }
 
 export interface AdminOrdersSnapshot {
@@ -37,10 +45,23 @@ export async function getAdminOrdersSnapshot(
       query,
     );
 
-  return {
-    items:
+  const items =
+    await Promise.all(
       result.items.map(
-        (order) => ({
+        async (order) => {
+
+          const refunds =
+            await getRefundsByOrderId(
+              order.id,
+            );
+
+          const completedRefunds =
+            refunds.filter(
+              (refund) =>
+                refund.status === "completed",
+            );
+
+          return {
           id:
             order.id,
 
@@ -61,8 +82,32 @@ export async function getAdminOrdersSnapshot(
 
           updatedAt:
             order.createdAt.toISOString(),
-        }),
+
+          refundCount:
+            refunds.length,
+
+          refundedAmountRial:
+            completedRefunds.reduce(
+              (
+                total,
+                refund,
+              ) =>
+                total +
+                refund.amountRial,
+              0,
+            ),
+
+          latestRefundStatus:
+            refunds.length > 0
+              ? refunds[refunds.length - 1].status
+              : null,
+        };
+        },
       ),
+    );
+
+  return {
+    items,
 
     total:
       result.total,
@@ -77,3 +122,4 @@ export async function getAdminOrdersSnapshot(
       result.totalPages,
   };
 }
+
