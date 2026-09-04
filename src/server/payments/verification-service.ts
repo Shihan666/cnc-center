@@ -36,6 +36,12 @@ export async function verifyPayment(
     );
   }
 
+  if (
+    payment.status === "paid"
+  ) {
+    return payment;
+  }
+
   const result =
     await verifyZarinPalPayment({
       authority:
@@ -75,5 +81,6 @@ export async function verifyPayment(
     "Payment verification failed.",
   );
 }
+
 
 
