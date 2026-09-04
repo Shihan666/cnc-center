@@ -1,4 +1,4 @@
-import {
+﻿import {
   inArray,
 } from 'drizzle-orm';
 
@@ -36,6 +36,10 @@ import {
 import {
   expireDueOrderReservations,
 } from './reservation-repository.ts';
+
+import {
+  createPaymentRecord,
+} from '../payments/repository.ts';
 
 export const PUBLIC_ORDER_RESERVATION_TTL_MS =
   30 * 60 * 1000;
@@ -394,6 +398,27 @@ export async function createPublicCheckoutOrder(
         ) ??
         persisted.productId,
     };
+  }
+
+  if (
+    persisted.status ===
+    'created'
+  ) {
+    await createPaymentRecord({
+      orderId:
+        persisted.orderId,
+
+      provider:
+        'zarinpal',
+
+      environment:
+        process.env.ZARINPAL_SANDBOX === 'true'
+          ? 'sandbox'
+          : 'production',
+
+      amountRial:
+        persistenceOrder.totalRial,
+    });
   }
 
   return persisted;
