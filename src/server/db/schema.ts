@@ -155,6 +155,7 @@ export const paymentStatusEnum =
       'paid',
       'failed',
       'cancelled',
+      'refunded',
     ],
   );
 
@@ -2497,6 +2498,7 @@ export const adminRecoveryCodesRelations =
         ),
     }),
   );
+
 
 
 

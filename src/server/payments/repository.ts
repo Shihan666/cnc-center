@@ -162,3 +162,30 @@ export async function markPaymentFailed(
 
   return payment ?? null;
 }
+
+
+export async function markPaymentRefunded(
+  paymentId: string,
+) {
+  const database =
+    getDatabase();
+
+  const [payment] =
+    await database
+      .update(
+        payments,
+      )
+      .set({
+        status:
+          "refunded",
+      })
+      .where(
+        eq(
+          payments.id,
+          paymentId,
+        ),
+      )
+      .returning();
+
+  return payment ?? null;
+}
