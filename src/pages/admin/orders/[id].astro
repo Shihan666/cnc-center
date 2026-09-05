@@ -845,6 +845,64 @@ const nextStatus =
             <p>
               {refund.reason ?? "-"}
             </p>
+
+            <div data-refund-id={refund.id}>
+              {refund.status === "requested" && (
+                <Button
+                  type="button"
+                  data-refund-action="process"
+                >
+                  Process refund
+                </Button>
+              )}
+
+              {refund.status === "processing" && (
+                <>
+                  <Button
+                    type="button"
+                    data-refund-action="complete"
+                  >
+                    Complete refund
+                  </Button>
+
+                  <Button
+                    type="button"
+                    data-refund-action="fail"
+                  >
+                    Fail refund
+                  </Button>
+                </>
+              )}
+            </div>
+
+            <div data-refund-id={refund.id}>
+              {refund.status === "requested" && (
+                <Button
+                  type="button"
+                  data-refund-action="process"
+                >
+                  Process refund
+                </Button>
+              )}
+
+              {refund.status === "processing" && (
+                <>
+                  <Button
+                    type="button"
+                    data-refund-action="complete"
+                  >
+                    Complete refund
+                  </Button>
+
+                  <Button
+                    type="button"
+                    data-refund-action="fail"
+                  >
+                    Fail refund
+                  </Button>
+                </>
+              )}
+            </div>
           </div>
         ))}
       </div>
