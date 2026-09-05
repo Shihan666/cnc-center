@@ -1,4 +1,4 @@
-�---
+---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import Badge from "../../../components/common/Badge.astro";
 import Button from "../../../components/common/Button.astro";
@@ -39,7 +39,6 @@ type AdminOrderRefund = {
   createdAt: string;
   completedAt: string | null;
 };
-
 
 type AdminOrderPayment = {
   id: string;
@@ -144,15 +143,15 @@ const hasOrderError =
 
 
 const statusLabels: Record<OrderStatus, string> = {
-  pending: "در ا� تظار بررس�R",
-  paid: "پرداخت شد�!",
-  processing: "در حا� پردازش",
-  ready_to_ship: "آ�&اد�! ارسا�",
-  shipped: "ارسا� شد�!",
-  completed: "تک�&�R� شد�!",
-  cancelled: "�غ�� شد�!",
-  awaiting_payment: "در ا� تظار پرداخت",
-  expired: "�&� �ض�R شد�!",
+  pending: "در انتظار بررسی",
+  paid: "پرداخت شده",
+  processing: "در حال پردازش",
+  ready_to_ship: "آماده ارسال",
+  shipped: "ارسال شده",
+  completed: "تکمیل شده",
+  cancelled: "لغو شده",
+  awaiting_payment: "در انتظار پرداخت",
+  expired: "منقضی شده",
 };
 
 const nextAdminStatus: Partial<
@@ -172,17 +171,17 @@ const nextStatus =
 
 ---
 
-<AdminLayout title="جزئ�Rات سفارش">
+<AdminLayout title="جزئیات سفارش">
   <div class="space-y-6">
     <nav
-      aria-label="�&س�Rر صفح�!"
+      aria-label="مسیر صفحه"
       class="flex flex-wrap items-center gap-2 text-sm text-muted"
     >
       <a
         href="/admin/orders"
         class="font-semibold text-brand-700 transition hover:text-brand-800"
       >
-        سفارش�R�!ا
+        سفارش‌ها
       </a>
 
       <span aria-hidden="true">
@@ -190,7 +189,7 @@ const nextStatus =
       </span>
 
       <span aria-current="page">
-        جزئ�Rات سفارش
+        جزئیات سفارش
       </span>
     </nav>
 
@@ -207,7 +206,7 @@ const nextStatus =
             {
               order
                 ? `سفارش ${order.orderNumber}`
-                : "جزئ�Rات سفارش"
+                : "جزئیات سفارش"
             }
           </h2>
 
@@ -226,7 +225,7 @@ const nextStatus =
         {
           orderId && (
             <p class="mt-2 text-sm text-muted">
-              ش� اس�! �&س�Rر:
+              شناسه مسیر:
               <span
                 dir="ltr"
                 class="mr-1 font-mono text-xs text-ink-soft"
@@ -260,7 +259,7 @@ const nextStatus =
 
               <div class="flex items-center gap-1">
                 <dt>
-                  آخر�R�  بر��زرسا� �R:
+                  آخرین بروزرسانی:
                 </dt>
 
                 <dd>
@@ -315,7 +314,7 @@ const nextStatus =
                 data-order-status-submit
                 class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                تغ�R�Rر ��ضع�Rت ب�! {statusLabels[nextStatus]}
+                تغییر وضعیت به {statusLabels[nextStatus]}
               </button>
 
               <p
@@ -329,69 +328,11 @@ const nextStatus =
           ) : null
         }
 
-        {
-          order && order.refunds.length > 0 ? (
-            <div
-              class="flex flex-wrap gap-2"
-              data-refund-actions-root
-            >
-              {
-                order.refunds
-                  .filter(
-                    (refund) =>
-                      refund.status === "requested" ||
-                      refund.status === "processing",
-                  )
-                  .map((refund) => (
-                    <div
-                      class="flex flex-wrap gap-2"
-                      data-refund-id={refund.id}
-                    >
-                      {
-                        refund.status === "requested" && (
-                          <button
-                            type="button"
-                            data-refund-process
-                            class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90"
-                          >
-                            41H9 ('2~1/'.*
-                          </button>
-                        )
-                      }
-
-                      {
-                        refund.status === "processing" && (
-                          <>
-                            <button
-                              type="button"
-                              data-refund-complete
-                              class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90"
-                            >
-                              *�E�D ('2~1/'.*
-                            </button>
-
-                            <button
-                              type="button"
-                              data-refund-fail
-                              class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
-                            >
-                              4�3* ('2~1/'.*
-                            </button>
-                          </>
-                        )
-                      }
-                    </div>
-                  ))
-              }
-            </div>
-          ) : null
-        }
-
         <Button
           href="/admin/orders"
           variant="secondary"
         >
-          بازگشت ب�! سفارش�R�!ا
+          بازگشت به سفارش‌ها
         </Button>
       </div>
     </section>
@@ -405,8 +346,8 @@ const nextStatus =
             class="shadow-none"
           >
             <EmptyState
-              title="سفارش پ�Rدا � شد"
-              description="سفارش�R با ا�R�  ش� اس�! ��ج��د � دارد �Rا د�Rگر در دسترس � �Rست."
+              title="سفارش پیدا نشد"
+              description="سفارشی با این شناسه وجود ندارد یا دیگر در دسترس نیست."
               compact
             />
           </Card>
@@ -419,8 +360,8 @@ const nextStatus =
             class="shadow-none"
           >
             <EmptyState
-              title="در�Rافت جزئ�Rات سفارش ا� جا�& � شد"
-              description="ارتباط با سر��ر �Rا در�Rافت اط�اعات سفارش با �&شک� ر��ب�!�Rر�� شد. د��بار�! ت�اش ک� �Rد."
+              title="دریافت جزئیات سفارش انجام نشد"
+              description="ارتباط با سرور یا دریافت اطلاعات سفارش با مشکل روبه‌رو شد. دوباره تلاش کنید."
               compact
             />
 
@@ -429,7 +370,7 @@ const nextStatus =
                 href={Astro.url.pathname}
                 class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
               >
-                ت�اش �&جدد
+                تلاش مجدد
               </a>
             </div>
           </Card>
@@ -443,11 +384,11 @@ const nextStatus =
               id="order-items-title"
               class="text-lg font-black text-ink"
             >
-              ا��ا�& سفارش
+              اقلام سفارش
             </h2>
 
             <p class="mt-1 text-sm leading-6 text-muted">
-              کا�ا�!ا �� تعداد �!ر �&��رد در ا�R�  بخش � �&ا�Rش داد�! �&�R�Rش��� د.
+              کالاها و تعداد هر مورد در این بخش نمایش داده می‌شوند.
             </p>
           </div>
 
@@ -462,10 +403,10 @@ const nextStatus =
               <div
                 class="grid grid-cols-[minmax(12rem,1fr)_6rem_9rem_9rem] gap-4 text-xs font-bold text-muted"
               >
-                <span>کا�ا</span>
+                <span>کالا</span>
                 <span>تعداد</span>
-                <span>��R�&ت ��احد</span>
-                <span>ج�&ع</span>
+                <span>قیمت واحد</span>
+                <span>جمع</span>
               </div>
             </div>
 
@@ -473,8 +414,8 @@ const nextStatus =
               order.items.length === 0 ? (
                 <div class="p-4 md:p-5">
                   <EmptyState
-                    title="���&�R برا�R ا�R�  سفارش ثبت � شد�!"
-                    description="در حا� حاضر �!�R�  ���&�R برا�R ا�R�  سفارش ��ج��د � دارد."
+                    title="قلمی برای این سفارش ثبت نشده"
+                    description="در حال حاضر هیچ قلمی برای این سفارش وجود ندارد."
                     compact
                   />
                 </div>
@@ -489,7 +430,7 @@ const nextStatus =
                           </p>
 
                           <p class="mt-1 text-xs text-muted">
-                            {item.brand} � {item.partNumber}
+                            {item.brand} — {item.partNumber}
                           </p>
                         </div>
 
@@ -502,14 +443,14 @@ const nextStatus =
 
                         <div class="text-sm text-ink">
                           <span class="font-bold md:hidden">
-                            ��R�&ت ��احد:{" "}
+                            قیمت واحد:{" "}
                           </span>
                           {formatRialAmount(item.unitPriceRial)}
                         </div>
 
                         <div class="text-sm font-bold text-ink">
                           <span class="md:hidden">
-                            ج�&ع:{" "}
+                            جمع:{" "}
                           </span>
                           {formatRialAmount(item.lineTotalRial)}
                         </div>
@@ -528,11 +469,11 @@ const nextStatus =
               id="order-timeline-title"
               class="text-lg font-black text-ink"
             >
-              ر��� د سفارش
+              روند سفارش
             </h2>
 
             <p class="mt-1 text-sm leading-6 text-muted">
-              تار�Rخ� �! تغ�R�Rر ��ضع�Rت سفارش در ا�R�  �س�&ت � �&ا�Rش داد�! �&�R�Rش��د.
+              تاریخچه تغییر وضعیت سفارش در این قسمت نمایش داده می‌شود.
             </p>
           </div>
 
@@ -544,8 +485,8 @@ const nextStatus =
             {
               order.statusHistory.length === 0 ? (
                 <EmptyState
-                  title="تار�Rخ� �!�Rا�R برا�R � �&ا�Rش � دار�R�&"
-                  description="�!� ��ز تغ�R�Rر ��ضع�Rت�R برا�R ا�R�  سفارش ثبت � شد�! است."
+                  title="تاریخچه‌ای برای نمایش نداریم"
+                  description="هنوز تغییر وضعیتی برای این سفارش ثبت نشده است."
                   compact
                 />
               ) : (
@@ -569,7 +510,7 @@ const nextStatus =
                                     aria-hidden="true"
                                     class="text-muted"
                                   >
-                                    � �
+                                    ←
                                   </span>
                                 </>
                               ) : null
@@ -625,13 +566,13 @@ const nextStatus =
               id="order-totals-title"
               class="text-lg font-black text-ink"
             >
-              �&ب�غ سفارش
+              مبلغ سفارش
             </h2>
 
             <dl class="mt-5 space-y-3 text-sm">
               <div class="flex items-center justify-between gap-4">
                 <dt class="text-muted">
-                  ج�&ع کا�ا�!ا
+                  جمع کالاها
                 </dt>
 
                 <dd class="font-bold text-ink">
@@ -641,14 +582,14 @@ const nextStatus =
 
               <div class="flex items-center justify-between gap-4">
                 <dt class="text-muted">
-                  �!ز�R� �! ارسا�
+                  هزینه ارسال
                 </dt>
 
                 <dd class="font-bold text-ink">
                   {
                     order.shippingFeeRial !== null
                       ? formatRialAmount(order.shippingFeeRial)
-                      : "�"
+                      : "—"
                   }
                 </dd>
               </div>
@@ -656,14 +597,14 @@ const nextStatus =
               <div class="border-t border-line pt-3">
                 <div class="flex items-center justify-between gap-4">
                   <dt class="font-bold text-ink">
-                    �&ب�غ � �!ا�R�R
+                    مبلغ نهایی
                   </dt>
 
                   <dd class="text-lg font-black text-ink">
                     {
                       order.totalRial !== null
                         ? formatRialAmount(order.totalRial)
-                        : "�"
+                        : "—"
                     }
                   </dd>
                 </div>
@@ -682,13 +623,13 @@ const nextStatus =
               id="order-customer-title"
               class="text-lg font-black text-ink"
             >
-              �&شتر�R
+              مشتری
             </h2>
 
             <dl class="mt-5 space-y-3 text-sm">
               <div>
                 <dt class="text-muted">
-                  � ا�&
+                  نام
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
@@ -698,7 +639,7 @@ const nextStatus =
 
               <div>
                 <dt class="text-muted">
-                  �&��با�R�
+                  موبایل
                 </dt>
 
                 <dd
@@ -710,10 +651,10 @@ const nextStatus =
               </div>
 
               {
-                (order.customerNotes ?? '').trim() ? (
+                order.customerNotes.trim() ? (
                   <div>
                     <dt class="text-muted">
-                      �Rادداشت �&شتر�R
+                      یادداشت مشتری
                     </dt>
 
                     <dd class="mt-1 whitespace-pre-wrap leading-7 text-ink">
@@ -736,13 +677,13 @@ const nextStatus =
               id="order-shipping-title"
               class="text-lg font-black text-ink"
             >
-              ارسا�
+              ارسال
             </h2>
 
             <dl class="mt-5 space-y-3 text-sm">
               <div>
                 <dt class="text-muted">
-                  ر��ش ارسا�
+                  روش ارسال
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
@@ -752,7 +693,7 @@ const nextStatus =
 
               <div>
                 <dt class="text-muted">
-                  ش�!ر
+                  شهر
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
@@ -790,8 +731,8 @@ const nextStatus =
               order.payments.length === 0 ? (
                 <div class="mt-5">
                   <EmptyState
-                    title="پرداخت�R ثبت � شد�!"
-                    description="�!� ��ز �!�R�  رک��رد پرداخت�R برا�R ا�R�  سفارش ثبت � شد�! است."
+                    title="پرداختی ثبت نشده"
+                    description="هنوز هیچ رکورد پرداختی برای این سفارش ثبت نشده است."
                     compact
                   />
                 </div>
@@ -802,7 +743,7 @@ const nextStatus =
                       <dl class="space-y-3 border-b border-line pb-5 text-sm last:border-b-0 last:pb-0">
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            ��ضع�Rت
+                            وضعیت
                           </dt>
 
                           <dd>
@@ -817,7 +758,7 @@ const nextStatus =
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            �&ب�غ
+                            مبلغ
                           </dt>
 
                           <dd class="font-bold text-ink">
@@ -827,7 +768,7 @@ const nextStatus =
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            ر��ش پرداخت
+                            روش پرداخت
                           </dt>
 
                           <dd class="font-bold text-ink">
@@ -837,20 +778,20 @@ const nextStatus =
 
                         <div>
                           <dt class="text-muted">
-                            ش�&ار�! پ�Rگ�Rر�R
+                            شماره پیگیری
                           </dt>
 
                           <dd
                             dir="ltr"
                             class="mt-1 text-right font-mono text-xs text-ink"
                           >
-                            {payment.refId ?? "�"}
+                            {payment.refId ?? "—"}
                           </dd>
                         </div>
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            ز�&ا�  ثبت
+                            زمان ثبت
                           </dt>
 
                           <dd class="text-xs text-ink">
@@ -858,108 +799,6 @@ const nextStatus =
                               {
                                 new Date(
                                   payment.createdAt,
-                                ).toLocaleString(
-                                  "fa-IR",
-                                )
-                              }
-                            </time>
-                          </dd>
-                        </div>
-                      </dl>
-                    ))
-                  }
-                </div>
-              )
-            }
-          </Card>
-        </section>
-
-
-        <section aria-labelledby="order-refunds-title">
-          <Card
-            as="div"
-            padding="md"
-            class="shadow-none"
-          >
-            <h2
-              id="order-refunds-title"
-              class="text-lg font-black text-ink"
-            >
-              ('2~1/'.*G'
-            </h2>
-
-            {
-              order.refunds.length === 0 ? (
-                <div class="mt-5">
-                  <EmptyState
-                    title="('2~1/'.*� +(* F4/G"
-                    description="(1'� '�F 3A'14 GFH2 Ğ /1.H'3* ('2~1/'.*� +(* F4/G '3*."
-                    compact
-                  />
-                </div>
-              ) : (
-                <div class="mt-5 space-y-5">
-                  {
-                    order.refunds.map((refund) => (
-                      <dl class="space-y-3 border-b border-line pb-5 text-sm last:border-b-0 last:pb-0">
-                        <div class="flex items-center justify-between gap-4">
-                          <dt class="text-muted">
-                            H69�*
-                          </dt>
-
-                          <dd>
-                            <Badge
-                              variant="neutral"
-                              size="sm"
-                            >
-                              {refund.status}
-                            </Badge>
-                          </dd>
-                        </div>
-
-                        <div class="flex items-center justify-between gap-4">
-                          <dt class="text-muted">
-                            E(D:
-                          </dt>
-
-                          <dd class="font-bold text-ink">
-                            {formatRialAmount(refund.amountRial)}
-                          </dd>
-                        </div>
-
-                        <div class="flex items-center justify-between gap-4">
-                          <dt class="text-muted">
-                            4F'3G ~1/'.*
-                          </dt>
-
-                          <dd
-                            dir="ltr"
-                            class="font-mono text-xs text-ink"
-                          >
-                            {refund.paymentId}
-                          </dd>
-                        </div>
-
-                        <div>
-                          <dt class="text-muted">
-                            /D�D
-                          </dt>
-
-                          <dd class="mt-1 text-ink">
-                            {refund.reason ?? ""}
-                          </dd>
-                        </div>
-
-                        <div class="flex items-center justify-between gap-4">
-                          <dt class="text-muted">
-                            2E'F +(*
-                          </dt>
-
-                          <dd class="text-xs text-ink">
-                            <time datetime={refund.createdAt}>
-                              {
-                                new Date(
-                                  refund.createdAt,
                                 ).toLocaleString(
                                   "fa-IR",
                                 )
@@ -1026,11 +865,11 @@ const nextStatus =
 
         const originalLabel =
           button.textContent ??
-          "تغ�R�Rر ��ضع�Rت";
+          "تغییر وضعیت";
 
         button.disabled = true;
         button.textContent =
-          "در حا� ثبت...";
+          "در حال ثبت...";
 
         message.textContent = "";
         message.classList.add("hidden");
@@ -1108,10 +947,10 @@ const nextStatus =
                 "invalid_transition"
             ) {
               message.textContent =
-                "��ضع�Rت سفارش تغ�R�Rر کرد�! �Rا ا�R�  ا� ت�ا� د�Rگر �&جاز � �Rست. صفح�! را د��بار�! بارگذار�R ک� �Rد.";
+                "وضعیت سفارش تغییر کرده یا این انتقال دیگر مجاز نیست. صفحه را دوباره بارگذاری کنید.";
             } else {
               message.textContent =
-                "تغ�R�Rر ��ضع�Rت سفارش ا� جا�& � شد. د��بار�! ت�اش ک� �Rد.";
+                "تغییر وضعیت سفارش انجام نشد. دوباره تلاش کنید.";
             }
 
             message.classList.remove(
@@ -1128,7 +967,7 @@ const nextStatus =
           window.location.reload();
         } catch {
           message.textContent =
-            "ارتباط با سر��ر بر�رار � شد. د��بار�! ت�اش ک� �Rد.";
+            "ارتباط با سرور برقرار نشد. دوباره تلاش کنید.";
 
           message.classList.remove(
             "hidden",
@@ -1141,143 +980,4 @@ const nextStatus =
       },
     );
   }
-
-  const refundRoots =
-    document.querySelectorAll(
-      "[data-refund-actions-root]",
-    );
-
-  for (const root of refundRoots) {
-    if (!(root instanceof HTMLElement)) {
-      continue;
-    }
-
-    const refundIdRoot =
-      root.querySelector(
-        "[data-refund-id]",
-      );
-
-    if (!(refundIdRoot instanceof HTMLElement)) {
-      continue;
-    }
-
-    const refundId =
-      refundIdRoot.dataset.refundId ?? "";
-
-    if (!refundId) {
-      continue;
-    }
-
-    const actions =
-      [
-        {
-          selector:
-            "[data-refund-process]",
-          endpoint:
-            "process",
-        },
-        {
-          selector:
-            "[data-refund-complete]",
-          endpoint:
-            "complete",
-        },
-        {
-          selector:
-            "[data-refund-fail]",
-          endpoint:
-            "fail",
-        },
-      ];
-
-    for (const action of actions) {
-      const button =
-        root.querySelector(
-          action.selector,
-        );
-
-      if (!(button instanceof HTMLButtonElement)) {
-        continue;
-      }
-
-      button.addEventListener(
-        "click",
-        async () => {
-          if (button.disabled) {
-            return;
-          }
-
-          button.disabled = true;
-
-          try {
-            const response =
-              await fetch(
-                `/api/admin/refunds/${encodeURIComponent(refundId)}/${action.endpoint}`,
-                {
-                  method:
-                    "POST",
-
-                  credentials:
-                    "same-origin",
-                },
-              );
-
-            let body:
-              Record<string, unknown> | null =
-              null;
-
-            try {
-              const value: unknown =
-                await response.json();
-
-              if (
-                typeof value === "object" &&
-                value !== null &&
-                !Array.isArray(value)
-              ) {
-                body =
-                  value as Record<string, unknown>;
-              }
-            } catch {
-              body = null;
-            }
-
-            if (
-              !response.ok ||
-              body?.ok !== true
-            ) {
-              if (
-                response.status === 401 ||
-                body?.reason === "invalid_session"
-              ) {
-                window.location.replace(
-                  "/admin/auth/login",
-                );
-
-                return;
-              }
-
-              button.disabled = false;
-
-              return;
-            }
-
-            window.location.reload();
-
-          } catch {
-            button.disabled = false;
-          }
-        },
-      );
-    }
-  }
 </script>
-
-
-
-
-
-
-
-
-
