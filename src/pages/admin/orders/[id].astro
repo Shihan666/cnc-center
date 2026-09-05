@@ -1040,10 +1040,11 @@ const nextStatus =
       },
     );
   }
-</script>
 
 
-<script>
+
+
+
   const refundRoots =
     document.querySelectorAll(
       "[data-refund-id]",
@@ -1066,6 +1067,10 @@ const nextStatus =
       button.addEventListener(
         "click",
         async () => {
+
+          console.log("REFUND BUTTON CLICKED");
+
+
           if (
             !(button instanceof HTMLButtonElement) ||
             !refundId
@@ -1081,6 +1086,11 @@ const nextStatus =
           }
 
           button.disabled = true;
+
+          console.log("REFUND REQUEST", {
+            refundId,
+            action,
+          });
 
           try {
             const response =
@@ -1099,18 +1109,20 @@ const nextStatus =
             }
 
             window.location.reload();
+
           } catch (error) {
             console.error(error);
-            alert(
-              "Refund action failed",
-            );
-
+            alert("Refund action failed");
             button.disabled = false;
           }
         },
       );
     }
   }
+
 </script>
+
+
+
 
 
