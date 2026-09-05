@@ -819,6 +819,39 @@ const nextStatus =
       ) : null
     }
   </div>
+<section aria-labelledby="order-refunds-title">
+  <Card>
+    <h2 id="order-refunds-title">
+      Refunds
+    </h2>
+
+    {order.refunds.length === 0 ? (
+      <EmptyState
+        title="No refunds"
+        description="No refund records found for this order."
+      />
+    ) : (
+      <div>
+        {order.refunds.map((refund) => (
+          <div>
+            <p>
+              {refund.status}
+            </p>
+
+            <p>
+              {formatRialAmount(refund.amountRial)}
+            </p>
+
+            <p>
+              {refund.reason ?? "-"}
+            </p>
+          </div>
+        ))}
+      </div>
+    )}
+  </Card>
+</section>
+
 </AdminLayout>
 
 <script>
