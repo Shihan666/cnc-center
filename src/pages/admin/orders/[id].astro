@@ -1071,4 +1071,54 @@ const nextStatus =
       },
     );
   }
+
+<script>
+  const refundRoots =
+    document.querySelectorAll("[data-refund-id]");
+
+  for (const root of refundRoots) {
+    const refundId =
+      root.dataset.refundId ?? "";
+
+    const buttons =
+      root.querySelectorAll("[data-refund-action]");
+
+    for (const button of buttons) {
+      button.addEventListener("click", async () => {
+        if (!(button instanceof HTMLButtonElement)) {
+          return;
+        }
+
+        const action =
+          button.dataset.refundAction;
+
+        if (!action || !refundId) {
+          return;
+        }
+
+        button.disabled = true;
+
+        try {
+          const response =
+            await fetch(
+              `/api/admin/refunds/${encodeURIComponent(refundId)}/${action}`,
+              {
+                method: "POST",
+              },
+            );
+
+          if (!response.ok) {
+            throw new Error("refund action failed");
+          }
+
+          window.location.reload();
+
+        } catch (error) {
+          console.error(error);
+          alert("Refund action failed");
+          button.disabled = false;
+        }
+      });
+    }
+  }
 </script>
