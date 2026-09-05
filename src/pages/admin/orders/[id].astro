@@ -651,7 +651,7 @@ const nextStatus =
               </div>
 
               {
-                order.customerNotes.trim() ? (
+                (order.customerNotes ?? "").trim() ? (
                   <div>
                     <dt class="text-muted">
                       یادداشت مشتری
@@ -845,6 +845,33 @@ const nextStatus =
             <p>
               Reason: {refund.reason ?? "-"}
             </p>
+
+            {refund.status === "requested" && (
+              <Button
+                type="button"
+                data-refund-action="process"
+              >
+                Process refund
+              </Button>
+            )}
+
+            {refund.status === "processing" && (
+              <>
+                <Button
+                  type="button"
+                  data-refund-action="complete"
+                >
+                  Complete refund
+                </Button>
+
+                <Button
+                  type="button"
+                  data-refund-action="fail"
+                >
+                  Fail refund
+                </Button>
+              </>
+            )}
           </div>
         ))}
       </div>
