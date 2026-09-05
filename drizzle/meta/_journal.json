@@ -29,6 +29,13 @@
       "when": 1788262494398,
       "tag": "0003_product_admin_privileges",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1788567004401,
+      "tag": "0004_colorful_klaw",
+      "breakpoints": true
     }
   ]
 }

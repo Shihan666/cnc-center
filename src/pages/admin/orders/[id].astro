@@ -710,7 +710,7 @@ const nextStatus =
               </div>
 
               {
-                order.customerNotes.trim() ? (
+                (order.customerNotes ?? '').trim() ? (
                   <div>
                     <dt class="text-muted">
                       ÛŒØ§Ø¯Ø¯Ø§Ø´Øª Ù…Ø´ØªØ±ÛŒ
@@ -1272,6 +1272,8 @@ const nextStatus =
     }
   }
 </script>
+
+
 
 
 
