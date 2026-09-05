@@ -1,4 +1,4 @@
-﻿---
+�---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import Badge from "../../../components/common/Badge.astro";
 import Button from "../../../components/common/Button.astro";
@@ -144,15 +144,15 @@ const hasOrderError =
 
 
 const statusLabels: Record<OrderStatus, string> = {
-  pending: "Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± Ø¨Ø±Ø±Ø³ÛŒ",
-  paid: "Ù¾Ø±Ø¯Ø§Ø®Øª Ø´Ø¯Ù‡",
-  processing: "Ø¯Ø± Ø­Ø§Ù„ Ù¾Ø±Ø¯Ø§Ø²Ø´",
-  ready_to_ship: "Ø¢Ù…Ø§Ø¯Ù‡ Ø§Ø±Ø³Ø§Ù„",
-  shipped: "Ø§Ø±Ø³Ø§Ù„ Ø´Ø¯Ù‡",
-  completed: "ØªÚ©Ù…ÛŒÙ„ Ø´Ø¯Ù‡",
-  cancelled: "Ù„ØºÙˆ Ø´Ø¯Ù‡",
-  awaiting_payment: "Ø¯Ø± Ø§Ù†ØªØ¸Ø§Ø± Ù¾Ø±Ø¯Ø§Ø®Øª",
-  expired: "Ù…Ù†Ù‚Ø¶ÛŒ Ø´Ø¯Ù‡",
+  pending: "در ا� تظار بررس�R",
+  paid: "پرداخت شد�!",
+  processing: "در حا� پردازش",
+  ready_to_ship: "آ�&اد�! ارسا�",
+  shipped: "ارسا� شد�!",
+  completed: "تک�&�R� شد�!",
+  cancelled: "�غ�� شد�!",
+  awaiting_payment: "در ا� تظار پرداخت",
+  expired: "�&� �ض�R شد�!",
 };
 
 const nextAdminStatus: Partial<
@@ -172,17 +172,17 @@ const nextStatus =
 
 ---
 
-<AdminLayout title="Ø¬Ø²Ø¦ÛŒØ§Øª Ø³ÙØ§Ø±Ø´">
+<AdminLayout title="جزئ�Rات سفارش">
   <div class="space-y-6">
     <nav
-      aria-label="Ù…Ø³ÛŒØ± ØµÙØ­Ù‡"
+      aria-label="�&س�Rر صفح�!"
       class="flex flex-wrap items-center gap-2 text-sm text-muted"
     >
       <a
         href="/admin/orders"
         class="font-semibold text-brand-700 transition hover:text-brand-800"
       >
-        Ø³ÙØ§Ø±Ø´â€ŒÙ‡Ø§
+        سفارش�R�!ا
       </a>
 
       <span aria-hidden="true">
@@ -190,7 +190,7 @@ const nextStatus =
       </span>
 
       <span aria-current="page">
-        Ø¬Ø²Ø¦ÛŒØ§Øª Ø³ÙØ§Ø±Ø´
+        جزئ�Rات سفارش
       </span>
     </nav>
 
@@ -206,8 +206,8 @@ const nextStatus =
           >
             {
               order
-                ? `Ø³ÙØ§Ø±Ø´ ${order.orderNumber}`
-                : "Ø¬Ø²Ø¦ÛŒØ§Øª Ø³ÙØ§Ø±Ø´"
+                ? `سفارش ${order.orderNumber}`
+                : "جزئ�Rات سفارش"
             }
           </h2>
 
@@ -226,7 +226,7 @@ const nextStatus =
         {
           orderId && (
             <p class="mt-2 text-sm text-muted">
-              Ø´Ù†Ø§Ø³Ù‡ Ù…Ø³ÛŒØ±:
+              ش� اس�! �&س�Rر:
               <span
                 dir="ltr"
                 class="mr-1 font-mono text-xs text-ink-soft"
@@ -242,7 +242,7 @@ const nextStatus =
             <dl class="mt-3 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted">
               <div class="flex items-center gap-1">
                 <dt>
-                  Ø«Ø¨Øª:
+                  ثبت:
                 </dt>
 
                 <dd>
@@ -260,7 +260,7 @@ const nextStatus =
 
               <div class="flex items-center gap-1">
                 <dt>
-                  Ø¢Ø®Ø±ÛŒÙ† Ø¨Ø±ÙˆØ²Ø±Ø³Ø§Ù†ÛŒ:
+                  آخر�R�  بر��زرسا� �R:
                 </dt>
 
                 <dd>
@@ -280,7 +280,7 @@ const nextStatus =
                 order.paidAt ? (
                   <div class="flex items-center gap-1">
                     <dt>
-                      Ù¾Ø±Ø¯Ø§Ø®Øª:
+                      پرداخت:
                     </dt>
 
                     <dd>
@@ -315,7 +315,7 @@ const nextStatus =
                 data-order-status-submit
                 class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª Ø¨Ù‡ {statusLabels[nextStatus]}
+                تغ�R�Rر ��ضع�Rت ب�! {statusLabels[nextStatus]}
               </button>
 
               <p
@@ -354,7 +354,7 @@ const nextStatus =
                             data-refund-process
                             class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90"
                           >
-                            شروع بازپرداخت
+                            41H9 ('2~1/'.*
                           </button>
                         )
                       }
@@ -367,7 +367,7 @@ const nextStatus =
                               data-refund-complete
                               class="inline-flex h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-bold text-white transition hover:opacity-90"
                             >
-                              تکمیل بازپرداخت
+                              *�E�D ('2~1/'.*
                             </button>
 
                             <button
@@ -375,7 +375,7 @@ const nextStatus =
                               data-refund-fail
                               class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
                             >
-                              شکست بازپرداخت
+                              4�3* ('2~1/'.*
                             </button>
                           </>
                         )
@@ -391,7 +391,7 @@ const nextStatus =
           href="/admin/orders"
           variant="secondary"
         >
-          Ø¨Ø§Ø²Ú¯Ø´Øª Ø¨Ù‡ Ø³ÙØ§Ø±Ø´â€ŒÙ‡Ø§
+          بازگشت ب�! سفارش�R�!ا
         </Button>
       </div>
     </section>
@@ -405,8 +405,8 @@ const nextStatus =
             class="shadow-none"
           >
             <EmptyState
-              title="Ø³ÙØ§Ø±Ø´ Ù¾ÛŒØ¯Ø§ Ù†Ø´Ø¯"
-              description="Ø³ÙØ§Ø±Ø´ÛŒ Ø¨Ø§ Ø§ÛŒÙ† Ø´Ù†Ø§Ø³Ù‡ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯ ÛŒØ§ Ø¯ÛŒÚ¯Ø± Ø¯Ø± Ø¯Ø³ØªØ±Ø³ Ù†ÛŒØ³Øª."
+              title="سفارش پ�Rدا � شد"
+              description="سفارش�R با ا�R�  ش� اس�! ��ج��د � دارد �Rا د�Rگر در دسترس � �Rست."
               compact
             />
           </Card>
@@ -419,8 +419,8 @@ const nextStatus =
             class="shadow-none"
           >
             <EmptyState
-              title="Ø¯Ø±ÛŒØ§ÙØª Ø¬Ø²Ø¦ÛŒØ§Øª Ø³ÙØ§Ø±Ø´ Ø§Ù†Ø¬Ø§Ù… Ù†Ø´Ø¯"
-              description="Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ø³Ø±ÙˆØ± ÛŒØ§ Ø¯Ø±ÛŒØ§ÙØª Ø§Ø·Ù„Ø§Ø¹Ø§Øª Ø³ÙØ§Ø±Ø´ Ø¨Ø§ Ù…Ø´Ú©Ù„ Ø±ÙˆØ¨Ù‡â€ŒØ±Ùˆ Ø´Ø¯. Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯."
+              title="در�Rافت جزئ�Rات سفارش ا� جا�& � شد"
+              description="ارتباط با سر��ر �Rا در�Rافت اط�اعات سفارش با �&شک� ر��ب�!�Rر�� شد. د��بار�! ت�اش ک� �Rد."
               compact
             />
 
@@ -429,7 +429,7 @@ const nextStatus =
                 href={Astro.url.pathname}
                 class="inline-flex h-10 items-center justify-center rounded-xl border border-line px-4 text-sm font-bold text-ink transition hover:bg-surface"
               >
-                ØªÙ„Ø§Ø´ Ù…Ø¬Ø¯Ø¯
+                ت�اش �&جدد
               </a>
             </div>
           </Card>
@@ -443,11 +443,11 @@ const nextStatus =
               id="order-items-title"
               class="text-lg font-black text-ink"
             >
-              Ø§Ù‚Ù„Ø§Ù… Ø³ÙØ§Ø±Ø´
+              ا��ا�& سفارش
             </h2>
 
             <p class="mt-1 text-sm leading-6 text-muted">
-              Ú©Ø§Ù„Ø§Ù‡Ø§ Ùˆ ØªØ¹Ø¯Ø§Ø¯ Ù‡Ø± Ù…ÙˆØ±Ø¯ Ø¯Ø± Ø§ÛŒÙ† Ø¨Ø®Ø´ Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆÙ†Ø¯.
+              کا�ا�!ا �� تعداد �!ر �&��رد در ا�R�  بخش � �&ا�Rش داد�! �&�R�Rش��� د.
             </p>
           </div>
 
@@ -462,10 +462,10 @@ const nextStatus =
               <div
                 class="grid grid-cols-[minmax(12rem,1fr)_6rem_9rem_9rem] gap-4 text-xs font-bold text-muted"
               >
-                <span>Ú©Ø§Ù„Ø§</span>
-                <span>ØªØ¹Ø¯Ø§Ø¯</span>
-                <span>Ù‚ÛŒÙ…Øª ÙˆØ§Ø­Ø¯</span>
-                <span>Ø¬Ù…Ø¹</span>
+                <span>کا�ا</span>
+                <span>تعداد</span>
+                <span>��R�&ت ��احد</span>
+                <span>ج�&ع</span>
               </div>
             </div>
 
@@ -473,8 +473,8 @@ const nextStatus =
               order.items.length === 0 ? (
                 <div class="p-4 md:p-5">
                   <EmptyState
-                    title="Ù‚Ù„Ù…ÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø³ÙØ§Ø±Ø´ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡"
-                    description="Ø¯Ø± Ø­Ø§Ù„ Ø­Ø§Ø¶Ø± Ù‡ÛŒÚ† Ù‚Ù„Ù…ÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø³ÙØ§Ø±Ø´ ÙˆØ¬ÙˆØ¯ Ù†Ø¯Ø§Ø±Ø¯."
+                    title="���&�R برا�R ا�R�  سفارش ثبت � شد�!"
+                    description="در حا� حاضر �!�R�  ���&�R برا�R ا�R�  سفارش ��ج��د � دارد."
                     compact
                   />
                 </div>
@@ -489,27 +489,27 @@ const nextStatus =
                           </p>
 
                           <p class="mt-1 text-xs text-muted">
-                            {item.brand} â€” {item.partNumber}
+                            {item.brand} � {item.partNumber}
                           </p>
                         </div>
 
                         <div class="text-sm text-ink">
                           <span class="font-bold md:hidden">
-                            ØªØ¹Ø¯Ø§Ø¯:{" "}
+                            تعداد:{" "}
                           </span>
                           {item.quantity}
                         </div>
 
                         <div class="text-sm text-ink">
                           <span class="font-bold md:hidden">
-                            Ù‚ÛŒÙ…Øª ÙˆØ§Ø­Ø¯:{" "}
+                            ��R�&ت ��احد:{" "}
                           </span>
                           {formatRialAmount(item.unitPriceRial)}
                         </div>
 
                         <div class="text-sm font-bold text-ink">
                           <span class="md:hidden">
-                            Ø¬Ù…Ø¹:{" "}
+                            ج�&ع:{" "}
                           </span>
                           {formatRialAmount(item.lineTotalRial)}
                         </div>
@@ -528,11 +528,11 @@ const nextStatus =
               id="order-timeline-title"
               class="text-lg font-black text-ink"
             >
-              Ø±ÙˆÙ†Ø¯ Ø³ÙØ§Ø±Ø´
+              ر��� د سفارش
             </h2>
 
             <p class="mt-1 text-sm leading-6 text-muted">
-              ØªØ§Ø±ÛŒØ®Ú†Ù‡ ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª Ø³ÙØ§Ø±Ø´ Ø¯Ø± Ø§ÛŒÙ† Ù‚Ø³Ù…Øª Ù†Ù…Ø§ÛŒØ´ Ø¯Ø§Ø¯Ù‡ Ù…ÛŒâ€ŒØ´ÙˆØ¯.
+              تار�Rخ� �! تغ�R�Rر ��ضع�Rت سفارش در ا�R�  �س�&ت � �&ا�Rش داد�! �&�R�Rش��د.
             </p>
           </div>
 
@@ -544,8 +544,8 @@ const nextStatus =
             {
               order.statusHistory.length === 0 ? (
                 <EmptyState
-                  title="ØªØ§Ø±ÛŒØ®Ú†Ù‡â€ŒØ§ÛŒ Ø¨Ø±Ø§ÛŒ Ù†Ù…Ø§ÛŒØ´ Ù†Ø¯Ø§Ø±ÛŒÙ…"
-                  description="Ù‡Ù†ÙˆØ² ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØªÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø³ÙØ§Ø±Ø´ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª."
+                  title="تار�Rخ� �!�Rا�R برا�R � �&ا�Rش � دار�R�&"
+                  description="�!� ��ز تغ�R�Rر ��ضع�Rت�R برا�R ا�R�  سفارش ثبت � شد�! است."
                   compact
                 />
               ) : (
@@ -569,7 +569,7 @@ const nextStatus =
                                     aria-hidden="true"
                                     class="text-muted"
                                   >
-                                    â†
+                                    � �
                                   </span>
                                 </>
                               ) : null
@@ -625,13 +625,13 @@ const nextStatus =
               id="order-totals-title"
               class="text-lg font-black text-ink"
             >
-              Ù…Ø¨Ù„Øº Ø³ÙØ§Ø±Ø´
+              �&ب�غ سفارش
             </h2>
 
             <dl class="mt-5 space-y-3 text-sm">
               <div class="flex items-center justify-between gap-4">
                 <dt class="text-muted">
-                  Ø¬Ù…Ø¹ Ú©Ø§Ù„Ø§Ù‡Ø§
+                  ج�&ع کا�ا�!ا
                 </dt>
 
                 <dd class="font-bold text-ink">
@@ -641,14 +641,14 @@ const nextStatus =
 
               <div class="flex items-center justify-between gap-4">
                 <dt class="text-muted">
-                  Ù‡Ø²ÛŒÙ†Ù‡ Ø§Ø±Ø³Ø§Ù„
+                  �!ز�R� �! ارسا�
                 </dt>
 
                 <dd class="font-bold text-ink">
                   {
                     order.shippingFeeRial !== null
                       ? formatRialAmount(order.shippingFeeRial)
-                      : "â€”"
+                      : "�"
                   }
                 </dd>
               </div>
@@ -656,14 +656,14 @@ const nextStatus =
               <div class="border-t border-line pt-3">
                 <div class="flex items-center justify-between gap-4">
                   <dt class="font-bold text-ink">
-                    Ù…Ø¨Ù„Øº Ù†Ù‡Ø§ÛŒÛŒ
+                    �&ب�غ � �!ا�R�R
                   </dt>
 
                   <dd class="text-lg font-black text-ink">
                     {
                       order.totalRial !== null
                         ? formatRialAmount(order.totalRial)
-                        : "â€”"
+                        : "�"
                     }
                   </dd>
                 </div>
@@ -682,13 +682,13 @@ const nextStatus =
               id="order-customer-title"
               class="text-lg font-black text-ink"
             >
-              Ù…Ø´ØªØ±ÛŒ
+              �&شتر�R
             </h2>
 
             <dl class="mt-5 space-y-3 text-sm">
               <div>
                 <dt class="text-muted">
-                  Ù†Ø§Ù…
+                  � ا�&
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
@@ -698,7 +698,7 @@ const nextStatus =
 
               <div>
                 <dt class="text-muted">
-                  Ù…ÙˆØ¨Ø§ÛŒÙ„
+                  �&��با�R�
                 </dt>
 
                 <dd
@@ -713,7 +713,7 @@ const nextStatus =
                 (order.customerNotes ?? '').trim() ? (
                   <div>
                     <dt class="text-muted">
-                      ÛŒØ§Ø¯Ø¯Ø§Ø´Øª Ù…Ø´ØªØ±ÛŒ
+                      �Rادداشت �&شتر�R
                     </dt>
 
                     <dd class="mt-1 whitespace-pre-wrap leading-7 text-ink">
@@ -736,13 +736,13 @@ const nextStatus =
               id="order-shipping-title"
               class="text-lg font-black text-ink"
             >
-              Ø§Ø±Ø³Ø§Ù„
+              ارسا�
             </h2>
 
             <dl class="mt-5 space-y-3 text-sm">
               <div>
                 <dt class="text-muted">
-                  Ø±ÙˆØ´ Ø§Ø±Ø³Ø§Ù„
+                  ر��ش ارسا�
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
@@ -752,7 +752,7 @@ const nextStatus =
 
               <div>
                 <dt class="text-muted">
-                  Ø´Ù‡Ø±
+                  ش�!ر
                 </dt>
 
                 <dd class="mt-1 font-bold text-ink">
@@ -762,7 +762,7 @@ const nextStatus =
 
               <div>
                 <dt class="text-muted">
-                  Ø¢Ø¯Ø±Ø³
+                  آدرس
                 </dt>
 
                 <dd class="mt-1 leading-7 text-ink">
@@ -783,15 +783,15 @@ const nextStatus =
               id="order-payment-title"
               class="text-lg font-black text-ink"
             >
-              Ù¾Ø±Ø¯Ø§Ø®Øª
+              پرداخت
             </h2>
 
             {
               order.payments.length === 0 ? (
                 <div class="mt-5">
                   <EmptyState
-                    title="Ù¾Ø±Ø¯Ø§Ø®ØªÛŒ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡"
-                    description="Ù‡Ù†ÙˆØ² Ù‡ÛŒÚ† Ø±Ú©ÙˆØ±Ø¯ Ù¾Ø±Ø¯Ø§Ø®ØªÛŒ Ø¨Ø±Ø§ÛŒ Ø§ÛŒÙ† Ø³ÙØ§Ø±Ø´ Ø«Ø¨Øª Ù†Ø´Ø¯Ù‡ Ø§Ø³Øª."
+                    title="پرداخت�R ثبت � شد�!"
+                    description="�!� ��ز �!�R�  رک��رد پرداخت�R برا�R ا�R�  سفارش ثبت � شد�! است."
                     compact
                   />
                 </div>
@@ -802,7 +802,7 @@ const nextStatus =
                       <dl class="space-y-3 border-b border-line pb-5 text-sm last:border-b-0 last:pb-0">
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            ÙˆØ¶Ø¹ÛŒØª
+                            ��ضع�Rت
                           </dt>
 
                           <dd>
@@ -817,7 +817,7 @@ const nextStatus =
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            Ù…Ø¨Ù„Øº
+                            �&ب�غ
                           </dt>
 
                           <dd class="font-bold text-ink">
@@ -827,7 +827,7 @@ const nextStatus =
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            Ø±ÙˆØ´ Ù¾Ø±Ø¯Ø§Ø®Øª
+                            ر��ش پرداخت
                           </dt>
 
                           <dd class="font-bold text-ink">
@@ -837,20 +837,20 @@ const nextStatus =
 
                         <div>
                           <dt class="text-muted">
-                            Ø´Ù…Ø§Ø±Ù‡ Ù¾ÛŒÚ¯ÛŒØ±ÛŒ
+                            ش�&ار�! پ�Rگ�Rر�R
                           </dt>
 
                           <dd
                             dir="ltr"
                             class="mt-1 text-right font-mono text-xs text-ink"
                           >
-                            {payment.refId ?? "â€”"}
+                            {payment.refId ?? "�"}
                           </dd>
                         </div>
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            Ø²Ù…Ø§Ù† Ø«Ø¨Øª
+                            ز�&ا�  ثبت
                           </dt>
 
                           <dd class="text-xs text-ink">
@@ -885,15 +885,15 @@ const nextStatus =
               id="order-refunds-title"
               class="text-lg font-black text-ink"
             >
-              بازپرداخت‌ها
+              ('2~1/'.*G'
             </h2>
 
             {
               order.refunds.length === 0 ? (
                 <div class="mt-5">
                   <EmptyState
-                    title="بازپرداختی ثبت نشده"
-                    description="برای این سفارش هنوز هیچ درخواست بازپرداختی ثبت نشده است."
+                    title="('2~1/'.*� +(* F4/G"
+                    description="(1'� '�F 3A'14 GFH2 Ğ /1.H'3* ('2~1/'.*� +(* F4/G '3*."
                     compact
                   />
                 </div>
@@ -904,7 +904,7 @@ const nextStatus =
                       <dl class="space-y-3 border-b border-line pb-5 text-sm last:border-b-0 last:pb-0">
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            وضعیت
+                            H69�*
                           </dt>
 
                           <dd>
@@ -919,7 +919,7 @@ const nextStatus =
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            مبلغ
+                            E(D:
                           </dt>
 
                           <dd class="font-bold text-ink">
@@ -929,7 +929,7 @@ const nextStatus =
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            شناسه پرداخت
+                            4F'3G ~1/'.*
                           </dt>
 
                           <dd
@@ -942,17 +942,17 @@ const nextStatus =
 
                         <div>
                           <dt class="text-muted">
-                            دلیل
+                            /D�D
                           </dt>
 
                           <dd class="mt-1 text-ink">
-                            {refund.reason ?? "—"}
+                            {refund.reason ?? ""}
                           </dd>
                         </div>
 
                         <div class="flex items-center justify-between gap-4">
                           <dt class="text-muted">
-                            زمان ثبت
+                            2E'F +(*
                           </dt>
 
                           <dd class="text-xs text-ink">
@@ -1026,11 +1026,11 @@ const nextStatus =
 
         const originalLabel =
           button.textContent ??
-          "ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª";
+          "تغ�R�Rر ��ضع�Rت";
 
         button.disabled = true;
         button.textContent =
-          "Ø¯Ø± Ø­Ø§Ù„ Ø«Ø¨Øª...";
+          "در حا� ثبت...";
 
         message.textContent = "";
         message.classList.add("hidden");
@@ -1108,10 +1108,10 @@ const nextStatus =
                 "invalid_transition"
             ) {
               message.textContent =
-                "ÙˆØ¶Ø¹ÛŒØª Ø³ÙØ§Ø±Ø´ ØªØºÛŒÛŒØ± Ú©Ø±Ø¯Ù‡ ÛŒØ§ Ø§ÛŒÙ† Ø§Ù†ØªÙ‚Ø§Ù„ Ø¯ÛŒÚ¯Ø± Ù…Ø¬Ø§Ø² Ù†ÛŒØ³Øª. ØµÙØ­Ù‡ Ø±Ø§ Ø¯ÙˆØ¨Ø§Ø±Ù‡ Ø¨Ø§Ø±Ú¯Ø°Ø§Ø±ÛŒ Ú©Ù†ÛŒØ¯.";
+                "��ضع�Rت سفارش تغ�R�Rر کرد�! �Rا ا�R�  ا� ت�ا� د�Rگر �&جاز � �Rست. صفح�! را د��بار�! بارگذار�R ک� �Rد.";
             } else {
               message.textContent =
-                "ØªØºÛŒÛŒØ± ÙˆØ¶Ø¹ÛŒØª Ø³ÙØ§Ø±Ø´ Ø§Ù†Ø¬Ø§Ù… Ù†Ø´Ø¯. Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯.";
+                "تغ�R�Rر ��ضع�Rت سفارش ا� جا�& � شد. د��بار�! ت�اش ک� �Rد.";
             }
 
             message.classList.remove(
@@ -1128,7 +1128,7 @@ const nextStatus =
           window.location.reload();
         } catch {
           message.textContent =
-            "Ø§Ø±ØªØ¨Ø§Ø· Ø¨Ø§ Ø³Ø±ÙˆØ± Ø¨Ø±Ù‚Ø±Ø§Ø± Ù†Ø´Ø¯. Ø¯ÙˆØ¨Ø§Ø±Ù‡ ØªÙ„Ø§Ø´ Ú©Ù†ÛŒØ¯.";
+            "ارتباط با سر��ر بر�رار � شد. د��بار�! ت�اش ک� �Rد.";
 
           message.classList.remove(
             "hidden",
